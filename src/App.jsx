@@ -155,7 +155,7 @@ const App = () => {
               <img
                 src="/ai-network.png"  //Fix image error
                 alt="AI Neural Network"
-                className="..."
+                className="w-full h-auto object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
               />
                             
               {/* Floating UI Card 1 (Profit) */}
