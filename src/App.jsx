@@ -152,12 +152,12 @@ const App = () => {
               {/* Glow behind image */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00FF9D]/20 blur-[60px] rounded-full"></div>
               
-              <img
-                src="/ai-network.png"  //Fix image error
-                alt="AI Neural Network"
+              <img 
+                src="The image 1.jpg" 
+                alt="AI Neural Network" 
                 className="w-full h-auto object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
               />
-                            
+              
               {/* Floating UI Card 1 (Profit) */}
               <div className="absolute top-10 -left-4 md:-left-12 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float-delayed z-20">
                 <div className="flex items-center gap-3 mb-2">
@@ -574,10 +574,8 @@ const WorldGlobe = () => {
     let rotation = 0;
 
     // Configuration
-    const GLOBE_RADIUS = 300;
     const DOT_COUNT = 300;
     const DOT_SIZE = 2;
-    const CONNECTION_DISTANCE = 60;
     
     // Resize handler
     const resizeCanvas = () => {
@@ -587,16 +585,16 @@ const WorldGlobe = () => {
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Generate random points on sphere
+    // Generate random points on UNIT sphere (radius 1)
     const points = [];
     for (let i = 0; i < DOT_COUNT; i++) {
       const phi = Math.acos(-1 + (2 * i) / DOT_COUNT);
       const theta = Math.sqrt(DOT_COUNT * Math.PI) * phi;
       
       points.push({
-        x: GLOBE_RADIUS * Math.cos(theta) * Math.sin(phi),
-        y: GLOBE_RADIUS * Math.sin(theta) * Math.sin(phi),
-        z: GLOBE_RADIUS * Math.cos(phi)
+        x: Math.cos(theta) * Math.sin(phi),
+        y: Math.sin(theta) * Math.sin(phi),
+        z: Math.cos(phi)
       });
     }
 
@@ -605,18 +603,27 @@ const WorldGlobe = () => {
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       
+      // Dynamic Radius: 35% of the smallest screen dimension to ensure it fits
+      const globeRadius = Math.min(canvas.width, canvas.height) * 0.35;
+      const connectionDist = globeRadius * 0.25; // Dynamic connection distance
+
       rotation += 0.003;
 
       // Rotate and project points
       const projectedPoints = points.map(p => {
+        // Scale unit sphere to globe radius
+        const pX = p.x * globeRadius;
+        const pY = p.y * globeRadius;
+        const pZ = p.z * globeRadius;
+
         // Rotate around Y axis
-        const x = p.x * Math.cos(rotation) - p.z * Math.sin(rotation);
-        const z = p.x * Math.sin(rotation) + p.z * Math.cos(rotation);
-        const y = p.y;
+        const x = pX * Math.cos(rotation) - pZ * Math.sin(rotation);
+        const z = pX * Math.sin(rotation) + pZ * Math.cos(rotation);
+        const y = pY;
         
         // Perspective scale
         const scale = 800 / (800 - z);
-        const alpha = (z + GLOBE_RADIUS) / (2 * GLOBE_RADIUS); // Fade back points
+        const alpha = (z + globeRadius) / (2 * globeRadius); // Fade back points
 
         return {
           x: x * scale + centerX,
@@ -640,11 +647,11 @@ const WorldGlobe = () => {
            const dy = p1.y - p2.y;
            const dist = Math.sqrt(dx*dx + dy*dy);
 
-           if (dist < CONNECTION_DISTANCE) {
+           if (dist < connectionDist) {
              ctx.beginPath();
              ctx.moveTo(p1.x, p1.y);
              ctx.lineTo(p2.x, p2.y);
-             ctx.globalAlpha = (1 - dist / CONNECTION_DISTANCE) * 0.3 * p1.alpha;
+             ctx.globalAlpha = (1 - dist / connectionDist) * 0.3 * p1.alpha;
              ctx.stroke();
            }
         }
