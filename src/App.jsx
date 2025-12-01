@@ -152,12 +152,12 @@ const App = () => {
               {/* Glow behind image */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00FF9D]/20 blur-[60px] rounded-full"></div>
               
-              <img 
-                src="The image 1.jpg" 
-                alt="AI Neural Network" 
-                className="w-full h-auto object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+              <img
+                src="/ai-network.png"  //Fix image error
+                alt="AI Neural Network"
+                className="..."
               />
-              
+                            
               {/* Floating UI Card 1 (Profit) */}
               <div className="absolute top-10 -left-4 md:-left-12 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float-delayed z-20">
                 <div className="flex items-center gap-3 mb-2">
