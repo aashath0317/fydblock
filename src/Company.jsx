@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Minus, ArrowRight, User, Star } from 'lucide-react';
 
 const Company = () => {
@@ -30,13 +30,12 @@ const Company = () => {
                     </button>
                 </div>
 
-                {/* --- Hero Image (Replaces Globe) --- */}
+                {/* --- Hero Image --- */}
                 <div className="relative flex justify-center order-1 lg:order-2">
                     <div className="w-[350px] h-[350px] md:w-[500px] md:h-[500px] relative animate-float">
                         {/* Background Glow */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00FF9D]/20 blur-[60px] rounded-full pointer-events-none"></div>
 
-                        {/* Hero Image */}
                         <img
                             src="/hero.png"
                             alt="Neural Network AI"
@@ -47,13 +46,30 @@ const Company = () => {
                 </div>
             </section>
 
-            {/* --- Stats Section --- */}
+            {/* --- Stats Section (ANIMATED) --- */}
             <section className="container mx-auto px-6 mb-24">
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-12">Trusted Worldwide Since 2021</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <StatCard number="1.2K" label="Investing Users" />
-                    <StatCard number="0.8M" label="Total Registered Users" />
-                    <StatCard number="$150M" label="Asset Locked" />
+                    <div className="text-center md:text-left">
+                        <div className="text-5xl md:text-6xl font-bold text-[#00FF9D] mb-2">
+                            <CountUp end={1.2} suffix="K" decimals={1} />
+                        </div>
+                        <div className="text-gray-400 text-sm font-medium tracking-wide">Investing Users</div>
+                    </div>
+
+                    <div className="text-center md:text-left">
+                        <div className="text-5xl md:text-6xl font-bold text-[#00FF9D] mb-2">
+                            <CountUp end={0.8} suffix="M" decimals={1} />
+                        </div>
+                        <div className="text-gray-400 text-sm font-medium tracking-wide">Total Registered Users</div>
+                    </div>
+
+                    <div className="text-center md:text-left">
+                        <div className="text-5xl md:text-6xl font-bold text-[#00FF9D] mb-2">
+                            <CountUp end={150} prefix="$" suffix="M" decimals={0} />
+                        </div>
+                        <div className="text-gray-400 text-sm font-medium tracking-wide">Asset Locked</div>
+                    </div>
                 </div>
 
                 {/* Green Banner */}
@@ -63,7 +79,7 @@ const Company = () => {
                         <h3 className="text-xl font-bold text-white">Join 15,000+ Active FydBlock Members!</h3>
                         <p className="text-sm text-gray-300">Be part of the future of automated trading.</p>
                     </div>
-                    <button className="relative z-10 border border-white text-white px-8 py-2 rounded bg-transparent hover:bg-white hover:text-black transition-all font-medium">
+                    <button className="relative z-10 border border-white text-white px-8 py-2 rounded-xl bg-transparent hover:bg-white hover:text-black transition-all font-medium">
                         Join us
                     </button>
                 </div>
@@ -92,8 +108,8 @@ const Company = () => {
             <section className="container mx-auto px-6 mb-24">
                 <h2 className="text-4xl font-bold text-white mb-12">Our Founders</h2>
                 <div className="grid md:grid-cols-2 gap-8 max-w-4xl">
-                    <FounderCard name="David V. Jones" role="CEO & Co-Founder" />
-                    <FounderCard name="Axel Aamot" role="CTO & Co-Founder" />
+                    <FounderCard name="Shaafi M" role="CEO & Founder" />
+                    <FounderCard name="Aashath MA" role="CTO & Founder & Chief technological officer " />
                 </div>
             </section>
 
@@ -149,12 +165,24 @@ const Company = () => {
 
 /* --- Sub Components --- */
 
-const StatCard = ({ number, label }) => (
-    <div>
-        <div className="text-5xl md:text-6xl font-bold text-[#00FF9D] mb-2">{number}</div>
-        <div className="text-gray-400 text-sm font-medium tracking-wide">{label}</div>
-    </div>
-);
+const CountUp = ({ end, duration = 2000, suffix = '', prefix = '', decimals = 0 }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            setCount(progress * end);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }, [end, duration]);
+
+    return <>{prefix}{count.toFixed(decimals)}{suffix}</>;
+};
 
 const FounderCard = ({ name, role }) => (
     <div className="bg-[#0A1014] border border-white/5 rounded-2xl p-6 flex items-start gap-4 hover:border-[#00FF9D]/30 transition-all group">
