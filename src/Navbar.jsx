@@ -19,32 +19,32 @@ const Navbar = ({ currentPage, navigateTo }) => {
 
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-          <button
-            onClick={() => handleNav('home')}
+          <button 
+            onClick={() => handleNav('home')} 
             className={`hover:text-[#00FF9D] transition-colors ${currentPage === 'home' ? 'text-[#00FF9D]' : ''}`}
           >
             Home
           </button>
-          <button
-            onClick={() => handleNav('company')}
+          <button 
+            onClick={() => handleNav('company')} 
             className={`hover:text-[#00FF9D] transition-colors ${currentPage === 'company' ? 'text-[#00FF9D]' : ''}`}
           >
             Company
           </button>
-          <button
-            onClick={() => handleNav('affiliate')}
+          <button 
+            onClick={() => handleNav('affiliate')} 
             className={`hover:text-[#00FF9D] transition-colors ${currentPage === 'affiliate' ? 'text-[#00FF9D]' : ''}`}
           >
             Affiliate
           </button>
-          <button
-            onClick={() => handleNav('pricing')}
+          <button 
+            onClick={() => handleNav('pricing')} 
             className={`hover:text-[#00FF9D] transition-colors ${currentPage === 'pricing' ? 'text-[#00FF9D]' : ''}`}
           >
             Pricing
           </button>
-          <button
-            onClick={() => handleNav('contact')}
+          <button 
+            onClick={() => handleNav('contact')} 
             className={`hover:text-[#00FF9D] transition-colors ${currentPage === 'contact' ? 'text-[#00FF9D]' : ''}`}
           >
             Contact Us
@@ -53,13 +53,13 @@ const Navbar = ({ currentPage, navigateTo }) => {
 
         {/* CTA Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          <button
+          <button 
             onClick={() => handleNav('signin')}
             className="text-white hover:text-[#00FF9D] font-medium transition-colors"
           >
             Log In
           </button>
-          <button
+          <button 
             onClick={() => handleNav('signup')}
             className="bg-[#00FF9D] text-black px-6 py-2 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:scale-105 shadow-[0_0_15px_rgba(0,255,157,0.3)]"
           >
@@ -81,9 +81,9 @@ const Navbar = ({ currentPage, navigateTo }) => {
           <button onClick={() => handleNav('affiliate')} className="text-lg text-left text-gray-300 hover:text-[#00FF9D]">Affiliate</button>
           <button onClick={() => handleNav('pricing')} className="text-lg text-left text-gray-300 hover:text-[#00FF9D]">Pricing</button>
           <button onClick={() => handleNav('contact')} className="text-lg text-left text-[#00FF9D] font-bold">Contact Us</button>
-
+          
           <div className="h-px bg-white/10 my-2"></div>
-
+          
           <button onClick={() => handleNav('signin')} className="text-left text-white font-medium py-2">Log In</button>
           <button onClick={() => handleNav('signup')} className="bg-[#00FF9D] text-black py-3 rounded-lg font-bold text-center">Sign Up</button>
         </div>
