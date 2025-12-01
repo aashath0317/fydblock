@@ -153,7 +153,7 @@ const App = () => {
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00FF9D]/20 blur-[60px] rounded-full"></div>
               
               <img 
-                src="The image 1.jpg" 
+                src="/ai-network.png"
                 alt="AI Neural Network" 
                 className="w-full h-auto object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
               />
