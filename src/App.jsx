@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Menu, X, ChevronRight, ChevronDown, 
-  BarChart2, Shield, Zap, Globe, 
+import {
+  Menu, X, ChevronRight, ChevronDown,
+  BarChart2, Shield, Zap, Globe,
   Play, CheckCircle2, ArrowRight,
   Cpu, Activity, Lock, Layers, Sparkles, Loader2
 } from 'lucide-react';
@@ -9,11 +9,6 @@ import {
 /**
  * FydBlock Landing Page (App.jsx)
  * High-fidelity recreation of the provided design.
- * Features:
- * - Immersive neon background effects
- * - Gemini AI Strategy Generator
- * - Glassmorphism UI
- * - Interactive 3D World Globe
  */
 
 const App = () => {
@@ -31,32 +26,26 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-[#050B0D] text-white font-sans overflow-x-hidden selection:bg-[#00FF9D] selection:text-black relative">
-      
+
       {/* --- Global Ambient Background Effects --- */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Top Left Green Glow */}
         <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vh] bg-[#00FF9D]/10 rounded-full blur-[150px]" />
-        {/* Top Right Blue/Cyan Glow */}
         <div className="absolute top-[10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/5 rounded-full blur-[150px]" />
-        {/* Bottom Center Green Glow */}
         <div className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[40vh] bg-[#00FF9D]/5 rounded-full blur-[180px]" />
       </div>
 
       {/* --- Navigation --- */}
-      <nav 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
-          isScrolled 
-            ? 'bg-[#050B0D]/80 backdrop-blur-xl border-white/10 py-4 shadow-lg' 
-            : 'bg-transparent border-transparent py-6'
-        }`}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${isScrolled
+          ? 'bg-[#050B0D]/80 backdrop-blur-xl border-white/10 py-4 shadow-lg'
+          : 'bg-transparent border-transparent py-6'
+          }`}
       >
         <div className="container mx-auto px-6 flex items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center gap-2">
-            <img src="logo.png" alt="FydBlock Logo" className="h-8 md:h-10 object-contain" />
+            <img src="/logo.png" alt="FydBlock Logo" className="h-8 md:h-10 object-contain" />
           </div>
 
-          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
             <a href="#features" className="hover:text-[#00FF9D] transition-colors hover:shadow-[0_0_10px_rgba(0,255,157,0.3)]">Features</a>
             <a href="#ai-demo" className="hover:text-[#00FF9D] transition-colors flex items-center gap-1"><Sparkles size={14} /> AI Demo</a>
@@ -65,7 +54,6 @@ const App = () => {
             <a href="#faq" className="hover:text-[#00FF9D] transition-colors">FAQ</a>
           </div>
 
-          {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
             <button className="text-white hover:text-[#00FF9D] font-medium transition-colors">Log In</button>
             <button className="bg-[#00FF9D] text-black px-6 py-2 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(0,255,157,0.4)]">
@@ -73,8 +61,7 @@ const App = () => {
             </button>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button 
+          <button
             className="md:hidden text-white"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
@@ -82,7 +69,6 @@ const App = () => {
           </button>
         </div>
 
-        {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-[#050B0D]/95 backdrop-blur-xl border-b border-white/10 p-6 flex flex-col gap-4 shadow-2xl animate-in slide-in-from-top-5">
             <a href="#features" className="text-lg text-gray-300" onClick={() => setMobileMenuOpen(false)}>Features</a>
@@ -100,7 +86,6 @@ const App = () => {
       {/* --- Hero Section --- */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden z-10">
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
-          {/* Hero Content */}
           <div className="space-y-8 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-[0_0_15px_rgba(0,255,157,0.1)]">
               <span className="w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]"></span>
@@ -113,10 +98,10 @@ const App = () => {
               </span>
             </h1>
             <p className="text-gray-400 text-lg leading-relaxed max-w-lg">
-              Automate your trading strategies with our advanced AI algorithms. 
+              Automate your trading strategies with our advanced AI algorithms.
               Maximize profits, minimize risks, and trade 24/7 across all major exchanges without lifting a finger.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button className="bg-[#00FF9D] text-black px-8 py-4 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:shadow-[0_0_30px_rgba(0,255,157,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2">
                 Start For Free <ArrowRight size={20} />
@@ -126,7 +111,6 @@ const App = () => {
               </button>
             </div>
 
-            {/* Stats/Social Proof */}
             <div className="flex items-center gap-8 pt-8 border-t border-white/5">
               <div>
                 <p className="text-3xl font-bold text-white shadow-[#00FF9D]">10B+</p>
@@ -145,20 +129,16 @@ const App = () => {
             </div>
           </div>
 
-          {/* Hero Visual */}
           <div className="relative z-10 lg:h-[600px] flex items-center justify-center">
-            {/* Main Image Asset */}
             <div className="relative w-full max-w-[500px] animate-float">
-              {/* Glow behind image */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00FF9D]/20 blur-[60px] rounded-full"></div>
-              
-              <img 
-                src="/ai-network.png"
-                alt="AI Neural Network" 
+
+              <img
+                src="/hero.png"
+                alt="AI Neural Network"
                 className="w-full h-auto object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
               />
-              
-              {/* Floating UI Card 1 (Profit) */}
+
               <div className="absolute top-10 -left-4 md:-left-12 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float-delayed z-20">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-full bg-[#00FF9D]/10 flex items-center justify-center text-[#00FF9D]">
@@ -174,7 +154,6 @@ const App = () => {
                 </div>
               </div>
 
-              {/* Floating UI Card 2 (Bot Status) */}
               <div className="absolute bottom-10 -right-4 md:right-0 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float z-20">
                 <div className="flex items-center gap-4">
                   <div className="relative">
@@ -209,19 +188,19 @@ const App = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <StepCard 
+            <StepCard
               number="01"
               title="Sign Up"
               description="Create your free account in less than 30 seconds."
               icon={<div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-6 ring-1 ring-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]"><Lock size={24} /></div>}
             />
-            <StepCard 
+            <StepCard
               number="02"
               title="Connect Exchange"
               description="Securely connect your favorite exchanges via API keys."
               icon={<div className="w-12 h-12 rounded-xl bg-[#00FF9D]/10 text-[#00FF9D] flex items-center justify-center mb-6 ring-1 ring-[#00FF9D]/30 shadow-[0_0_15px_rgba(0,255,157,0.2)]"><Zap size={24} /></div>}
             />
-            <StepCard 
+            <StepCard
               number="03"
               title="Start Trading"
               description="Select a bot or strategy and start profiting instantly."
@@ -233,16 +212,13 @@ const App = () => {
 
       {/* --- One Platform Section --- */}
       <section className="py-24 relative overflow-hidden z-10" id="features">
-        {/* Section specific background light */}
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00A3FF]/5 blur-[120px] rounded-full -z-10"></div>
 
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
           <div className="order-2 lg:order-1 relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-[#00FF9D] to-[#00A3FF] rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-            {/* Mock Dashboard UI */}
             <div className="relative rounded-2xl bg-[#0A1014] border border-white/10 p-2 shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-tr from-[#00FF9D]/5 to-blue-500/5 rounded-2xl"></div>
-              {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-white/5">
                 <div className="flex gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -251,7 +227,6 @@ const App = () => {
                 </div>
                 <div className="text-xs text-gray-500">FydBlock Dashboard</div>
               </div>
-              {/* Content */}
               <div className="p-6 grid gap-6">
                 <div className="flex justify-between items-end">
                   <div>
@@ -260,11 +235,10 @@ const App = () => {
                   </div>
                   <div className="text-[#00FF9D] text-sm font-bold bg-[#00FF9D]/10 px-2 py-1 rounded shadow-[0_0_10px_rgba(0,255,157,0.1)]">+24.5%</div>
                 </div>
-                {/* Chart Placeholder */}
                 <div className="h-48 w-full bg-gradient-to-t from-[#00FF9D]/10 to-transparent rounded-lg border border-white/5 relative flex items-end px-2 pb-2 gap-2">
-                   {[40, 60, 45, 70, 50, 80, 65, 85, 75, 95].map((h, i) => (
-                     <div key={i} style={{height: `${h}%`}} className="flex-1 bg-[#00FF9D] opacity-60 rounded-t-sm hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(0,255,157,0.3)]"></div>
-                   ))}
+                  {[40, 60, 45, 70, 50, 80, 65, 85, 75, 95].map((h, i) => (
+                    <div key={i} style={{ height: `${h}%` }} className="flex-1 bg-[#00FF9D] opacity-60 rounded-t-sm hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(0,255,157,0.3)]"></div>
+                  ))}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/5 p-4 rounded-xl backdrop-blur-sm">
@@ -279,16 +253,16 @@ const App = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="order-1 lg:order-2">
-             <div className="inline-block px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider mb-6">
+            <div className="inline-block px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider mb-6">
               All-In-One
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">One Platform,<br/>Many Trading Tools</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">One Platform,<br />Many Trading Tools</h2>
             <p className="text-gray-400 text-lg mb-8 leading-relaxed">
               Why switch between apps? Get everything you need to trade successfully in one unified dashboard. Real-time analytics, multiple exchange support, and smart automation.
             </p>
-            
+
             <ul className="space-y-4">
               <FeatureItem text="Smart Trade Terminal for Manual Trading" />
               <FeatureItem text="DCA, Grid, and Futures Bots" />
@@ -306,28 +280,28 @@ const App = () => {
       {/* --- Bots Section --- */}
       <section className="py-24 relative z-10" id="bots">
         <div className="container mx-auto px-6">
-           <div className="text-center mb-16">
+          <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">FydBlock Bots For Everyone</h2>
             <p className="text-gray-400">Choose the perfect strategy for your risk level and goals.</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <BotCard 
+            <BotCard
               title="DCA Bot"
               desc="Dollar Cost Averaging strategy to buy low and sell high automatically over time. Best for accumulating assets."
               icon={<Layers className="text-[#00FF9D]" />}
             />
-            <BotCard 
+            <BotCard
               title="Grid Bot"
               desc="Profit from small price fluctuations in sideways markets. Buys when price drops, sells when it rises."
               icon={<div className="grid grid-cols-2 gap-1 w-5 h-5"><div className="bg-[#00FF9D] shadow-[0_0_5px_#00FF9D]"></div><div className="bg-[#00FF9D]/30"></div><div className="bg-[#00FF9D]/30"></div><div className="bg-[#00FF9D] shadow-[0_0_5px_#00FF9D]"></div></div>}
             />
-            <BotCard 
+            <BotCard
               title="Futures Bot"
               desc="Advanced bot for trading futures contracts with leverage. Includes long and short strategies."
               icon={<Activity className="text-[#00FF9D]" />}
             />
-            <BotCard 
+            <BotCard
               title="Signal Bot"
               desc="Execute trades automatically based on TradingView custom signals or technical indicators."
               icon={<Zap className="text-[#00FF9D]" />}
@@ -342,9 +316,8 @@ const App = () => {
           <h3 className="text-xl text-gray-400 font-medium">Connect All Your Exchanges In Seconds</h3>
         </div>
         <div className="overflow-hidden relative w-full mask-linear-gradient">
-           {/* Fade edges */}
-           <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#050B0D] to-transparent z-10"></div>
-           <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#050B0D] to-transparent z-10"></div>
+          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#050B0D] to-transparent z-10"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#050B0D] to-transparent z-10"></div>
 
           <div className="flex gap-16 animate-marquee whitespace-nowrap px-6 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
             {/* Mock Logos */}
@@ -353,7 +326,7 @@ const App = () => {
                 <span className="w-8 h-8 rounded bg-white/10"></span> {name}
               </span>
             ))}
-             {/* Duplicate for infinite loop illusion */}
+            {/* Duplicate for infinite loop illusion */}
             {['BINANCE', 'COINBASE', 'KRAKEN', 'KUCOIN', 'OKX', 'BYBIT', 'BITFINEX', 'HUOBI'].map((name, i) => (
               <span key={`dup-${i}`} className="text-2xl font-bold font-mono tracking-widest text-white/40 flex items-center gap-2 hover:text-[#00FF9D] hover:shadow-[0_0_10px_rgba(0,255,157,0.2)] transition-all cursor-default">
                 <span className="w-8 h-8 rounded bg-white/10"></span> {name}
@@ -372,24 +345,22 @@ const App = () => {
           </div>
 
           <div className="relative max-w-4xl mx-auto">
-            {/* Connecting Lines (Simulated with absolute divs) */}
             <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[150px] border-t-2 border-r-2 border-l-2 border-dashed border-[#00FF9D]/20 rounded-t-[50px] -z-10"></div>
-            
+
             <div className="grid md:grid-cols-3 gap-8 text-center pt-8">
-              <SecurityCard 
+              <SecurityCard
                 title="Encrypted Keys"
                 desc="API keys are encrypted and stored in secure containers using RSA 2048-bit encryption."
                 icon={<Lock size={32} />}
               />
               <div className="relative -mt-12 md:mt-0">
-                 {/* Center Node */}
-                 <div className="w-24 h-24 mx-auto bg-[#00FF9D]/10 rounded-full flex items-center justify-center border border-[#00FF9D] shadow-[0_0_40px_rgba(0,255,157,0.4)] mb-6 z-10 relative backdrop-blur-md">
-                   <Shield size={40} className="text-[#00FF9D]" />
-                 </div>
-                 <h3 className="text-xl font-bold mb-2">Bank-Grade Security</h3>
-                 <p className="text-sm text-gray-400">Regular security audits and bounty programs.</p>
+                <div className="w-24 h-24 mx-auto bg-[#00FF9D]/10 rounded-full flex items-center justify-center border border-[#00FF9D] shadow-[0_0_40px_rgba(0,255,157,0.4)] mb-6 z-10 relative backdrop-blur-md">
+                  <Shield size={40} className="text-[#00FF9D]" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Bank-Grade Security</h3>
+                <p className="text-sm text-gray-400">Regular security audits and bounty programs.</p>
               </div>
-              <SecurityCard 
+              <SecurityCard
                 title="No Withdrawal Rights"
                 desc="Our system only requests 'Trade' permission. We can never withdraw your funds."
                 icon={<CheckCircle2 size={32} />}
@@ -403,7 +374,7 @@ const App = () => {
       <section className="py-24 relative z-10" id="faq">
         <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-4">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">FydBlock <br/>Frequently Asked Questions</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">FydBlock <br />Frequently Asked Questions</h2>
             <p className="text-gray-400 mb-8">Can't find the answer you're looking for? Reach out to our customer support team.</p>
             <button className="text-[#00FF9D] font-bold flex items-center gap-2 hover:gap-4 transition-all hover:text-white">
               Contact Support <ArrowRight size={20} />
@@ -420,23 +391,21 @@ const App = () => {
 
       {/* --- World Globe & Social Proof --- */}
       <section className="py-32 relative overflow-hidden z-10 min-h-[600px] flex items-center">
-        {/* Globe Background Component */}
         <div className="absolute inset-0 z-0">
           <WorldGlobe />
-          {/* Vignette to blend edges */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,_#050B0D_90%)] pointer-events-none"></div>
         </div>
-        
+
         <div className="container mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
           <div className="max-w-xl">
             <h2 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">
-              Used by 10,000+ <br/>
+              Used by 10,000+ <br />
               Traders around the World
             </h2>
             <p className="text-gray-300 font-medium text-lg drop-shadow-md">Join a global community of smart investors trading from over 150 countries.</p>
-            
+
             <div className="flex -space-x-4 mt-8">
-              {[1,2,3,4].map(i => (
+              {[1, 2, 3, 4].map(i => (
                 <div key={i} className="w-12 h-12 rounded-full bg-[#0A1014] border-2 border-[#050B0D] flex items-center justify-center text-xs font-bold text-gray-400 hover:text-white hover:border-[#00FF9D] transition-colors cursor-default">
                   U{i}
                 </div>
@@ -466,15 +435,14 @@ const App = () => {
       <section className="py-12 px-6 relative z-10">
         <div className="container mx-auto">
           <div className="bg-gradient-to-r from-[#00FF9D]/10 to-blue-500/10 border border-[#00FF9D]/30 rounded-3xl p-12 text-center relative overflow-hidden group">
-             {/* Dynamic background effect */}
-             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#00FF9D]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-1000"></div>
-             
-             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-             <h2 className="text-3xl md:text-5xl font-bold mb-6 relative z-10 text-white">Why Aren't You Trading Yet?</h2>
-             <p className="text-gray-300 mb-8 max-w-2xl mx-auto relative z-10">Don't leave money on the table. Set up your first bot today and let the AI do the heavy lifting.</p>
-             <button className="bg-white text-black px-10 py-4 rounded-full font-bold hover:bg-[#00FF9D] transition-all hover:scale-105 hover:shadow-[0_0_25px_rgba(0,255,157,0.5)] relative z-10">
-               Create Free Account
-             </button>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#00FF9D]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-1000"></div>
+
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <h2 className="text-3xl md:text-5xl font-bold mb-6 relative z-10 text-white">Why Aren't You Trading Yet?</h2>
+            <p className="text-gray-300 mb-8 max-w-2xl mx-auto relative z-10">Don't leave money on the table. Set up your first bot today and let the AI do the heavy lifting.</p>
+            <button className="bg-white text-black px-10 py-4 rounded-full font-bold hover:bg-[#00FF9D] transition-all hover:scale-105 hover:shadow-[0_0_25px_rgba(0,255,157,0.5)] relative z-10">
+              Create Free Account
+            </button>
           </div>
         </div>
       </section>
@@ -484,18 +452,17 @@ const App = () => {
         <div className="container mx-auto px-6 grid md:grid-cols-4 gap-8 mb-12">
           <div>
             <div className="flex items-center gap-2 mb-6">
-               <img src="logo.png" alt="Logo" className="h-6" />
-               <span className="text-white font-bold text-lg">FydBlock</span>
+              <img src="/logo.png" alt="Logo" className="h-6" />
+              <span className="text-white font-bold text-lg">FydBlock</span>
             </div>
             <p className="mb-4">Automated crypto trading for everyone.</p>
             <div className="flex gap-4">
-              {/* Social Icons Placeholder */}
               <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center hover:bg-[#00FF9D] hover:text-black transition-colors cursor-pointer hover:shadow-[0_0_10px_#00FF9D]">X</div>
               <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center hover:bg-[#00FF9D] hover:text-black transition-colors cursor-pointer hover:shadow-[0_0_10px_#00FF9D]">in</div>
               <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center hover:bg-[#00FF9D] hover:text-black transition-colors cursor-pointer hover:shadow-[0_0_10px_#00FF9D]">fb</div>
             </div>
           </div>
-          
+
           <div>
             <h4 className="text-white font-bold mb-4">Platform</h4>
             <ul className="space-y-2">
@@ -504,7 +471,7 @@ const App = () => {
               <li><a href="#" className="hover:text-[#00FF9D] transition-colors">Supported Exchanges</a></li>
             </ul>
           </div>
-          
+
           <div>
             <h4 className="text-white font-bold mb-4">Company</h4>
             <ul className="space-y-2">
@@ -515,7 +482,7 @@ const App = () => {
           </div>
 
           <div>
-             <h4 className="text-white font-bold mb-4">Legal</h4>
+            <h4 className="text-white font-bold mb-4">Legal</h4>
             <ul className="space-y-2">
               <li><a href="#" className="hover:text-[#00FF9D] transition-colors">Privacy Policy</a></li>
               <li><a href="#" className="hover:text-[#00FF9D] transition-colors">Terms of Service</a></li>
@@ -558,10 +525,8 @@ const App = () => {
   );
 };
 
-/**
- * World Globe Component
- * Interactive rotating globe network visualization using HTML5 Canvas
- */
+/* --- Sub Components --- */
+
 const WorldGlobe = () => {
   const canvasRef = useRef(null);
 
@@ -576,7 +541,7 @@ const WorldGlobe = () => {
     // Configuration
     const DOT_COUNT = 300;
     const DOT_SIZE = 2;
-    
+
     // Resize handler
     const resizeCanvas = () => {
       canvas.width = canvas.offsetWidth;
@@ -590,7 +555,7 @@ const WorldGlobe = () => {
     for (let i = 0; i < DOT_COUNT; i++) {
       const phi = Math.acos(-1 + (2 * i) / DOT_COUNT);
       const theta = Math.sqrt(DOT_COUNT * Math.PI) * phi;
-      
+
       points.push({
         x: Math.cos(theta) * Math.sin(phi),
         y: Math.sin(theta) * Math.sin(phi),
@@ -602,7 +567,7 @@ const WorldGlobe = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
-      
+
       // Dynamic Radius: 35% of the smallest screen dimension to ensure it fits
       const globeRadius = Math.min(canvas.width, canvas.height) * 0.35;
       const connectionDist = globeRadius * 0.25; // Dynamic connection distance
@@ -620,7 +585,7 @@ const WorldGlobe = () => {
         const x = pX * Math.cos(rotation) - pZ * Math.sin(rotation);
         const z = pX * Math.sin(rotation) + pZ * Math.cos(rotation);
         const y = pY;
-        
+
         // Perspective scale
         const scale = 800 / (800 - z);
         const alpha = (z + globeRadius) / (2 * globeRadius); // Fade back points
@@ -637,23 +602,23 @@ const WorldGlobe = () => {
       ctx.strokeStyle = '#00FF9D';
       projectedPoints.forEach((p1, i) => {
         if (p1.z < -100) return; // Don't draw connections on back side too much
-        
+
         // Find close points to connect
         for (let j = i + 1; j < projectedPoints.length; j++) {
-           const p2 = projectedPoints[j];
-           if (p2.z < -100) continue;
+          const p2 = projectedPoints[j];
+          if (p2.z < -100) continue;
 
-           const dx = p1.x - p2.x;
-           const dy = p1.y - p2.y;
-           const dist = Math.sqrt(dx*dx + dy*dy);
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
 
-           if (dist < connectionDist) {
-             ctx.beginPath();
-             ctx.moveTo(p1.x, p1.y);
-             ctx.lineTo(p2.x, p2.y);
-             ctx.globalAlpha = (1 - dist / connectionDist) * 0.3 * p1.alpha;
-             ctx.stroke();
-           }
+          if (dist < connectionDist) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.globalAlpha = (1 - dist / connectionDist) * 0.3 * p1.alpha;
+            ctx.stroke();
+          }
         }
       });
 
@@ -664,13 +629,13 @@ const WorldGlobe = () => {
         ctx.fillStyle = '#00FF9D';
         ctx.globalAlpha = p.alpha;
         ctx.fill();
-        
+
         // Add glow to front points
         if (p.z > 100) {
-           ctx.shadowBlur = 10;
-           ctx.shadowColor = '#00FF9D';
-           ctx.fill();
-           ctx.shadowBlur = 0;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#00FF9D';
+          ctx.fill();
+          ctx.shadowBlur = 0;
         }
       });
 
@@ -688,10 +653,6 @@ const WorldGlobe = () => {
   return <canvas ref={canvasRef} className="w-full h-full opacity-60" />;
 };
 
-/**
- * Gemini Strategy Section Component
- * Allows user to generate AI trading strategies
- */
 const GeminiStrategySection = () => {
   const [asset, setAsset] = useState('BTC');
   const [risk, setRisk] = useState('Moderate');
@@ -705,7 +666,17 @@ const GeminiStrategySection = () => {
     setError('');
     setOutput('');
 
-    const apiKey = ""; // Handled by runtime
+    // Use empty string to avoid import.meta issues in some environments.
+    // User can uncomment the line below to use .env key locally.
+    // const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const apiKey = VITE_GEMINI_API_KEY;
+
+    if (!apiKey) {
+      setError("API Key missing. Please check your .env file or add key in App.jsx");
+      setLoading(false);
+      return;
+    }
+
     const prompt = `Act as an expert crypto trading bot architect using FydBlock. The user wants to trade ${asset} with ${risk} risk. Suggest a specific trading strategy configuration (e.g., DCA step scale, take profit percentage, safety order volume, grid lines) for a bot. Keep it concise, professional, and actionable (under 100 words). Use bullet points for key parameters.`;
 
     try {
@@ -746,64 +717,64 @@ const GeminiStrategySection = () => {
 
   return (
     <section className="py-24 relative overflow-hidden z-10" id="ai-demo">
-       {/* Background Decor */}
-       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+      {/* Background Decor */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-wider mb-4 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
-             <Sparkles size={12} className="text-purple-400" />
-             Gemini AI Integration
+            <Sparkles size={12} className="text-purple-400" />
+            Gemini AI Integration
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">Architect Your Strategy <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-[#00FF9D]">Powered by Gemini</span></h2>
+          <h2 className="text-3xl md:text-5xl font-bold mb-4">Architect Your Strategy <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-[#00FF9D]">Powered by Gemini</span></h2>
           <p className="text-gray-400 max-w-xl mx-auto">
             Not sure where to start? Tell our AI what you want to trade and your risk tolerance, and it will build a custom bot configuration for you instantly.
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto bg-[#050B0D]/80 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl relative group">
-          <div className="absolute -inset-[1px] bg-gradient-to-r from-purple-500/20 to-[#00FF9D]/20 rounded-2xl z-[-1] opacity-50 group-hover:opacity-100 transition duration-500"></div>
-          
+        <div className="max-w-4xl mx-auto relative group">
+          {/* Removed background, border, and glow effect div */}
+
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-             <div>
-               <label className="block text-xs text-gray-500 uppercase font-bold mb-2">Asset to Trade</label>
-               <input 
-                 type="text" 
-                 value={asset}
-                 onChange={(e) => setAsset(e.target.value.toUpperCase())}
-                 className="w-full bg-[#0A1014] border border-white/10 rounded-lg p-3 text-white focus:border-[#00FF9D] focus:outline-none transition-colors font-mono focus:shadow-[0_0_10px_rgba(0,255,157,0.1)]"
-                 placeholder="e.g. BTC"
-               />
-             </div>
-             <div>
-               <label className="block text-xs text-gray-500 uppercase font-bold mb-2">Risk Level</label>
-               <select 
-                 value={risk}
-                 onChange={(e) => setRisk(e.target.value)}
-                 className="w-full bg-[#0A1014] border border-white/10 rounded-lg p-3 text-white focus:border-[#00FF9D] focus:outline-none transition-colors appearance-none cursor-pointer focus:shadow-[0_0_10px_rgba(0,255,157,0.1)]"
-               >
-                 <option value="Conservative">Conservative (Low Risk)</option>
-                 <option value="Moderate">Moderate (Balanced)</option>
-                 <option value="Aggressive">Aggressive (High Yield)</option>
-               </select>
-             </div>
-             <div className="flex items-end">
-               <button 
-                 onClick={generateStrategy}
-                 disabled={loading || !asset}
-                 className="w-full bg-[#00FF9D] hover:bg-[#00cc7d] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(0,255,157,0.3)]"
-               >
-                 {loading ? <Loader2 size={20} className="animate-spin" /> : <><Sparkles size={18} /> Generate Strategy ✨</>}
-               </button>
-             </div>
+            <div>
+              <label className="block text-xs text-gray-500 uppercase font-bold mb-2">Asset to Trade</label>
+              <input
+                type="text"
+                value={asset}
+                onChange={(e) => setAsset(e.target.value.toUpperCase())}
+                className="w-full bg-[#0A1014] border border-white/10 rounded-lg p-3 text-white focus:border-[#00FF9D] focus:outline-none transition-colors font-mono focus:shadow-[0_0_10px_rgba(0,255,157,0.1)]"
+                placeholder="e.g. BTC"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 uppercase font-bold mb-2">Risk Level</label>
+              <select
+                value={risk}
+                onChange={(e) => setRisk(e.target.value)}
+                className="w-full bg-[#0A1014] border border-white/10 rounded-lg p-3 text-white focus:border-[#00FF9D] focus:outline-none transition-colors appearance-none cursor-pointer focus:shadow-[0_0_10px_rgba(0,255,157,0.1)]"
+              >
+                <option value="Conservative">Conservative (Low Risk)</option>
+                <option value="Moderate">Moderate (Balanced)</option>
+                <option value="Aggressive">Aggressive (High Yield)</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={generateStrategy}
+                disabled={loading || !asset}
+                className="w-full bg-[#00FF9D] hover:bg-[#00cc7d] disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(0,255,157,0.3)]"
+              >
+                {loading ? <Loader2 size={20} className="animate-spin" /> : <><Sparkles size={18} /> Generate Strategy ✨</>}
+              </button>
+            </div>
           </div>
 
-          <div className="bg-[#0A1014] border border-white/5 rounded-xl p-6 min-h-[160px] relative shadow-inner">
+          <div className="p-6 min-h-[160px] relative">
             <h3 className="text-xs text-gray-500 uppercase font-bold mb-3 flex items-center gap-2">
               AI Output Console
               <div className="h-px bg-white/10 flex-grow"></div>
             </h3>
-            
+
             {loading ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
                 <Loader2 size={32} className="animate-spin text-[#00FF9D] mb-2" />
@@ -827,8 +798,6 @@ const GeminiStrategySection = () => {
     </section>
   );
 }
-
-/* --- Sub Components --- */
 
 const FeatureItem = ({ text }) => (
   <li className="flex items-center gap-3">
@@ -858,8 +827,8 @@ const BotCard = ({ title, desc, icon }) => (
     </div>
     <div>
       <div className="flex justify-between items-start">
-         <h3 className="font-bold text-lg mb-1 group-hover:text-[#00FF9D] transition-colors">{title}</h3>
-         <div className="w-2 h-2 rounded-full bg-[#00FF9D] mt-2 shadow-[0_0_5px_#00FF9D] opacity-50 group-hover:opacity-100"></div>
+        <h3 className="font-bold text-lg mb-1 group-hover:text-[#00FF9D] transition-colors">{title}</h3>
+        <div className="w-2 h-2 rounded-full bg-[#00FF9D] mt-2 shadow-[0_0_5px_#00FF9D] opacity-50 group-hover:opacity-100"></div>
       </div>
       <p className="text-sm text-gray-400 leading-relaxed">{desc}</p>
     </div>
@@ -880,7 +849,7 @@ const AccordionItem = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="border-b border-white/5">
-      <button 
+      <button
         className="w-full py-6 flex items-center justify-between text-left hover:text-[#00FF9D] transition-colors group"
         onClick={() => setIsOpen(!isOpen)}
       >
