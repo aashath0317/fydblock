@@ -1,15 +1,49 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Check, Wallet } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from './config'; // Import API URL
 
-const SignUp = ({ navigateTo }) => {
+const SignUp = () => {
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
-    const [activeTab, setActiveTab] = useState('signup'); // Default to signup
+    const [activeTab, setActiveTab] = useState('signup');
 
-    // Handler for tab switching
+    // --- Form State ---
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    // Handle Tab Switching
     const handleTabClick = (tab) => {
         setActiveTab(tab);
         if (tab === 'login') {
-            navigateTo('signin'); // Switch to the SignIn page component
+            navigate('/signin');
+        }
+    };
+
+    // --- Handle Sign Up Submission ---
+    const handleSignUp = async (e) => {
+        e.preventDefault();
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Ideally, auto-login the user here by getting a token
+                // For now, we redirect them to the Bot Builder as requested
+                alert('Account created! Proceeding to Bot Setup...');
+                navigate('/bot-builder');
+            } else {
+                alert(data.message || 'Registration failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Server error. Is the backend running?');
         }
     };
 
@@ -30,7 +64,7 @@ const SignUp = ({ navigateTo }) => {
                     <img src="/logo.png" alt="FydBlock" className="h-8 mb-8" />
 
                     <button
-                        onClick={() => navigateTo('home')}
+                        onClick={() => navigate('/')}
                         className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                     >
                         <ArrowLeft size={20} />
@@ -66,11 +100,14 @@ const SignUp = ({ navigateTo }) => {
                         </div>
 
                         {/* Form */}
-                        <form className="space-y-6">
+                        <form onSubmit={handleSignUp} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-300">Email Address</label>
                                 <input
                                     type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Enter your email address..."
                                     className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] placeholder:text-gray-500 transition-all"
                                 />
@@ -81,6 +118,9 @@ const SignUp = ({ navigateTo }) => {
                                 <div className="relative">
                                     <input
                                         type={showPassword ? "text" : "password"}
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Enter your password..."
                                         className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] placeholder:text-gray-500 transition-all pr-12"
                                     />
@@ -94,7 +134,7 @@ const SignUp = ({ navigateTo }) => {
                                 </div>
                             </div>
 
-                            {/* Password Requirements Checklist */}
+                            {/* Checklist */}
                             <div className="grid grid-cols-2 gap-y-2 gap-x-4">
                                 {[
                                     "8 characters", "1 lowercase letter", "1 special character",
@@ -109,7 +149,7 @@ const SignUp = ({ navigateTo }) => {
                                 ))}
                             </div>
 
-                            {/* Terms Checkbox */}
+                            {/* Terms */}
                             <div className="flex items-center gap-2 pt-2">
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className="w-5 h-5 rounded border border-gray-500 flex items-center justify-center bg-white group-hover:border-[#00FF9D] transition-colors shrink-0">
@@ -122,13 +162,12 @@ const SignUp = ({ navigateTo }) => {
                                 </label>
                             </div>
 
-                            {/* Submit Button */}
                             <button className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-blue-500/20">
                                 Create an Account
                             </button>
                         </form>
 
-                        {/* Social Divider */}
+                        {/* Social Logic */}
                         <div className="relative my-8 text-center">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-white/10"></div>
@@ -136,7 +175,6 @@ const SignUp = ({ navigateTo }) => {
                             <span className="relative bg-[#050B0D] px-4 text-sm text-gray-400">OR</span>
                         </div>
 
-                        {/* Social Buttons */}
                         <div className="space-y-4">
                             <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all">
                                 <GoogleIcon />
@@ -150,18 +188,16 @@ const SignUp = ({ navigateTo }) => {
 
                     </div>
 
-                    {/* --- Right Column: Illustration Card --- */}
+                    {/* Right Column */}
                     <div className="hidden lg:block relative h-[600px] w-full bg-[#0B2323] rounded-3xl overflow-hidden border border-white/5">
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="relative w-[80%] h-[80%]">
-                                {/* Decorative Elements */}
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-white/5 rounded-full blur-3xl"></div>
-
-                                {/* Placeholder for the illustration in the image */}
                                 <img
                                     src="/Group.png"
                                     className="w-full h-full object-contain drop-shadow-2xl opacity-80 mix-blend-lighten"
                                     alt="Sign Up Illustration"
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                 />
                             </div>
                         </div>
@@ -172,8 +208,6 @@ const SignUp = ({ navigateTo }) => {
         </div>
     );
 };
-
-// --- Icons ---
 
 const GoogleIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
