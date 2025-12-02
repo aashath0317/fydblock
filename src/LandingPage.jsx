@@ -105,6 +105,50 @@ const AccordionItem = ({ question, answer }) => {
   );
 };
 
+const AnimatedProfitCard = () => {
+  const [progress, setProgress] = useState(0);
+  const duration = 5000; // 5 seconds (Slow)
+  const targetProfit = 12450;
+  const targetWidth = 75; // Stops at 75% width
+
+  useEffect(() => {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const p = Math.min((timestamp - startTimestamp) / duration, 1);
+      setProgress(p);
+      if (p < 1) {
+        window.requestAnimationFrame(step);
+      }
+    };
+    window.requestAnimationFrame(step);
+  }, []);
+
+  return (
+    <div className="absolute top-10 -left-4 md:-left-12 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float-delayed z-20">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-8 h-8 rounded-full bg-[#00FF9D]/10 flex items-center justify-center text-[#00FF9D]">
+          <Activity size={16} />
+        </div>
+        <div>
+          <p className="text-xs text-gray-400">Total Profit</p>
+          <p className="text-sm font-bold text-white">
+            {/* The number grows based on progress */}
+            ${(targetProfit * progress).toFixed(2)}
+          </p>
+        </div>
+      </div>
+
+      {/* The Bar grows based on the SAME progress */}
+      <div className="h-1 w-32 bg-gray-800 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-[#00FF9D] shadow-[0_0_10px_#00FF9D]"
+          style={{ width: `${targetWidth * progress}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
 /* =========================================
    MAIN COMPONENT
    ========================================= */
@@ -144,26 +188,32 @@ const LandingPage = ({ navigateTo }) => {
             </div>
 
             {/* --- UPDATED: ANIMATED STATS SECTION --- */}
-            <div className="flex items-center gap-8 pt-8 border-t border-white/5">
-              <div>
-                <p className="text-3xl font-bold text-white shadow-[#00FF9D]">
-                  <CountUp end={10} suffix="B+" duration={2000} />
-                </p>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Volume Traded</p>
-              </div>
-              <div className="w-px h-10 bg-white/10"></div>
-              <div>
-                <p className="text-3xl font-bold text-white">
-                  <CountUp end={24} suffix="/7" duration={2000} />
-                </p>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Uptime</p>
-              </div>
-              <div className="w-px h-10 bg-white/10"></div>
-              <div>
-                <p className="text-3xl font-bold text-white">
-                  <CountUp end={15} suffix="+" duration={2000} />
-                </p>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Exchanges</p>
+            <div style={{ fontFamily: "'Poppins', sans-serif" }}>
+              {/* 1. Load the Font from Google */}
+              <style>
+                {`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');`}
+              </style>
+              <div className="flex items-center gap-8 pt-8 border-t border-white/5">
+                <div>
+                  <p className="text-3xl font-bold text-white shadow-[#00FF9D]">
+                    <CountUp end={10} suffix="B+" duration={2000} />
+                  </p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Volume Traded</p>
+                </div>
+                <div className="w-px h-10 bg-white/10"></div>
+                <div>
+                  <p className="text-3xl font-bold text-white">
+                    <CountUp end={24} suffix="/7" duration={2000} />
+                  </p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Uptime</p>
+                </div>
+                <div className="w-px h-10 bg-white/10"></div>
+                <div>
+                  <p className="text-3xl font-bold text-white">
+                    <CountUp end={15} suffix="+" duration={2000} />
+                  </p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Exchanges</p>
+                </div>
               </div>
             </div>
           </div>
@@ -181,23 +231,7 @@ const LandingPage = ({ navigateTo }) => {
               />
 
               {/* Floating Cards */}
-              <div className="absolute top-10 -left-4 md:-left-12 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float-delayed z-20">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-full bg-[#00FF9D]/10 flex items-center justify-center text-[#00FF9D]">
-                    <Activity size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400">Total Profit</p>
-                    <p className="text-sm font-bold text-white">
-                      $<CountUp end={12450} suffix=".00" decimals={2} />
-                    </p>
-                  </div>
-                </div>
-                <div className="h-1 w-32 bg-gray-800 rounded-full overflow-hidden">
-                  <div className="h-full w-[70%] bg-[#00FF9D] shadow-[0_0_10px_#00FF9D]"></div>
-                </div>
-              </div>
-
+              <AnimatedProfitCard />
               <div className="absolute bottom-10 -right-4 md:right-0 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float z-20">
                 <div className="flex items-center gap-4">
                   <div className="relative">
@@ -276,10 +310,55 @@ const LandingPage = ({ navigateTo }) => {
                   </div>
                   <div className="text-[#00FF9D] text-sm font-bold bg-[#00FF9D]/10 px-2 py-1 rounded shadow-[0_0_10px_rgba(0,255,157,0.1)]">+24.5%</div>
                 </div>
-                <div className="h-48 w-full bg-gradient-to-t from-[#00FF9D]/10 to-transparent rounded-lg border border-white/5 relative flex items-end px-2 pb-2 gap-2">
-                  {[40, 60, 45, 70, 50, 80, 65, 85, 75, 95].map((h, i) => (
-                    <div key={i} style={{ height: `${h}%` }} className="flex-1 bg-[#00FF9D] opacity-60 rounded-t-sm hover:opacity-100 transition-opacity shadow-[0_0_10px_rgba(0,255,157,0.3)]"></div>
-                  ))}
+                {/* --- NEW LINE CHART SVG --- */}
+                <div className="h-48 w-full bg-[#0A1014] rounded-lg border border-white/5 relative overflow-hidden group-hover:border-[#00FF9D]/30 transition-colors">
+
+                  {/* Grid Lines (Optional background decoration) */}
+                  <div className="absolute inset-0 grid grid-cols-4 grid-rows-4">
+                    <div className="border-r border-white/5"></div>
+                    <div className="border-r border-white/5"></div>
+                    <div className="border-r border-white/5"></div>
+                    <div className="border-r border-white/5"></div>
+                  </div>
+                  <div className="absolute inset-0 grid grid-rows-4">
+                    <div className="border-b border-white/5"></div>
+                    <div className="border-b border-white/5"></div>
+                    <div className="border-b border-white/5"></div>
+                  </div>
+
+                  {/* The Chart */}
+                  <svg
+                    viewBox="0 0 400 200"
+                    className="w-full h-full absolute bottom-0 left-0"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="#00FF9D" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#00FF9D" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* The Area Fill (Under the line) */}
+                    <path
+                      d="M0,200 L0,150 L40,130 L80,160 L120,100 L160,120 L200,80 L240,90 L280,50 L320,70 L360,30 L400,10 L400,200 Z"
+                      fill="url(#chartGradient)"
+                    />
+
+                    {/* The Stroke Line (The actual graph) */}
+                    <path
+                      d="M0,150 L40,130 L80,160 L120,100 L160,120 L200,80 L240,90 L280,50 L320,70 L360,30 L400,10"
+                      fill="none"
+                      stroke="#00FF9D"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="drop-shadow-[0_0_10px_rgba(0,255,157,0.5)]"
+                    />
+
+                    {/* Animated Dot at the end */}
+                    <circle cx="400" cy="10" r="4" fill="#00FF9D" className="animate-pulse shadow-[0_0_10px_#00FF9D]" />
+                  </svg>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/5 p-4 rounded-xl backdrop-blur-sm">
@@ -390,7 +469,7 @@ const LandingPage = ({ navigateTo }) => {
           </div>
 
           <div className="relative max-w-4xl mx-auto">
-            <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[150px] border-t-2 border-r-2 border-l-2 border-dashed border-[#00FF9D]/20 rounded-t-[50px] -z-10"></div>
+            <div className="hidden md:block absolute top-20 left-1/2 -translate-x-1/2 w-[80%] h-[150px] border-t-2 border-r-2 border-l-2 border-dashed border-[#00FF9D]/20 rounded-t-[50px] -z-10"></div> {/* Line Across the shield */}
 
             <div className="grid md:grid-cols-3 gap-8 text-center pt-8">
               <SecurityCard
@@ -456,17 +535,6 @@ const LandingPage = ({ navigateTo }) => {
             >
               Join Now
             </button>
-
-            <div className="flex -space-x-4 mt-8">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="w-12 h-12 rounded-full bg-[#0A1014] border-2 border-[#050B0D] flex items-center justify-center text-xs font-bold text-gray-400 hover:text-white hover:border-[#00FF9D] transition-colors cursor-default">
-                  U{i}
-                </div>
-              ))}
-              <div className="w-12 h-12 rounded-full bg-[#00FF9D] border-2 border-[#050B0D] flex items-center justify-center text-black font-bold text-xs shadow-[0_0_15px_rgba(0,255,157,0.4)]">
-                +10k
-              </div>
-            </div>
           </div>
 
           <div className="bg-[#0A1014]/80 backdrop-blur-md p-6 rounded-2xl border border-white/10 max-w-sm shadow-2xl relative">
@@ -487,9 +555,8 @@ const LandingPage = ({ navigateTo }) => {
       {/* Footer CTA */}
       <section className="py-24 px-6 relative z-10">
         <div className="container mx-auto">
-          <div className="bg-gradient-to-r from-[#00FF9D]/10 to-blue-500/10 border border-[#00FF9D]/30 rounded-3xl p-12 text-center relative overflow-hidden group">
+          <div className="bg-gradient-to-r from-[#00FF9D]/10 to-blue-500/10 border border-[#00FF9D]/30 rounded-3xl p-24 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#00FF9D]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-1000"></div>
-
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
             <h2 className="text-3xl md:text-5xl font-bold mb-6 relative z-10 text-white">Why Aren't You Trading Yet?</h2>
             <p className="text-gray-300 mb-8 max-w-2xl mx-auto relative z-10">Don't leave money on the table. Set up your first bot today and let the AI do the heavy lifting.</p>
