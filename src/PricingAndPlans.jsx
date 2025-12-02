@@ -232,4 +232,5 @@ const Accordion = ({ title, content, isOpen: defaultOpen = false }) => {
     );
 };
 
+
 export default PricingAndPlans;
