@@ -6,7 +6,7 @@ import {
 
 const Affiliate = () => {
     // Simple state for the "calculator" slider visual
-    const [clients, setClients] = useState(10);
+    const [clients, setClients] = useState(100);
     const earnings = (clients * 125).toLocaleString(); // Mock calculation: $125 per client
 
     return (
@@ -18,7 +18,7 @@ const Affiliate = () => {
 
                     {/* Left Text */}
                     <div className="space-y-8">
-                        <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+                        <h1 className="text-4xl md:text-5xl font-medium text-white leading-tight">
                             Earn Up To 30% For <br />
                             Every Payment <br />
                             Your Referred <br />
@@ -49,8 +49,8 @@ const Affiliate = () => {
                             {/* Slider Input */}
                             <input
                                 type="range"
-                                min="1"
-                                max="100"
+                                min="10"
+                                max="1000"
                                 value={clients}
                                 onChange={(e) => setClients(parseInt(e.target.value))}
                                 className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#00FF9D] mb-12 hover:accent-[#00cc7d]"
@@ -66,11 +66,31 @@ const Affiliate = () => {
                 </div>
 
                 {/* Partners Logos (Mock) */}
-                <div className="mt-24 pt-12 border-t border-white/5 flex flex-wrap justify-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                    {['NEXO', 'COINBASE', 'CRYPTO.COM', 'BINANCE', 'COINMARKETCAP'].map((brand, i) => (
-                        <span key={i} className="text-xl font-bold text-gray-500 flex items-center gap-2">
-                            <div className="w-6 h-6 bg-gray-600 rounded-full"></div> {brand}
-                        </span>
+                <div className="mt-24 pt-12 border-t border-white/5 flex flex-wrap justify-center gap-12 grayscale hover:grayscale-0 transition-all duration-500">
+                    {[
+                        { name: 'KRAKEN', file: 'KRAKEN.png' },
+                        { name: 'BINANCE', file: 'BINANCE.png' },
+                        { name: 'COINBASE', file: 'COINBASE.png' },
+                        { name: 'BYBIT', file: 'BYBIT.png' },
+                        { name: 'OKX', file: 'OKX.jpg' }
+                    ].map((brand, i) => (
+                        <div key={i} className="flex items-center gap-3 group select-none">
+                            <img
+                                src={`/logos/${brand.file}`}
+                                alt={brand.name}
+                                className="w-8 h-8 object-contain group-hover:scale-110 transition-transform duration-300"
+                                onError={(e) => {
+                                    e.target.style.display = 'none'; // Hide image if broken
+                                    e.target.nextSibling.style.display = 'block'; // Show backup circle
+                                }}
+                            />
+                            {/* Backup circle in case image fails to load */}
+                            <div className="w-8 h-8 bg-gray-600 rounded-full hidden"></div>
+
+                            <span className="text-xl font-bold text-gray-500 group-hover:text-white transition-colors">
+                                {brand.name}
+                            </span>
+                        </div>
                     ))}
                 </div>
             </section>
