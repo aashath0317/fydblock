@@ -1,16 +1,16 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // Import Link
 import { Twitter, Linkedin, Facebook } from 'lucide-react';
 
-const Footer = ({ navigateTo }) => {
+const Footer = () => {
     return (
         <footer className="py-12 border-t border-white/5 bg-[#030607]/80 backdrop-blur-sm text-sm text-gray-400 relative z-10">
             <div className="container mx-auto px-6 grid md:grid-cols-4 gap-8 mb-12">
-
                 {/* Brand Column */}
                 <div>
-                    <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => navigateTo('home')}>
+                    <Link to="/" className="flex items-center gap-2 mb-6 cursor-pointer">
                         <img src="/logo.png" alt="Logo" className="h-12" />
-                    </div>
+                    </Link>
                     <p>Automated crypto trading for everyone.</p>
                     <p>Reg.nr. 57541</p>
                     <p>License nr. 59990</p>
@@ -25,41 +25,21 @@ const Footer = ({ navigateTo }) => {
                 {/* Platform Links - Connected to Landing Page Sections */}
                 <div>
                     <h4 className="text-white font-bold mb-4">Platform</h4>
-                    <ul className="space-y-2">
-                        <li>
-                            <button onClick={() => navigateTo('home', 'features')} className="hover:text-[#00FF9D] transition-colors text-left">
-                                Features
-                            </button>
-                        </li>
-                        <li>
-                            <button onClick={() => navigateTo('home', 'bots')} className="hover:text-[#00FF9D] transition-colors text-left">
-                                Trading Bots
-                            </button>
-                        </li>
-                        <li>
-                            <button onClick={() => navigateTo('home', 'ai-demo')} className="hover:text-[#00FF9D] transition-colors text-left">
-                                AI Strategy
-                            </button>
-                        </li>
-                        <li>
-                            <button onClick={() => navigateTo('home', 'faq')} className="hover:text-[#00FF9D] transition-colors text-left">
-                                FAQ
-                            </button>
-                        </li>
+                    <ul className="space-y-2 flex flex-col">
+                        <Link to="/" className="hover:text-[#00FF9D] transition-colors text-left">Features</Link>
+                        <Link to="/" className="hover:text-[#00FF9D] transition-colors text-left">Trading Bots</Link>
+                        <Link to="/" className="hover:text-[#00FF9D] transition-colors text-left">AI Strategy</Link>
+                        <Link to="/#faq" className="hover:text-[#00FF9D] transition-colors text-left">FAQ</Link>
                     </ul>
                 </div>
 
                 {/* Company Links */}
                 <div>
                     <h4 className="text-white font-bold mb-4">Company</h4>
-                    <ul className="space-y-2">
-                        <li><button onClick={() => navigateTo('home')} className="hover:text-[#00FF9D] transition-colors text-left">About Us</button></li>
-                        <li><button onClick={() => navigateTo('home')} className="hover:text-[#00FF9D] transition-colors text-left">Careers</button></li>
-                        <li>
-                            <button onClick={() => navigateTo('contact')} className="hover:text-[#00FF9D] transition-colors text-left">
-                                Contact Us
-                            </button>
-                        </li>
+                    <ul className="space-y-2 flex flex-col">
+                        <Link to="/company" className="hover:text-[#00FF9D] transition-colors text-left">About Us</Link>
+                        <Link to="/company" className="hover:text-[#00FF9D] transition-colors text-left">Careers</Link>
+                        <Link to="/contact" className="hover:text-[#00FF9D] transition-colors text-left">Contact Us</Link>
                     </ul>
                 </div>
 
@@ -75,10 +55,10 @@ const Footer = ({ navigateTo }) => {
 
             {/* Copyright */}
             <div className="container mx-auto px-6 text-center pt-8 border-t border-white/5">
-                <p>&copy; 2025 FydBlock. All rights reserved.</p>
+                <p>&copy; 2025 Fydblock Pvt Ltd. All rights reserved.</p>
 
             </div>
-        </footer>
+        </footer >
     );
 };
 
