@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const ResetPass = ({ navigateTo }) => {
+const ResetPass = () => {
+    const navigate = useNavigate();
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [email, setEmail] = useState('');
 
@@ -29,7 +31,7 @@ const ResetPass = ({ navigateTo }) => {
                     <img src="/logo.png" alt="FydBlock" className="h-8 mb-8" />
 
                     <button
-                        onClick={() => navigateTo('signin')}
+                        onClick={() => navigate('/signin')}
                         className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                     >
                         <ArrowLeft size={20} />
