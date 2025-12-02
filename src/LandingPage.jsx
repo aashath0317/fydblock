@@ -538,16 +538,35 @@ const LandingPage = ({ navigateTo }) => {
           </div>
 
           <div className="bg-[#0A1014]/80 backdrop-blur-md p-6 rounded-2xl border border-white/10 max-w-sm shadow-2xl relative">
+            {/* Ping Animation Dot */}
             <div className="absolute -top-2 -right-2 w-4 h-4 bg-[#00FF9D] rounded-full shadow-[0_0_10px_#00FF9D] animate-ping"></div>
+
             <div className="flex gap-4 items-center mb-4">
-              <div className="w-12 h-12 bg-gray-600 rounded-full"></div>
+              {/* --- IMAGE ADDED HERE --- */}
+              <img
+                src="./profile1.png"   /* <--- Make sure to put your image file here */
+                alt="Alex M."
+                className="w-12 h-12 rounded-full object-cover border border-white/20"
+                /* This keeps the gray circle if the image fails to load */
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              {/* Backup Gray Circle */}
+              <div className="w-12 h-12 bg-gray-600 rounded-full hidden"></div>
+              {/* ------------------------ */}
+
               <div>
-                <p className="font-bold">Alex M.</p>
+                <p className="font-bold text-white">Alex M.</p>
                 <p className="text-xs text-gray-400">Pro Trader, UK</p>
               </div>
               <div className="ml-auto text-[#00FF9D] drop-shadow-[0_0_5px_rgba(0,255,157,0.5)]">★★★★★</div>
             </div>
-            <p className="text-gray-300 italic">"I've tried 3Commas and Cryptohopper, but FydBlock's interface is by far the most intuitive. My DCA bots have been running for 3 months with consistent profits."</p>
+
+            <p className="text-gray-300 italic text-sm leading-relaxed">
+              "I've tried 3Commas and Cryptohopper, but FydBlock's interface is by far the most intuitive. My DCA bots have been running for 3 months with consistent profits."
+            </p>
           </div>
         </div>
       </section>
