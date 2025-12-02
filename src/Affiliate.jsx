@@ -4,8 +4,19 @@ import {
     Minus,
     Plus,
     Menu,
-    X
+    X,
+    ChevronDown
 } from 'lucide-react';
+
+const EXCHANGES = [
+    { name: 'BINANCE', logo: 'BINANCE.png' },
+    { name: 'COINBASE', logo: 'COINBASE.png' },
+    { name: 'KRAKEN', logo: 'KRAKEN.png' },
+    { name: 'BYBIT', logo: 'BYBIT.png' },
+    { name: 'OKX', logo: 'OKX.jpg' },
+];
+
+const MARQUEE_LOGOS = [...EXCHANGES, ...EXCHANGES, ...EXCHANGES, ...EXCHANGES];
 
 const Affiliate = () => {
     // State for the calculator
@@ -148,39 +159,33 @@ const Affiliate = () => {
                 </div>
             </section>
 
-            {/* --- Partners Logos --- */}
-            <section className="container mx-auto px-6 mb-32">
-                {/* Partners Logos (Mock) */}
-                <div className="mt-24 pt-12 border-t border-white/5 flex flex-wrap justify-center gap-12 grayscale hover:grayscale-0 transition-all duration-500">
-                    {[
-                        { name: 'KRAKEN', file: 'KRAKEN.png' },
-                        { name: 'BINANCE', file: 'BINANCE.png' },
-                        { name: 'COINBASE', file: 'COINBASE.png' },
-                        { name: 'BYBIT', file: 'BYBIT.png' },
-                        { name: 'OKX', file: 'OKX.jpg' }
-                    ].map((brand, i) => (
-                        <div key={i} className="flex items-center gap-3 group select-none">
+            <div className="overflow-hidden relative w-full mask-linear-gradient">
+                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#050B0D] to-transparent z-10"></div>
+                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#050B0D] to-transparent z-10"></div>
+
+                <div className="flex gap-16 animate-marquee whitespace-nowrap px-6 transition-all duration-500 w-max">
+                    {MARQUEE_LOGOS.map((ex, i) => (
+                        <span key={i} className="text-2xl font-bold font-mono tracking-widest text-white/40 flex items-center gap-4 hover:text-[#00FF9D] hover:shadow-[0_0_10px_rgba(0,255,157,0.2)] transition-all cursor-default group">
                             <img
-                                src={`/logos/${brand.file}`}
-                                alt={brand.name}
-                                className="w-8 h-8 object-contain group-hover:scale-110 transition-transform duration-300"
+                                src={`/logos/${ex.logo}`}
+                                alt={ex.name}
+                                className="w-14 h-14 object-contain transition-opacity"
                                 onError={(e) => {
-                                    e.target.style.display = 'none'; // Hide image if broken
-                                    e.target.nextSibling.style.display = 'block'; // Show backup circle
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'block';
                                 }}
                             />
-                            {/* Backup circle in case image fails to load */}
-                            <div className="w-8 h-8 bg-gray-600 rounded-full hidden"></div>
-
-                            <span className="text-xl font-bold text-gray-500 group-hover:text-white transition-colors">
-                                {brand.name}
-                            </span>
-                        </div>
+                            <span className="w-14 h-14 rounded bg-white/10 hidden"></span>
+                            {ex.name}
+                        </span>
                     ))}
                 </div>
-            </section>
+            </div>
 
             {/* --- Steps Section --- */}
+            <br />
+            <br />
+            <br />
             <section className="container mx-auto px-6 mb-32">
                 <h2 className="text-3xl md:text-5xl font-medium text-center text-white mb-20">
                     Get Started In Three Easy Steps
@@ -225,46 +230,21 @@ const Affiliate = () => {
             </section>
 
             {/* --- FAQ Section --- */}
-            <section className="container mx-auto px-6 grid lg:grid-cols-2 gap-16 mb-24">
-                <div>
-                    <div className="inline-block px-4 py-1.5 rounded-full bg-[#00FF9D]/10 text-[#00FF9D] text-xs font-bold mb-8 uppercase tracking-wider">
-                        Frequently Asked Questions
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-medium mb-8 text-white leading-[1.1]">
-                        Crypto Blockchain <br /> Frequently Asked <br /> Questions
-                    </h2>
-                    <p className="text-gray-400 mb-10 leading-relaxed max-w-md">
-                        Here are some of the most common questions from our community.
-                        Whether you are a first-time user, investor, or developer, we've got the answers.
-                    </p>
-                    <div className="flex items-center gap-6">
-                        <button className="bg-[#00FF9D] text-black px-6 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all">
-                            More Questions
-                        </button>
-                        <button className="text-white flex items-center gap-2 hover:text-[#00FF9D] transition-colors font-medium group">
-                            Contact Us
-                            <span className="bg-white/10 rounded-full p-1 group-hover:bg-[#00FF9D]/20 transition-colors"><ArrowRight size={14} /></span>
+            <section className="py-24 relative z-10" id="faq">
+                <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-12">
+                    <div className="lg:col-span-4">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-6">FydBlock <br />Frequently Asked Questions</h2>
+                        <p className="text-gray-400 mb-8">Can't find the answer you're looking for? Reach out to our customer support team.</p>
+                        <button className="text-[#00FF9D] font-bold flex items-center gap-2 hover:gap-4 transition-all hover:text-white">
+                            Contact Support <ArrowRight size={20} />
                         </button>
                     </div>
-                </div>
-
-                <div className="space-y-4">
-                    <Accordion
-                        title="What makes this blockchain different?"
-                        content="Our architecture prioritizes user ownership and transparent automation logic, unlike black-box competitors."
-                    />
-                    <Accordion
-                        title="How can I buy your token?"
-                        content="Our utility token is available on Uniswap and our partner centralized exchanges."
-                    />
-                    <Accordion
-                        title="What is the consensus mechanism?"
-                        content="We use a unique consensus layer that allows for sub-second finality on trade execution signals."
-                    />
-                    <Accordion
-                        title="How does it handle scalability?"
-                        content="We utilize sharding technology to ensure high throughput even during peak network activity."
-                    />
+                    <div className="lg:col-span-8 space-y-4">
+                        <AccordionItem question="Is my money safe with FydBlock?" answer="Absolutely. Your funds always remain on your exchange account (like Binance or Coinbase). FydBlock simply sends trade commands via API keys which you configure to disable withdrawal permissions." />
+                        <AccordionItem question="Do I need coding skills to use the bots?" answer="No! FydBlock is designed for everyone. We offer pre-configured templates and a visual strategy builder. You can start a bot in 3 clicks." />
+                        <AccordionItem question="Which exchanges do you support?" answer="We support over 15 major exchanges including Binance, Kraken, Coinbase Pro, KuCoin, OKX, Bybit, and more." />
+                        <AccordionItem question="Can I try it for free?" answer="Yes, we offer a 7-day free trial on our Pro plan so you can test all features risk-free. No credit card required." />
+                    </div>
                 </div>
             </section>
         </div>
@@ -293,24 +273,19 @@ const StepCard = ({ number, title, actionLabel, isActive }) => (
     </div>
 );
 
-const Accordion = ({ title, content }) => {
+const AccordionItem = ({ question, answer }) => {
     const [isOpen, setIsOpen] = useState(false);
-
     return (
-        <div className="border-b border-white/10 pb-4">
+        <div className="border-b border-white/5">
             <button
+                className="w-full py-6 flex items-center justify-between text-left hover:text-[#00FF9D] transition-colors group"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between text-left py-4 group"
             >
-                <span className="text-lg font-medium text-white group-hover:text-[#00FF9D] transition-colors pr-4">{title}</span>
-                <span className={`text-[#00FF9D] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-                    {isOpen ? <Minus size={20} /> : <Plus size={20} />}
-                </span>
+                <span className="font-medium text-lg text-gray-200 group-hover:text-[#00FF9D]">{question}</span>
+                <ChevronDown className={`transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#00FF9D]' : 'text-gray-500'}`} />
             </button>
-            <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'}`}
-            >
-                <p className="text-gray-400 leading-relaxed pr-8 pb-4">{content}</p>
+            <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-48 opacity-100 pb-6' : 'max-h-0 opacity-0'}`}>
+                <p className="text-gray-400 leading-relaxed">{answer}</p>
             </div>
         </div>
     );
