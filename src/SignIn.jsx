@@ -1,15 +1,48 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Check, Wallet } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from './config';
 
-const SignIn = ({ navigateTo }) => {
+const SignIn = () => {
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [activeTab, setActiveTab] = useState('login');
 
-    // Helper to handle tab switching
+    // --- NEW: Form State ---
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    // --- FIXED: Handle Tab Switching ---
     const handleTabClick = (tab) => {
         setActiveTab(tab);
         if (tab === 'signup') {
-            navigateTo('signup'); // <--- This triggers the page switch
+            navigate('/signup'); // <--- Fixed: Use 'navigate' instead of 'navigateTo'
+        }
+    };
+
+    // --- NEW: Handle Login Submission ---
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Save the token to browser storage
+                localStorage.setItem('token', data.token);
+                alert('Login Successful!');
+                navigate('/'); // Redirect to Home/Dashboard
+            } else {
+                alert(data.message || 'Login failed');
+            }
+        } catch (error) {
+            console.error('Login Error:', error);
+            alert('Server error. Is the backend running?');
         }
     };
 
@@ -24,17 +57,10 @@ const SignIn = ({ navigateTo }) => {
             </div>
 
             <div className="container mx-auto px-6 py-8 relative z-10">
-
-                {/* --- Header / Back Button --- */}
                 <div className="mb-8">
                     <img src="/logo.png" alt="FydBlock" className="h-8 mb-8" />
-
-                    <button
-                        onClick={() => navigateTo('home')}
-                        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                        <span>Back</span>
+                    <button onClick={() => navigate('/')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                        <ArrowLeft size={20} /> <span>Back</span>
                     </button>
                 </div>
 
@@ -43,36 +69,28 @@ const SignIn = ({ navigateTo }) => {
                     {/* --- Left Column: Form --- */}
                     <div className="max-w-md w-full">
 
-                        {/* Tabs (FIXED) */}
+                        {/* Tabs */}
                         <div className="flex gap-8 mb-10">
-                            <button
-                                onClick={() => handleTabClick('login')}
-                                className={`text-2xl font-bold pb-2 relative transition-all ${activeTab === 'login' ? 'text-white' : 'text-gray-500'}`}
-                            >
+                            <button className="text-2xl font-bold pb-2 relative text-white">
                                 Log In
-                                {activeTab === 'login' && (
-                                    <span className="absolute bottom-0 left-0 w-1/2 h-1 bg-[#00FF9D] rounded-full"></span>
-                                )}
+                                <span className="absolute bottom-0 left-0 w-1/2 h-1 bg-[#00FF9D] rounded-full"></span>
                             </button>
-                            <button
-                                onClick={() => handleTabClick('signup')}
-                                className={`text-2xl font-bold pb-2 relative transition-all ${activeTab === 'signup' ? 'text-white' : 'text-gray-500'}`}
-                            >
+                            <button onClick={() => handleTabClick('signup')} className="text-2xl font-bold pb-2 relative text-gray-500 hover:text-white transition-colors">
                                 Sign Up
-                                {activeTab === 'signup' && (
-                                    <span className="absolute bottom-0 left-0 w-1/2 h-1 bg-[#00FF9D] rounded-full"></span>
-                                )}
                             </button>
                         </div>
 
-                        {/* Inputs */}
-                        <form className="space-y-6">
+                        {/* Form - Connected to handleLogin */}
+                        <form onSubmit={handleLogin} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-300">Email Address</label>
                                 <input
                                     type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Enter your email address..."
-                                    className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] placeholder:text-gray-500 transition-all"
+                                    className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] transition-all"
                                 />
                             </div>
 
@@ -81,8 +99,11 @@ const SignIn = ({ navigateTo }) => {
                                 <div className="relative">
                                     <input
                                         type={showPassword ? "text" : "password"}
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Enter your password..."
-                                        className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] placeholder:text-gray-500 transition-all pr-12"
+                                        className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] transition-all pr-12"
                                     />
                                     <button
                                         type="button"
@@ -103,11 +124,7 @@ const SignIn = ({ navigateTo }) => {
                                     </div>
                                     <span className="text-sm text-gray-400 group-hover:text-white transition-colors">Remember me</span>
                                 </label>
-                                <button
-                                    type="button"
-                                    onClick={() => navigateTo('resetpass')}
-                                    className="text-sm text-[#00FF9D] hover:underline"
-                                >
+                                <button type="button" onClick={() => navigate('/resetpass')} className="text-sm text-[#00FF9D] hover:underline">
                                     Forget your password
                                 </button>
                             </div>
