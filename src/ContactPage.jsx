@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Phone, Mail, MapPin, Send,
   Facebook, Twitter, Linkedin, Instagram,
-  Plus, Minus, ArrowRight
+  Plus, Minus, ArrowRight, ChevronDown
 } from 'lucide-react';
 
 const ContactPage = () => {
@@ -138,56 +138,24 @@ const ContactPage = () => {
           </div>
         </div>
 
-        {/* --- FAQ Section (NEW) --- */}
-        <div className="mt-32 max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 mb-20">
-          <div>
-            <div className="inline-block px-3 py-1 rounded-full bg-[#00FF9D]/10 text-[#00FF9D] text-xs font-bold mb-6">
-              Frequently Asked Questions
-            </div>
-            <h2 className="text-4xl font-bold mb-6 text-white leading-tight">
-              Crypto Blockchain <br /> Frequently Asked <br /> Questions
-            </h2>
-            <p className="text-gray-400 mb-8 leading-relaxed">
-              Here are some of the most common questions from our community. Whether you are a first-time user, investor, or developer, we've got the answers to help you get started.
-            </p>
-            <div className="flex items-center gap-6">
-              <button className="bg-[#00FF9D] text-black px-6 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all">
-                More Questions
-              </button>
-              <button className="text-white flex items-center gap-2 hover:text-[#00FF9D] transition-colors font-medium">
-                Contact us <span className="bg-white/10 rounded-full p-1"><ArrowRight size={12} /></span>
+        {/* --- FAQ Section --- */}
+        <section className="py-24 relative z-10" id="faq">
+          <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-4">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">FydBlock <br />Frequently Asked Questions</h2>
+              <p className="text-gray-400 mb-8">Can't find the answer you're looking for? Reach out to our customer support team.</p>
+              <button className="text-[#00FF9D] font-bold flex items-center gap-2 hover:gap-4 transition-all hover:text-white">
+                Contact Support <ArrowRight size={20} />
               </button>
             </div>
+            <div className="lg:col-span-8 space-y-4">
+              <AccordionItem question="Is my money safe with FydBlock?" answer="Absolutely. Your funds always remain on your exchange account (like Binance or Coinbase). FydBlock simply sends trade commands via API keys which you configure to disable withdrawal permissions." />
+              <AccordionItem question="Do I need coding skills to use the bots?" answer="No! FydBlock is designed for everyone. We offer pre-configured templates and a visual strategy builder. You can start a bot in 3 clicks." />
+              <AccordionItem question="Which exchanges do you support?" answer="We support over 15 major exchanges including Binance, Kraken, Coinbase Pro, KuCoin, OKX, Bybit, and more." />
+              <AccordionItem question="Can I try it for free?" answer="Yes, we offer a 7-day free trial on our Pro plan so you can test all features risk-free. No credit card required." />
+            </div>
           </div>
-
-          <div className="space-y-4">
-            <Accordion
-              title="What makes this blockchain different from others?"
-              content="Our architecture combines scalability, speed, and low fees while supporting complex smart contracts and eco-friendly protocols."
-              isOpen={true}
-            />
-            <Accordion
-              title="How can I buy your token?"
-              content="You can purchase our tokens through major decentralized exchanges (DEX) or directly through our launchpad partners."
-            />
-            <Accordion
-              title="What makes this blockchain different from others?"
-              content="We utilize a unique consensus mechanism that ensures faster finality and higher throughput compared to legacy chains."
-            />
-            <Accordion
-              title="How does your blockchain handle scalability?"
-              content="We use dynamic sharding and layer-2 solutions to process thousands of transactions per second without network congestion."
-            />
-            <Accordion
-              title="What security measures are in place for transactions?"
-              content="All transactions are secured by military-grade encryption and verified by a distributed network of validators."
-            />
-            <Accordion
-              title="Can I stake my tokens for rewards?"
-              content="Yes! Staking is a core feature. You can earn up to 12% APY by delegating your tokens to a validator node."
-            />
-          </div>
-        </div>
+        </section>
 
       </div>
     </div>
@@ -202,27 +170,23 @@ const SocialIcon = ({ icon }) => (
   </div>
 );
 
-const Accordion = ({ title, content, isOpen: defaultOpen = false }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
+const AccordionItem = ({ question, answer }) => {
+  const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="border-b border-white/10 pb-4">
+    <div className="border-b border-white/5">
       <button
+        className="w-full py-6 flex items-center justify-between text-left hover:text-[#00FF9D] transition-colors group"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between text-left py-2 group"
       >
-        <span className="font-bold text-white group-hover:text-[#00FF9D] transition-colors pr-4">{title}</span>
-        <span className={`text-[#00FF9D] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-          {isOpen ? <Minus size={20} /> : <Plus size={20} />}
-        </span>
+        <span className="font-medium text-lg text-gray-200 group-hover:text-[#00FF9D]">{question}</span>
+        <ChevronDown className={`transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#00FF9D]' : 'text-gray-500'}`} />
       </button>
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-32 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}
-      >
-        <p className="text-sm text-gray-400 leading-relaxed pr-8">{content}</p>
+      <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-48 opacity-100 pb-6' : 'max-h-0 opacity-0'}`}>
+        <p className="text-gray-400 leading-relaxed">{answer}</p>
       </div>
     </div>
   );
 };
+
 
 export default ContactPage;
