@@ -109,7 +109,7 @@ const Company = () => {
                 <h2 className="text-4xl font-bold text-white mb-12">Our Founders</h2>
                 <div className="grid md:grid-cols-2 gap-8 max-w-4xl">
                     <FounderCard name="Shaafi M" role="CEO & Founder" />
-                    <FounderCard name="Aashath MA" role="CTO & Founder & Chief technological officer " />
+                    <FounderCard name="Aashath MA" role="CTO & Founder" />
                 </div>
             </section>
 
