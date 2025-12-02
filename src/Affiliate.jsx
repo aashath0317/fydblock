@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     ArrowRight,
     Minus,
@@ -19,6 +20,7 @@ const EXCHANGES = [
 const MARQUEE_LOGOS = [...EXCHANGES, ...EXCHANGES, ...EXCHANGES, ...EXCHANGES];
 
 const Affiliate = () => {
+    const navigate = useNavigate();
     // State for the calculator
     const [clients, setClients] = useState(10); // Default to 10 to match image
     const earnings = (clients * 125).toLocaleString();
