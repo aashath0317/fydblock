@@ -3,8 +3,10 @@ import {
     Plus, Minus, ArrowRight, User, Star,
     ChevronDown
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const Company = ({ navigateTo }) => {
+const Company = () => {
+    const navigate = useNavigate();
     return (
         <div className="pt-32 pb-20 relative z-10 animate-in fade-in duration-500">
 
@@ -29,7 +31,7 @@ const Company = ({ navigateTo }) => {
                     </p>
 
                     <button
-                        onClick={() => navigateTo('pricing')}
+                        onClick={() => navigate('/pricing')}
                         className="bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all shadow-[0_0_15px_rgba(0,255,157,0.3)] mt-4"
                     >
                         Start Free Trial
