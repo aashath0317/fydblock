@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Minus, ArrowRight, User, Star } from 'lucide-react';
+import {
+    Plus, Minus, ArrowRight, User, Star,
+    ChevronDown
+} from 'lucide-react';
 
-const Company = () => {
+const Company = ({ navigateTo }) => {
     return (
         <div className="pt-32 pb-20 relative z-10 animate-in fade-in duration-500">
 
@@ -25,7 +28,10 @@ const Company = () => {
                         execution 24/7/365.
                     </p>
 
-                    <button className="bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all shadow-[0_0_15px_rgba(0,255,157,0.3)] mt-4">
+                    <button
+                        onClick={() => navigateTo('pricing')}
+                        className="bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all shadow-[0_0_15px_rgba(0,255,157,0.3)] mt-4"
+                    >
                         Start Free Trial
                     </button>
                 </div>
@@ -79,28 +85,60 @@ const Company = () => {
                         <h3 className="text-xl font-bold text-white">Join 15,000+ Active FydBlock Members!</h3>
                         <p className="text-sm text-gray-300">Be part of the future of automated trading.</p>
                     </div>
-                    <button className="relative z-10 border border-white text-white px-8 py-2 rounded-xl bg-transparent hover:bg-white hover:text-black transition-all font-medium">
+                    <button
+                        onClick={() => window.open('https://t.me/Fydblock', '_blank')}
+                        className="relative z-10 border border-white text-white px-8 py-2 rounded-xl bg-transparent hover:bg-white hover:text-black transition-all font-medium">
                         Join us
                     </button>
                 </div>
             </section>
 
-            {/* --- History Section --- */}
             <section className="container mx-auto px-6 mb-24">
-                <h2 className="text-4xl font-bold text-white mb-12">Our History</h2>
-                <div className="space-y-6 text-gray-400 leading-relaxed max-w-4xl">
-                    <p>
-                        We started with a simple idea: make professional-grade trading automation accessible to everyone.
-                        What began as a small script for friends has evolved into a robust platform serving thousands globally.
-                    </p>
-                    <p>
-                        Since launching our beta in late 2021, we have integrated 15+ major exchanges and executed millions of
-                        trades. The crypto winter didn't slow us down—it only made our risk management tools sharper.
-                    </p>
-                    <p>
-                        Our team has expanded from two founders to a dedicated group of 20+ engineers.
-                        We remain committed to our core mission: providing transparency, security, and performance.
-                    </p>
+                <div className="grid lg:grid-cols-2 gap-12 items-center">
+
+                    {/* Left Side: Text Content */}
+                    <div>
+                        <h2 className="text-4xl font-bold text-white mb-8 relative inline-block">
+                            Our History
+                            {/* Optional underline accent */}
+                            <span className="absolute -bottom-2 left-0 w-1/3 h-1 bg-[#00FF9D] rounded-full"></span>
+                        </h2>
+
+                        <div className="space-y-6 text-gray-400 leading-relaxed text-lg">
+                            <p>
+                                We started with a simple idea: make professional-grade trading automation accessible to everyone.
+                                What began as a small script for friends has evolved into a robust platform serving thousands globally.
+                            </p>
+                            <p>
+                                Since launching our beta in late 2021, we have integrated 15+ major exchanges and executed millions of
+                                trades. The crypto winter didn't slow us down—it only made our risk management tools sharper.
+                            </p>
+                            <p>
+                                Our team has expanded from two founders to a dedicated group of 20+ engineers.
+                                We remain committed to our core mission: providing transparency, security, and performance.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Right Side: Image Placeholder */}
+                    <div className="relative h-[400px] w-full bg-[#0A1014] border border-white/10 rounded-2xl overflow-hidden group">
+                        {/* Decorative Glow */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 bg-[#00FF9D]/10 blur-[50px] rounded-full"></div>
+
+                        {/* Placeholder Content */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 z-10">
+                            <div className="w-16 h-16 mb-4 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                </svg>
+                                <img src="./history.png" alt="Our History" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
             </section>
 
@@ -114,48 +152,21 @@ const Company = () => {
             </section>
 
             {/* --- FAQ Section --- */}
-            <section className="container mx-auto px-6 grid lg:grid-cols-2 gap-16 mb-20">
-                <div>
-                    <div className="inline-block px-3 py-1 rounded-full bg-[#00FF9D]/10 text-[#00FF9D] text-xs font-bold mb-6">
-                        Common Questions
-                    </div>
-                    <h2 className="text-4xl font-bold mb-6 text-white leading-tight">
-                        Crypto Blockchain <br /> Frequently Asked <br /> Questions
-                    </h2>
-                    <p className="text-gray-400 mb-8 leading-relaxed">
-                        Have questions? We have answers. Learn more about our platform, security, and how we differ from the competition.
-                    </p>
-                    <div className="flex items-center gap-6">
-                        <button className="bg-[#00FF9D] text-black px-6 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all">
-                            More Questions
-                        </button>
-                        <button className="text-white flex items-center gap-2 hover:text-[#00FF9D] transition-colors font-medium">
-                            Read Docs <span className="bg-white/10 rounded-full p-1"><ArrowRight size={12} /></span>
+            <section className="py-24 relative z-10" id="faq">
+                <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-12">
+                    <div className="lg:col-span-4">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-6">FydBlock <br />Frequently Asked Questions</h2>
+                        <p className="text-gray-400 mb-8">Can't find the answer you're looking for? Reach out to our customer support team.</p>
+                        <button className="text-[#00FF9D] font-bold flex items-center gap-2 hover:gap-4 transition-all hover:text-white">
+                            Contact Support <ArrowRight size={20} />
                         </button>
                     </div>
-                </div>
-
-                <div className="space-y-4">
-                    <Accordion
-                        title="What makes this blockchain different from others?"
-                        content="Our architecture prioritizes user ownership and transparent automation logic, unlike black-box competitors."
-                    />
-                    <Accordion
-                        title="How can I buy your token?"
-                        content="Our utility token is available on Uniswap and our partner centralized exchanges."
-                    />
-                    <Accordion
-                        title="What makes this blockchain different from others?"
-                        content="We use a unique consensus layer that allows for sub-second finality on trade execution signals."
-                    />
-                    <Accordion
-                        title="How secure is your blockchain platform?"
-                        content="Security is paramount. We undergo quarterly third-party audits and maintain a bug bounty program."
-                    />
-                    <Accordion
-                        title="What security measures are in place for transactions?"
-                        content="All API keys are encrypted with RSA-2048 and stored in hardware security modules (HSM)."
-                    />
+                    <div className="lg:col-span-8 space-y-4">
+                        <AccordionItem question="Is my money safe with FydBlock?" answer="Absolutely. Your funds always remain on your exchange account (like Binance or Coinbase). FydBlock simply sends trade commands via API keys which you configure to disable withdrawal permissions." />
+                        <AccordionItem question="Do I need coding skills to use the bots?" answer="No! FydBlock is designed for everyone. We offer pre-configured templates and a visual strategy builder. You can start a bot in 3 clicks." />
+                        <AccordionItem question="Which exchanges do you support?" answer="We support over 15 major exchanges including Binance, Kraken, Coinbase Pro, KuCoin, OKX, Bybit, and more." />
+                        <AccordionItem question="Can I try it for free?" answer="Yes, we offer a 7-day free trial on our Pro plan so you can test all features risk-free. No credit card required." />
+                    </div>
                 </div>
             </section>
 
@@ -199,27 +210,21 @@ const FounderCard = ({ name, role }) => (
     </div>
 );
 
-const Accordion = ({ title, content }) => {
+const AccordionItem = ({ question, answer }) => {
     const [isOpen, setIsOpen] = useState(false);
-
     return (
-        <div className="border-b border-white/10 pb-4">
+        <div className="border-b border-white/5">
             <button
+                className="w-full py-6 flex items-center justify-between text-left hover:text-[#00FF9D] transition-colors group"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between text-left py-2 group"
             >
-                <span className="font-bold text-white group-hover:text-[#00FF9D] transition-colors pr-4">{title}</span>
-                <span className={`text-[#00FF9D] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-                    {isOpen ? <Minus size={20} /> : <Plus size={20} />}
-                </span>
+                <span className="font-medium text-lg text-gray-200 group-hover:text-[#00FF9D]">{question}</span>
+                <ChevronDown className={`transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#00FF9D]' : 'text-gray-500'}`} />
             </button>
-            <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-32 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}
-            >
-                <p className="text-sm text-gray-400 leading-relaxed pr-8">{content}</p>
+            <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-48 opacity-100 pb-6' : 'max-h-0 opacity-0'}`}>
+                <p className="text-gray-400 leading-relaxed">{answer}</p>
             </div>
         </div>
     );
 };
-
 export default Company;
