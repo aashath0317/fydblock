@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import {
   BarChart2, Shield, Zap,
   Play, CheckCircle2, ArrowRight,
@@ -153,7 +155,8 @@ const AnimatedProfitCard = () => {
    MAIN COMPONENT
    ========================================= */
 
-const LandingPage = ({ navigateTo }) => {
+const LandingPage = () => {
+  const navigate = useNavigate();
   return (
     <>
       {/* --- Hero Section --- */}
@@ -170,14 +173,14 @@ const LandingPage = ({ navigateTo }) => {
                 Powered by AI
               </span>
             </h1>
-            <p className="text-gray-400 text-lg leading-relaxed max-w-lg">
+            <p className="text-gray-400 text-light leading-relaxed max-w-lg">
               Automate your trading strategies with our advanced AI algorithms.
               Maximize profits, minimize risks, and trade 24/7 across all major exchanges without lifting a finger.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button
-                onClick={() => navigateTo('pricing')}
+                onClick={() => navigate('/pricing')}
                 className="bg-[#00FF9D] text-black px-8 py-4 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:shadow-[0_0_30px_rgba(0,255,157,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2"
               >
                 Start For Free <ArrowRight size={20} />
@@ -530,7 +533,7 @@ const LandingPage = ({ navigateTo }) => {
 
             {/* JOIN BUTTON */}
             <button
-              onClick={() => navigateTo('signup')}
+              onClick={() => navigate('/signup')}
               className="mt-8 bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:scale-105 shadow-[0_0_15px_rgba(0,255,157,0.3)]"
             >
               Join Now
@@ -579,7 +582,8 @@ const LandingPage = ({ navigateTo }) => {
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
             <h2 className="text-3xl md:text-5xl font-bold mb-6 relative z-10 text-white">Why Aren't You Trading Yet?</h2>
             <p className="text-gray-300 mb-8 max-w-2xl mx-auto relative z-10">Don't leave money on the table. Set up your first bot today and let the AI do the heavy lifting.</p>
-            <button className="bg-white text-black px-10 py-4 rounded-full font-bold hover:bg-[#00FF9D] transition-all hover:scale-105 hover:shadow-[0_0_25px_rgba(0,255,157,0.5)] relative z-10">
+            <button className="bg-white text-black px-10 py-4 rounded-full font-bold hover:bg-[#00FF9D] transition-all hover:scale-105 hover:shadow-[0_0_25px_rgba(0,255,157,0.5)] relative z-10"
+              onClick={() => navigate('/pricing')}>
               Start Free Trial
             </button>
           </div>
