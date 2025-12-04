@@ -472,7 +472,11 @@ const LandingPage = () => {
           </div>
 
           <div className="relative max-w-4xl mx-auto">
+            {/* --- Desktop: Horizontal Arch Line (Existing) --- */}
             <div className="hidden md:block absolute top-20 left-1/2 -translate-x-1/2 w-[80%] h-[150px] border-t-2 border-r-2 border-l-2 border-dashed border-[#00FF9D]/20 rounded-t-[50px] -z-10"></div> {/* Line Across the shield */}
+
+            {/* --- Mobile: Vertical Arch Line (New) --- */}
+            <div className="md:hidden absolute top-12 bottom-12 left-1/2 -translate-x-1/2 w-px border-l-2 border-dashed border-[#00FF9D]/20 -z-10"></div>
 
             <div className="grid md:grid-cols-3 gap-8 text-center pt-8">
               <SecurityCard
@@ -480,7 +484,7 @@ const LandingPage = () => {
                 desc="API keys are encrypted and stored in secure containers using RSA 2048-bit encryption."
                 icon={<Lock size={32} />}
               />
-              <div className="relative -mt-12 md:mt-0">
+              <div className="relative mt-12 md:mt-0">
                 <div className="w-24 h-24 mx-auto bg-[#00FF9D]/10 rounded-full flex items-center justify-center border border-[#00FF9D] shadow-[0_0_40px_rgba(0,255,157,0.4)] mb-6 z-10 relative backdrop-blur-md">
                   <Shield size={40} className="text-[#00FF9D]" />
                 </div>
@@ -577,7 +581,7 @@ const LandingPage = () => {
       {/* Footer CTA */}
       <section className="py-24 px-6 relative z-10">
         <div className="container mx-auto">
-          <div className="bg-gradient-to-r from-[#00FF9D]/10 to-blue-500/10 border border-[#00FF9D]/30 rounded-3xl p-24 text-center relative overflow-hidden group">
+          <div className="bg-gradient-to-r from-[#00FF9D]/10 to-blue-500/10 border border-[#00FF9D]/30 rounded-3xl p-8 md:p-24 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#00FF9D]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-1000"></div>
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
             <h2 className="text-3xl md:text-5xl font-bold mb-6 relative z-10 text-white">Why Aren't You Trading Yet?</h2>
