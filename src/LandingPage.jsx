@@ -1,15 +1,237 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import {
-  BarChart2, Shield, Zap,
-  Play, CheckCircle2, ArrowRight,
-  Cpu, Activity, Lock, Layers,
-  ChevronRight, ChevronDown
+  BarChart2, Shield, Zap, Play, CheckCircle2, ArrowRight,
+  Cpu, Activity, Lock, Layers, ChevronRight, ChevronDown
 } from 'lucide-react';
 import WorldGlobe from './WorldGlobe';
 
-/* --- Exchange Data --- */
+/* =========================================
+   HELPER: SPLINE INTERPOLATION
+   ========================================= */
+
+const getSplinePoints = (data, resolution = 10) => {
+  const points = [];
+
+  // Catmull-Rom Spline Interpolation Helper
+  const p = (i, rel) => {
+    const p0 = data[Math.max(0, i - 1)];
+    const p1 = data[i];
+    const p2 = data[Math.min(data.length - 1, i + 1)];
+    const p3 = data[Math.min(data.length - 1, i + 2)];
+
+    const t = rel;
+    const t2 = t * t;
+    const t3 = t2 * t;
+
+    // Calculate Value (Y)
+    const v0 = p0.value;
+    const v1 = p1.value;
+    const v2 = p2.value;
+    const v3 = p3.value;
+
+    const value = 0.5 * (
+      (2 * v1) +
+      (-v0 + v2) * t +
+      (2 * v0 - 5 * v1 + 4 * v2 - v3) * t2 +
+      (-v0 + 3 * v1 - 3 * v2 + v3) * t3
+    );
+
+    // Calculate Day (X)
+    const d0 = p0.day;
+    const d1 = p1.day;
+    const d2 = p2.day;
+    const d3 = p3.day;
+
+    const day = 0.5 * (
+      (2 * d1) +
+      (-d0 + d2) * t +
+      (2 * d0 - 5 * d1 + 4 * d2 - d3) * t2 +
+      (-d0 + 3 * d1 - 3 * d2 + d3) * t3
+    );
+
+    return { day, value };
+  };
+
+  for (let i = 0; i < data.length - 1; i++) {
+    for (let j = 0; j < resolution; j++) {
+      points.push(p(i, j / resolution));
+    }
+  }
+  points.push(data[data.length - 1]); // Add last point
+  return points;
+};
+
+/* =========================================
+   UPDATED CHART COMPONENT
+   ========================================= */
+const InteractiveInsightChart = () => {
+  const containerRef = useRef(null);
+  const [hoverIndex, setHoverIndex] = useState(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 200 });
+
+  // 1. Define Key Data Points
+  const rawData = useMemo(() => [
+    { day: 1, value: 1500 }, { day: 3, value: 2300 }, { day: 5, value: 3800 },
+    { day: 8, value: 3200 }, { day: 10, value: 2800 }, { day: 12, value: 4100 },
+    { day: 15, value: 5900 }, { day: 18, value: 5500 }, { day: 20, value: 4900 },
+    { day: 22, value: 6500 }, { day: 25, value: 7800 }, { day: 28, value: 4500 },
+    { day: 30, value: 5200 },
+  ], []);
+
+  // 2. Generate High-Resolution Data for Smoothness
+  const smoothData = useMemo(() => getSplinePoints(rawData, 20), [rawData]);
+  const maxValue = 8500;
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight
+        });
+      }
+    };
+    window.addEventListener('resize', updateSize);
+    // Slight delay to ensure parent container is rendered
+    setTimeout(updateSize, 100);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
+  // 3. Convert Smooth Data to SVG Path String
+  const linePath = useMemo(() => {
+    if (smoothData.length === 0) return "";
+    const getCoord = (pt) => {
+      // Map X (Day 1-30) to Width
+      const x = ((pt.day - 1) / 29) * dimensions.width;
+      // Map Y (Value) to Height
+      const y = dimensions.height - (pt.value / maxValue) * dimensions.height;
+      return `${x},${y}`;
+    };
+    return "M" + smoothData.map(getCoord).join(" L");
+  }, [smoothData, dimensions, maxValue]);
+
+  // 4. Handle Mouse Move
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+
+    const relativeX = Math.max(0, Math.min(mouseX, dimensions.width));
+    const totalPoints = smoothData.length;
+    const estimatedIndex = Math.floor((relativeX / dimensions.width) * (totalPoints - 1));
+
+    setHoverIndex(estimatedIndex);
+  };
+
+  const handleMouseLeave = () => setHoverIndex(null);
+
+  // 5. Get Active Coordinates for Tooltip
+  const activePoint = hoverIndex !== null ? smoothData[hoverIndex] : null;
+  const activeX = activePoint ? ((activePoint.day - 1) / 29) * dimensions.width : 0;
+  const activeY = activePoint ? dimensions.height - (activePoint.value / maxValue) * dimensions.height : 0;
+
+  return (
+    // MODIFIED CONTAINER: Transparent bg, Wide, Centered, Outline kept
+    <div className="bg-transparent border border-white/10 rounded-3xl p-8 w-full max-w-7xl mx-auto relative group transition-all select-none">
+
+      {/* Background Glow (Adjusted for larger size) */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-[#00FF9D]/5 rounded-full blur-[100px] -z-10"></div>
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[100px] -z-10"></div>
+
+      {/* Header */}
+      <div className="mb-10 flex flex-col items-center justify-center text-center">
+        <h4 className="text-[#00FF9D] font-medium text-2xl mb-2 tracking-wide">Insights with AI</h4>
+        <div className="flex items-center gap-3 bg-white/5 px-4 py-1 rounded-full border border-white/5">
+          <span className="text-white font-bold text-lg">+20%</span>
+          <span className="text-gray-400 text-sm">Profit increase vs last week</span>
+        </div>
+      </div>
+
+      {/* Floating Tooltip (Follows Mouse) */}
+      <div
+        className={`absolute z-20 pointer-events-none transition-opacity duration-100 ${hoverIndex !== null ? 'opacity-100' : 'opacity-0'}`}
+        style={{
+          top: activeY - 100, // Moved up slightly
+          left: activeX,
+          transform: 'translateX(-50%)'
+        }}
+      >
+        <div className="bg-[#1f2937] border border-white/10 rounded-xl p-4 shadow-2xl w-40 text-center relative backdrop-blur-md">
+          <p className="text-xs text-gray-400 mb-1">Estimated Profit</p>
+          <p className="text-2xl font-bold text-white leading-none mb-1">
+            ${activePoint?.value.toFixed(0).toLocaleString()}
+          </p>
+          <p className="text-xs text-gray-400">December {activePoint?.day.toFixed(0)}</p>
+          {/* Arrow */}
+          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1f2937] rotate-45 border-r border-b border-white/10"></div>
+        </div>
+      </div>
+
+      {/* Chart Area - MODIFIED HEIGHT */}
+      <div
+        ref={containerRef}
+        // Increased height to 300px on mobile, 450px on desktop
+        className="relative h-[100px] md:h-[250px] w-full cursor-crosshair"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* X-Axis Labels */}
+        <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-sm text-gray-500 font-mono px-2">
+          <span>Day 01</span><span>Day 10</span><span>Day 20</span><span>Day 30</span>
+        </div>
+
+        {/* Grid Lines (Horizontal) - Optional for better readability on big charts */}
+        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
+          <div className="border-t border-dashed border-white/10 w-full h-0"></div>
+          <div className="border-t border-dashed border-white/10 w-full h-0"></div>
+          <div className="border-t border-dashed border-white/10 w-full h-0"></div>
+          <div className="border-t border-dashed border-white/10 w-full h-0"></div>
+        </div>
+
+        <svg className="w-full h-full overflow-visible">
+          <defs>
+            <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#00FF9D" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#00FF9D" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Area Fill */}
+          <path d={`${linePath} L ${dimensions.width},${dimensions.height} L 0,${dimensions.height} Z`} fill="url(#chartGradient)" />
+
+          {/* Line Stroke */}
+          <path d={linePath} fill="none" stroke="#00FF9D" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_15px_rgba(0,255,157,0.3)]" />
+
+          {/* Interactive Elements */}
+          {hoverIndex !== null && (
+            <>
+              {/* Vertical Dashed Line */}
+              <line
+                x1={activeX} y1={0} // From top
+                x2={activeX} y2={dimensions.height}
+                stroke="#00FF9D" strokeWidth="1" strokeDasharray="6 6"
+                className="opacity-50"
+              />
+              {/* White Dot with Green Border */}
+              <circle
+                cx={activeX} cy={activeY} r="6"
+                fill="#0A1014" stroke="#00FF9D" strokeWidth="3"
+                className="shadow-[0_0_15px_#00FF9D]"
+              />
+            </>
+          )}
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+
+/* =========================================
+   REST OF COMPONENT
+   ========================================= */
+
 const EXCHANGES = [
   { name: 'BINANCE', logo: 'BINANCE.png' },
   { name: 'COINBASE', logo: 'COINBASE.png' },
@@ -19,10 +241,6 @@ const EXCHANGES = [
 ];
 
 const MARQUEE_LOGOS = [...EXCHANGES, ...EXCHANGES, ...EXCHANGES, ...EXCHANGES];
-
-/* =========================================
-   HELPER COMPONENTS (Must be at the top)
-   ========================================= */
 
 const CountUp = ({ end, duration = 2000, suffix = '', prefix = '', decimals = 0 }) => {
   const [count, setCount] = useState(0);
@@ -151,9 +369,6 @@ const AnimatedProfitCard = () => {
     </div>
   );
 };
-/* =========================================
-   MAIN COMPONENT
-   ========================================= */
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -167,7 +382,7 @@ const LandingPage = () => {
               <span className="w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]"></span>
               AI Powered Trading 2.0
             </div>
-            <h1 className="text-5xl lg:text-7xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-2xl">
+            <h1 className="text-5xl lg:text-7xl 3xl:text-9xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-2xl">
               Smarter Business <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF9D] via-[#00FF9D] to-[#00A3FF]">
                 Powered by AI
@@ -191,39 +406,49 @@ const LandingPage = () => {
             </div>
 
             {/* --- UPDATED: ANIMATED STATS SECTION --- */}
-            <div style={{ fontFamily: "'Poppins', sans-serif" }}>
-              {/* 1. Load the Font from Google */}
-              <style>
-                {`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');`}
-              </style>
-              <div className="flex items-center gap-8 pt-8 border-t border-white/5">
-                <div>
-                  <p className="text-3xl font-bold text-white shadow-[#00FF9D]">
-                    <CountUp end={10} suffix="B+" duration={2000} />
-                  </p>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Volume Traded</p>
-                </div>
-                <div className="w-px h-10 bg-white/10"></div>
-                <div>
-                  <p className="text-3xl font-bold text-white">
-                    <CountUp end={24} suffix="/7" duration={2000} />
-                  </p>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Uptime</p>
-                </div>
-                <div className="w-px h-10 bg-white/10"></div>
-                <div>
-                  <p className="text-3xl font-bold text-white">
-                    <CountUp end={15} suffix="+" duration={2000} />
-                  </p>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Exchanges</p>
+            <div className="container mx-auto px-6 relative z-10 -mt-10 md:-mt-20 lg:mt-0 mb-20">
+              <div style={{ fontFamily: "'Poppins', sans-serif" }} className="pt-8 border-t border-white/5">
+
+                <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+
+                  {/* LEFT SIDE: Stats Text */}
+                  <div className="flex-1 flex items-center justify-between gap-6 w-full">
+                    <div>
+                      <p className="text-3xl md:text-5xl font-bold text-white shadow-[#00FF9D] mb-1">
+                        <CountUp end={10} suffix="B+" duration={2000} />
+                      </p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Volume Traded</p>
+                    </div>
+
+                    <div className="w-px h-12 bg-white/10"></div>
+
+                    <div>
+                      <p className="text-3xl md:text-5xl font-bold text-white mb-1">
+                        <CountUp end={24} suffix="/7" duration={2000} />
+                      </p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Uptime</p>
+                    </div>
+
+                    <div className="w-px h-12 bg-white/10"></div>
+
+                    <div>
+                      <p className="text-3xl md:text-5xl font-bold text-white mb-1">
+                        <CountUp end={15} suffix="+" duration={2000} />
+                      </p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">Exchanges</p>
+                    </div>
+                  </div>
+
+
                 </div>
               </div>
             </div>
+
           </div>
 
           {/* Hero Image with Animation */}
           <div className="relative z-10 lg:h-[600px] flex items-center justify-center">
-            <div className="relative w-full max-w-[500px] animate-float">
+            <div className="relative w-full max-w-[500px] 2xl:max-w-[700px] 3xl:max-w-[900px] animate-float">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00FF9D]/20 blur-[60px] rounded-full"></div>
 
               <img
@@ -253,6 +478,11 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* --- CHART SECTION (Modified Layout) --- */}
+      <div className="container mx-auto px-6 py-12 flex justify-center w-full">
+        <InteractiveInsightChart />
+      </div>
 
       {/* --- Steps Section --- */}
       <section className="py-20 relative z-10">
@@ -336,7 +566,7 @@ const LandingPage = () => {
                     preserveAspectRatio="none"
                   >
                     <defs>
-                      <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                      <linearGradient id="chartGradient2" x1="0" x2="0" y1="0" y2="1">
                         <stop offset="0%" stopColor="#00FF9D" stopOpacity="0.4" />
                         <stop offset="100%" stopColor="#00FF9D" stopOpacity="0" />
                       </linearGradient>
@@ -345,7 +575,7 @@ const LandingPage = () => {
                     {/* The Area Fill (Under the line) */}
                     <path
                       d="M0,200 L0,150 L40,130 L80,160 L120,100 L160,120 L200,80 L240,90 L280,50 L320,70 L360,30 L400,10 L400,200 Z"
-                      fill="url(#chartGradient)"
+                      fill="url(#chartGradient2)"
                     />
 
                     {/* The Stroke Line (The actual graph) */}
@@ -581,6 +811,7 @@ const LandingPage = () => {
       {/* Footer CTA */}
       <section className="py-24 px-6 relative z-10">
         <div className="container mx-auto">
+          {/* Changed p-24 to p-8 md:p-24 to fix mobile view */}
           <div className="bg-gradient-to-r from-[#00FF9D]/10 to-blue-500/10 border border-[#00FF9D]/30 rounded-3xl p-8 md:p-24 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#00FF9D]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-1000"></div>
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
