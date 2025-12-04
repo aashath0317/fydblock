@@ -12,7 +12,7 @@ const Company = () => {
 
             {/* --- Welcome Section --- */}
             <section className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center mb-24">
-                <div className="space-y-6 order-2 lg:order-1">
+                <div className="space-y-6">
                     <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
                         Welcome To <span className="text-[#00FF9D]">Fydblock.</span>
                     </h1>
@@ -39,7 +39,7 @@ const Company = () => {
                 </div>
 
                 {/* --- Hero Image --- */}
-                <div className="relative flex justify-center order-1 lg:order-2">
+                <div className="relative flex justify-center">
                     <div className="w-[350px] h-[350px] md:w-[500px] md:h-[500px] relative animate-float">
                         {/* Background Glow */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00FF9D]/20 blur-[60px] rounded-full pointer-events-none"></div>
