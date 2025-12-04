@@ -382,7 +382,7 @@ const LandingPage = () => {
               <span className="w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]"></span>
               AI Powered Trading 2.0
             </div>
-            <h1 className="text-5xl lg:text-7xl 3xl:text-9xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-2xl">
+            <h1 className="text-5xl lg:text-7xl 3xl:text-9xl font-light leading-[1.1] tracking-tight text-white drop-shadow-2xl">
               Smarter Business <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF9D] via-[#00FF9D] to-[#00A3FF]">
                 Powered by AI
@@ -414,7 +414,7 @@ const LandingPage = () => {
                   {/* LEFT SIDE: Stats Text */}
                   <div className="flex-1 flex items-center justify-between gap-6 w-full">
                     <div>
-                      <p className="text-3xl md:text-5xl font-bold text-white shadow-[#00FF9D] mb-1">
+                      <p className="text-3xl md:text-5xl font-light text-white shadow-[#00FF9D] mb-1">
                         <CountUp end={10} suffix="B+" duration={2000} />
                       </p>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Volume Traded</p>
@@ -423,7 +423,7 @@ const LandingPage = () => {
                     <div className="w-px h-12 bg-white/10"></div>
 
                     <div>
-                      <p className="text-3xl md:text-5xl font-bold text-white mb-1">
+                      <p className="text-3xl md:text-5xl font-light text-white mb-1">
                         <CountUp end={24} suffix="/7" duration={2000} />
                       </p>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Uptime</p>
@@ -432,7 +432,7 @@ const LandingPage = () => {
                     <div className="w-px h-12 bg-white/10"></div>
 
                     <div>
-                      <p className="text-3xl md:text-5xl font-bold text-white mb-1">
+                      <p className="text-3xl md:text-5xl font-light text-white mb-1">
                         <CountUp end={15} suffix="+" duration={2000} />
                       </p>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Exchanges</p>
