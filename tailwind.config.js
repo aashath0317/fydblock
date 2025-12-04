@@ -14,7 +14,8 @@ export default {
         md: '768px',
         lg: '1024px',
         xl: '1152px',     // Locks width to 1152px on large screens
-        '2xl': '2304px',  // KEEPS it at 1152px even on huge screens (This is the "80%" effect)
+        '2xl': '2304px',
+        '3xl': '5120px',
       },
     },
     extend: {
