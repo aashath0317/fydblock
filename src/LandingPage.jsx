@@ -9,80 +9,57 @@ import WorldGlobe from './WorldGlobe';
 /* =========================================
    HELPER: SPLINE INTERPOLATION
    ========================================= */
-
 const getSplinePoints = (data, resolution = 10) => {
   const points = [];
-
-  // Catmull-Rom Spline Interpolation Helper
   const p = (i, rel) => {
     const p0 = data[Math.max(0, i - 1)];
     const p1 = data[i];
     const p2 = data[Math.min(data.length - 1, i + 1)];
     const p3 = data[Math.min(data.length - 1, i + 2)];
-
     const t = rel;
     const t2 = t * t;
     const t3 = t2 * t;
-
-    // Calculate Value (Y)
     const v0 = p0.value;
     const v1 = p1.value;
     const v2 = p2.value;
     const v3 = p3.value;
-
-    const value = 0.5 * (
-      (2 * v1) +
-      (-v0 + v2) * t +
-      (2 * v0 - 5 * v1 + 4 * v2 - v3) * t2 +
-      (-v0 + 3 * v1 - 3 * v2 + v3) * t3
-    );
-
-    // Calculate Day (X)
+    const value = 0.5 * ((2 * v1) + (-v0 + v2) * t + (2 * v0 - 5 * v1 + 4 * v2 - v3) * t2 + (-v0 + 3 * v1 - 3 * v2 + v3) * t3);
     const d0 = p0.day;
     const d1 = p1.day;
     const d2 = p2.day;
     const d3 = p3.day;
-
-    const day = 0.5 * (
-      (2 * d1) +
-      (-d0 + d2) * t +
-      (2 * d0 - 5 * d1 + 4 * d2 - d3) * t2 +
-      (-d0 + 3 * d1 - 3 * d2 + d3) * t3
-    );
-
+    const day = 0.5 * ((2 * d1) + (-d0 + d2) * t + (2 * d0 - 5 * d1 + 4 * d2 - d3) * t2 + (-d0 + 3 * d1 - 3 * d2 + d3) * t3);
     return { day, value };
   };
-
   for (let i = 0; i < data.length - 1; i++) {
     for (let j = 0; j < resolution; j++) {
       points.push(p(i, j / resolution));
     }
   }
-  points.push(data[data.length - 1]); // Add last point
+  points.push(data[data.length - 1]);
   return points;
 };
 
 /* =========================================
-   UPDATED CHART COMPONENT
+   UPDATED: INTERACTIVE FLOATING CHART CARD
    ========================================= */
-const InteractiveInsightChart = () => {
+const FloatingChartCard = () => {
   const containerRef = useRef(null);
   const [hoverIndex, setHoverIndex] = useState(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 200 });
+  const [dimensions, setDimensions] = useState({ width: 280, height: 100 });
 
-  // 1. Define Key Data Points
+  // Data for the mini chart
   const rawData = useMemo(() => [
-    { day: 1, value: 1500 }, { day: 3, value: 2300 }, { day: 5, value: 3800 },
-    { day: 8, value: 3200 }, { day: 10, value: 2800 }, { day: 12, value: 4100 },
-    { day: 15, value: 5900 }, { day: 18, value: 5500 }, { day: 20, value: 4900 },
-    { day: 22, value: 6500 }, { day: 25, value: 7800 }, { day: 28, value: 4500 },
-    { day: 30, value: 5200 },
+    { day: 1, value: 1000 }, { day: 5, value: 2400 },
+    { day: 10, value: 1800 }, { day: 15, value: 4200 },
+    { day: 20, value: 3600 }, { day: 25, value: 5800 },
+    { day: 30, value: 4800 },
   ], []);
 
-  // 2. Generate High-Resolution Data for Smoothness
-  const smoothData = useMemo(() => getSplinePoints(rawData, 20), [rawData]);
-  const maxValue = 8500;
+  const smoothData = useMemo(() => getSplinePoints(rawData, 15), [rawData]);
+  const maxValue = 6500;
 
+  // Handle Resize
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
@@ -92,132 +69,120 @@ const InteractiveInsightChart = () => {
         });
       }
     };
+    updateSize();
     window.addEventListener('resize', updateSize);
-    // Slight delay to ensure parent container is rendered
-    setTimeout(updateSize, 100);
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // 3. Convert Smooth Data to SVG Path String
+  // Generate Path
   const linePath = useMemo(() => {
     if (smoothData.length === 0) return "";
     const getCoord = (pt) => {
-      // Map X (Day 1-30) to Width
       const x = ((pt.day - 1) / 29) * dimensions.width;
-      // Map Y (Value) to Height
       const y = dimensions.height - (pt.value / maxValue) * dimensions.height;
       return `${x},${y}`;
     };
     return "M" + smoothData.map(getCoord).join(" L");
   }, [smoothData, dimensions, maxValue]);
 
-  // 4. Handle Mouse Move
+  // Handle Hover
   const handleMouseMove = (e) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
-
     const relativeX = Math.max(0, Math.min(mouseX, dimensions.width));
     const totalPoints = smoothData.length;
     const estimatedIndex = Math.floor((relativeX / dimensions.width) * (totalPoints - 1));
-
     setHoverIndex(estimatedIndex);
   };
 
   const handleMouseLeave = () => setHoverIndex(null);
 
-  // 5. Get Active Coordinates for Tooltip
+  // Active Data Point
   const activePoint = hoverIndex !== null ? smoothData[hoverIndex] : null;
   const activeX = activePoint ? ((activePoint.day - 1) / 29) * dimensions.width : 0;
   const activeY = activePoint ? dimensions.height - (activePoint.value / maxValue) * dimensions.height : 0;
 
   return (
-    // MODIFIED CONTAINER: Transparent bg, Wide, Centered, Outline kept
-    <div className="bg-transparent border border-white/10 rounded-3xl p-8 w-full max-w-7xl mx-auto relative group transition-all select-none">
-
-      {/* Background Glow (Adjusted for larger size) */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-[#00FF9D]/5 rounded-full blur-[100px] -z-10"></div>
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[100px] -z-10"></div>
-
-      {/* Header */}
-      <div className="mb-10 flex flex-col items-center justify-center text-center">
-        <h4 className="text-[#00FF9D] font-medium text-2xl mb-2 tracking-wide">Insights with AI</h4>
-        <div className="flex items-center gap-3 bg-white/5 px-4 py-1 rounded-full border border-white/5">
-          <span className="text-white font-bold text-lg">+20%</span>
-          <span className="text-gray-400 text-sm">Profit increase vs last week</span>
-        </div>
+    <div
+      // UPDATED POSITIONING HERE: Changed -left-6/md:-left-20 to left-4/md:-left-4
+      className="absolute bottom-0 left-8 md:-left-8 -right-8 md:-right-16 bg-[#0A1014]/1 backdrop-blur border border-[#00FF9D]/20 p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-float z-30 w-[260px] md:w-[300px]"
+      style={{ animationDelay: '2s' }}
+    >
+      {/* Header Area: Switch between Default and Hover State */}
+      <div className="h-12 mb-3 relative">
+        {activePoint ? (
+          // HOVER STATE: Show specific data
+          <div className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="p-2.5 bg-[#00FF9D]/10 rounded-xl text-[#00FF9D] shadow-[0_0_15px_rgba(0,255,157,0.1)]">
+              <BarChart2 size={20} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Day {activePoint.day.toFixed(0)}</p>
+              <p className="text-xl font-bold text-white leading-none mt-0.5">
+                ${activePoint.value.toFixed(0)}
+              </p>
+            </div>
+          </div>
+        ) : (
+          // DEFAULT STATE: "Insights with AI"
+          <div className="flex flex-col items-center justify-center pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <h4 className="text-[#00FF9D] font-bold text-sm mb-1 tracking-wide shadow-green-glow">
+              Insights with AI
+            </h4>
+            <div className="flex items-center gap-2 bg-white/5 px-3 py-0.5 rounded-full border border-white/10">
+              <span className="text-white font-bold text-xs">+20%</span>
+              <span className="text-gray-400 text-[10px]">vs last week</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Floating Tooltip (Follows Mouse) */}
-      <div
-        className={`absolute z-20 pointer-events-none transition-opacity duration-100 ${hoverIndex !== null ? 'opacity-100' : 'opacity-0'}`}
-        style={{
-          top: activeY - 100, // Moved up slightly
-          left: activeX,
-          transform: 'translateX(-50%)'
-        }}
-      >
-        <div className="bg-[#1f2937] border border-white/10 rounded-xl p-4 shadow-2xl w-40 text-center relative backdrop-blur-md">
-          <p className="text-xs text-gray-400 mb-1">Estimated Profit</p>
-          <p className="text-2xl font-bold text-white leading-none mb-1">
-            ${activePoint?.value.toFixed(0).toLocaleString()}
-          </p>
-          <p className="text-xs text-gray-400">December {activePoint?.day.toFixed(0)}</p>
-          {/* Arrow */}
-          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#1f2937] rotate-45 border-r border-b border-white/10"></div>
-        </div>
-      </div>
-
-      {/* Chart Area - MODIFIED HEIGHT */}
+      {/* Interactive Chart Area */}
       <div
         ref={containerRef}
-        // Increased height to 300px on mobile, 450px on desktop
-        className="relative h-[100px] md:h-[250px] w-full cursor-crosshair"
+        className="h-[80px] w-full relative cursor-crosshair"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {/* X-Axis Labels */}
-        <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-sm text-gray-500 font-mono px-2">
-          <span>Day 01</span><span>Day 10</span><span>Day 20</span><span>Day 30</span>
-        </div>
-
-        {/* Grid Lines (Horizontal) - Optional for better readability on big charts */}
-        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
-          <div className="border-t border-dashed border-white/10 w-full h-0"></div>
-          <div className="border-t border-dashed border-white/10 w-full h-0"></div>
-          <div className="border-t border-dashed border-white/10 w-full h-0"></div>
-          <div className="border-t border-dashed border-white/10 w-full h-0"></div>
-        </div>
-
         <svg className="w-full h-full overflow-visible">
           <defs>
-            <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#00FF9D" stopOpacity="0.2" />
+            <linearGradient id="miniChartGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#00FF9D" stopOpacity="0.3" />
               <stop offset="100%" stopColor="#00FF9D" stopOpacity="0" />
             </linearGradient>
           </defs>
 
           {/* Area Fill */}
-          <path d={`${linePath} L ${dimensions.width},${dimensions.height} L 0,${dimensions.height} Z`} fill="url(#chartGradient)" />
+          <path
+            d={`${linePath} L ${dimensions.width},${dimensions.height} L 0,${dimensions.height} Z`}
+            fill="url(#miniChartGradient)"
+          />
 
           {/* Line Stroke */}
-          <path d={linePath} fill="none" stroke="#00FF9D" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_15px_rgba(0,255,157,0.3)]" />
+          <path
+            d={linePath}
+            fill="none"
+            stroke="#00FF9D"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="drop-shadow-[0_0_10px_rgba(0,255,157,0.4)]"
+          />
 
-          {/* Interactive Elements */}
+          {/* Interactive Elements (Hover) */}
           {hoverIndex !== null && (
             <>
-              {/* Vertical Dashed Line */}
               <line
-                x1={activeX} y1={0} // From top
+                x1={activeX} y1={0}
                 x2={activeX} y2={dimensions.height}
-                stroke="#00FF9D" strokeWidth="1" strokeDasharray="6 6"
-                className="opacity-50"
+                stroke="#00FF9D" strokeWidth="1"
+                strokeDasharray="4 4" className="opacity-50"
               />
-              {/* White Dot with Green Border */}
               <circle
-                cx={activeX} cy={activeY} r="6"
-                fill="#0A1014" stroke="#00FF9D" strokeWidth="3"
-                className="shadow-[0_0_15px_#00FF9D]"
+                cx={activeX} cy={activeY} r="4"
+                fill="#0A1014" stroke="#00FF9D" strokeWidth="2"
+                className="shadow-[0_0_10px_#00FF9D]"
               />
             </>
           )}
@@ -226,7 +191,6 @@ const InteractiveInsightChart = () => {
     </div>
   );
 };
-
 
 /* =========================================
    REST OF COMPONENT
@@ -244,20 +208,16 @@ const MARQUEE_LOGOS = [...EXCHANGES, ...EXCHANGES, ...EXCHANGES, ...EXCHANGES];
 
 const CountUp = ({ end, duration = 2000, suffix = '', prefix = '', decimals = 0 }) => {
   const [count, setCount] = useState(0);
-
   useEffect(() => {
     let startTimestamp = null;
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       setCount(progress * end);
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
+      if (progress < 1) window.requestAnimationFrame(step);
     };
     window.requestAnimationFrame(step);
   }, [end, duration]);
-
   return <>{prefix}{count.toFixed(decimals)}{suffix}</>;
 };
 
@@ -276,17 +236,13 @@ const StepCard = ({ number, title, description, icon }) => (
     <div className="text-4xl font-bold text-white mb-4 group-hover:text-[#00FF9D] transition-colors">{number}</div>
     <h3 className="text-xl font-bold mb-2 text-white group-hover:text-[#00FF9D] transition-colors">{title}</h3>
     <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-    <div className="mt-6 flex items-center text-[#00FF9D] text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
-      Learn More <ChevronRight size={16} />
-    </div>
+    <div className="mt-6 flex items-center text-[#00FF9D] text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">Learn More <ChevronRight size={16} /></div>
   </div>
 );
 
 const BotCard = ({ title, desc, icon }) => (
   <div className="bg-[#080C0F] p-6 rounded-2xl border border-white/5 flex gap-4 hover:bg-white/5 transition-all cursor-pointer group hover:border-[#00FF9D]/30 hover:shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-    <div className="w-12 h-12 rounded-full bg-[#00FF9D]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-[0_0_10px_rgba(0,255,157,0.1)] group-hover:shadow-[0_0_15px_rgba(0,255,157,0.3)]">
-      {icon}
-    </div>
+    <div className="w-12 h-12 rounded-full bg-[#00FF9D]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-[0_0_10px_rgba(0,255,157,0.1)] group-hover:shadow-[0_0_15px_rgba(0,255,157,0.3)]">{icon}</div>
     <div>
       <div className="flex justify-between items-start">
         <h3 className="font-bold text-lg mb-1 group-hover:text-[#00FF9D] transition-colors">{title}</h3>
@@ -299,9 +255,7 @@ const BotCard = ({ title, desc, icon }) => (
 
 const SecurityCard = ({ title, desc, icon }) => (
   <div className="bg-[#0A1014]/80 backdrop-blur-sm p-6 rounded-2xl border border-white/5 relative z-10 hover:border-[#00FF9D]/30 transition-all hover:-translate-y-1">
-    <div className="w-16 h-16 mx-auto bg-gray-800/50 rounded-full flex items-center justify-center text-gray-400 mb-4 group-hover:text-[#00FF9D] transition-colors">
-      {icon}
-    </div>
+    <div className="w-16 h-16 mx-auto bg-gray-800/50 rounded-full flex items-center justify-center text-gray-400 mb-4 group-hover:text-[#00FF9D] transition-colors">{icon}</div>
     <h3 className="text-lg font-bold mb-2">{title}</h3>
     <p className="text-sm text-gray-400">{desc}</p>
   </div>
@@ -311,60 +265,41 @@ const AccordionItem = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="border-b border-white/5">
-      <button
-        className="w-full py-6 flex items-center justify-between text-left hover:text-[#00FF9D] transition-colors group"
-        onClick={() => setIsOpen(!isOpen)}
-      >
+      <button className="w-full py-6 flex items-center justify-between text-left hover:text-[#00FF9D] transition-colors group" onClick={() => setIsOpen(!isOpen)}>
         <span className="font-medium text-lg text-gray-200 group-hover:text-[#00FF9D]">{question}</span>
         <ChevronDown className={`transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#00FF9D]' : 'text-gray-500'}`} />
       </button>
-      <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-48 opacity-100 pb-6' : 'max-h-0 opacity-0'}`}>
-        <p className="text-gray-400 leading-relaxed">{answer}</p>
-      </div>
+      <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-48 opacity-100 pb-6' : 'max-h-0 opacity-0'}`}><p className="text-gray-400 leading-relaxed">{answer}</p></div>
     </div>
   );
 };
 
 const AnimatedProfitCard = () => {
   const [progress, setProgress] = useState(0);
-  const duration = 5000; // 5 seconds (Slow)
+  const duration = 5000;
   const targetProfit = 12450;
-  const targetWidth = 75; // Stops at 75% width
-
+  const targetWidth = 75;
   useEffect(() => {
     let startTimestamp = null;
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const p = Math.min((timestamp - startTimestamp) / duration, 1);
       setProgress(p);
-      if (p < 1) {
-        window.requestAnimationFrame(step);
-      }
+      if (p < 1) window.requestAnimationFrame(step);
     };
     window.requestAnimationFrame(step);
   }, []);
-
   return (
     <div className="absolute top-10 -left-4 md:-left-12 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float-delayed z-20">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-8 h-8 rounded-full bg-[#00FF9D]/10 flex items-center justify-center text-[#00FF9D]">
-          <Activity size={16} />
-        </div>
+        <div className="w-8 h-8 rounded-full bg-[#00FF9D]/10 flex items-center justify-center text-[#00FF9D]"><Activity size={16} /></div>
         <div>
           <p className="text-xs text-gray-400">Total Profit</p>
-          <p className="text-sm font-bold text-white">
-            {/* The number grows based on progress */}
-            ${(targetProfit * progress).toFixed(2)}
-          </p>
+          <p className="text-sm font-bold text-white">${(targetProfit * progress).toFixed(2)}</p>
         </div>
       </div>
-
-      {/* The Bar grows based on the SAME progress */}
       <div className="h-1 w-32 bg-gray-800 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-[#00FF9D] shadow-[0_0_10px_#00FF9D]"
-          style={{ width: `${targetWidth * progress}%` }}
-        ></div>
+        <div className="h-full bg-[#00FF9D] shadow-[0_0_10px_#00FF9D]" style={{ width: `${targetWidth * progress}%` }}></div>
       </div>
     </div>
   );
@@ -374,98 +309,58 @@ const LandingPage = () => {
   const navigate = useNavigate();
   return (
     <>
-      {/* --- Hero Section --- */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden z-10">
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-[0_0_15px_rgba(0,255,157,0.1)]">
-              <span className="w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]"></span>
-              AI Powered Trading 2.0
+              <span className="w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]"></span> AI Powered Trading 2.0
             </div>
             <h1 className="text-5xl lg:text-7xl 3xl:text-9xl font-light leading-[1.1] tracking-tight text-white drop-shadow-2xl">
-              Smarter Business <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF9D] via-[#00FF9D] to-[#00A3FF]">
-                Powered by AI
-              </span>
+              Smarter Business <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF9D] via-[#00FF9D] to-[#00A3FF]">Powered by AI</span>
             </h1>
             <p className="text-gray-400 text-light leading-relaxed max-w-lg">
-              Automate your trading strategies with our advanced AI algorithms.
-              Maximize profits, minimize risks, and trade 24/7 across all major exchanges without lifting a finger.
+              Automate your trading strategies with our advanced AI algorithms. Maximize profits, minimize risks, and trade 24/7 across all major exchanges without lifting a finger.
             </p>
-
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button
-                onClick={() => navigate('/pricing')}
-                className="bg-[#00FF9D] text-black px-8 py-4 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:shadow-[0_0_30px_rgba(0,255,157,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2"
-              >
-                Start For Free <ArrowRight size={20} />
-              </button>
-              <button className="bg-white/5 text-white border border-white/10 px-8 py-4 rounded-full font-bold hover:bg-white/10 transition-all flex items-center justify-center gap-2 backdrop-blur-sm">
-                <Play size={18} fill="currentColor" /> Watch Demo
-              </button>
+              <button onClick={() => navigate('/pricing')} className="bg-[#00FF9D] text-black px-8 py-4 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:shadow-[0_0_30px_rgba(0,255,157,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2">Start For Free <ArrowRight size={20} /></button>
+              <button className="bg-white/5 text-white border border-white/10 px-8 py-4 rounded-full font-bold hover:bg-white/10 transition-all flex items-center justify-center gap-2 backdrop-blur-sm"><Play size={18} fill="currentColor" /> Watch Demo</button>
             </div>
-
-            {/* --- UPDATED: ANIMATED STATS SECTION --- */}
             <div className="container mx-auto px-6 relative z-10 -mt-10 md:-mt-20 lg:mt-0 mb-20">
               <div style={{ fontFamily: "'Poppins', sans-serif" }} className="pt-8 border-t border-white/5">
-
                 <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
-
-                  {/* LEFT SIDE: Stats Text */}
                   <div className="flex-1 flex items-center justify-between gap-6 w-full">
                     <div>
-                      <p className="text-3xl md:text-5xl font-light text-white shadow-[#00FF9D] mb-1">
-                        <CountUp end={10} suffix="B+" duration={2000} />
-                      </p>
+                      <p className="text-3xl md:text-5xl font-light text-white shadow-[#00FF9D] mb-1"><CountUp end={10} suffix="B+" duration={2000} /></p>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Volume Traded</p>
                     </div>
-
                     <div className="w-px h-12 bg-white/10"></div>
-
                     <div>
-                      <p className="text-3xl md:text-5xl font-light text-white mb-1">
-                        <CountUp end={24} suffix="/7" duration={2000} />
-                      </p>
+                      <p className="text-3xl md:text-5xl font-light text-white mb-1"><CountUp end={24} suffix="/7" duration={2000} /></p>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Uptime</p>
                     </div>
-
                     <div className="w-px h-12 bg-white/10"></div>
-
                     <div>
-                      <p className="text-3xl md:text-5xl font-light text-white mb-1">
-                        <CountUp end={15} suffix="+" duration={2000} />
-                      </p>
+                      <p className="text-3xl md:text-5xl font-light text-white mb-1"><CountUp end={15} suffix="+" duration={2000} /></p>
                       <p className="text-xs text-gray-500 uppercase tracking-wide">Exchanges</p>
                     </div>
                   </div>
-
-
                 </div>
               </div>
             </div>
-
           </div>
-
-          {/* Hero Image with Animation */}
           <div className="relative z-10 lg:h-[600px] flex items-center justify-center">
             <div className="relative w-full max-w-[500px] 2xl:max-w-[700px] 3xl:max-w-[900px] animate-float">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[#00FF9D]/20 blur-[60px] rounded-full"></div>
+              <img src="/hero.png" onError={(e) => { e.currentTarget.style.display = 'none'; }} alt="AI Neural Network" className="w-full h-auto object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
 
-              <img
-                src="/hero.png"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                alt="AI Neural Network"
-                className="w-full h-auto object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-              />
-
-              {/* Floating Cards */}
+              {/* Existing Card 1: Top Left */}
               <AnimatedProfitCard />
-              <div className="absolute bottom-10 -right-4 md:right-0 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float z-20">
+
+              {/* Existing Card 2: Bottom Right (MOVED UP to bottom-32) */}
+              <div className="absolute top-10 -right-4 md:right-0 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float z-20">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                      <Cpu size={20} />
-                    </div>
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400"><Cpu size={20} /></div>
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#00FF9D] rounded-full border-2 border-[#0A1014] shadow-[0_0_5px_#00FF9D]"></div>
                   </div>
                   <div>
@@ -474,54 +369,34 @@ const LandingPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* --- NEW FLOATING CHART CARD (With Default "Insights with AI" view) --- */}
+              <FloatingChartCard />
+
             </div>
           </div>
         </div>
       </section>
 
-      {/* --- CHART SECTION (Modified Layout) --- */}
-      <div className="container mx-auto px-6 py-12 flex justify-center w-full">
-        <InteractiveInsightChart />
-      </div>
+      {/* --- Chart Section Removed --- */}
 
-      {/* --- Steps Section --- */}
       <section className="py-20 relative z-10">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="inline-block px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider mb-4 shadow-[0_0_10px_rgba(0,255,157,0.1)]">
-              Easy Start
-            </div>
+            <div className="inline-block px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider mb-4 shadow-[0_0_10px_rgba(0,255,157,0.1)]">Easy Start</div>
             <h2 className="text-3xl md:text-4xl font-bold">Get Started in 3 Steps</h2>
             <p className="text-gray-400 mt-4 max-w-xl mx-auto">Start your automated trading journey in minutes. No coding required.</p>
           </div>
-
           <div className="grid md:grid-cols-3 gap-8">
-            <StepCard
-              number="01"
-              title="Sign Up"
-              description="Create your free account in less than 30 seconds."
-              icon={<div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-6 ring-1 ring-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]"><Lock size={24} /></div>}
-            />
-            <StepCard
-              number="02"
-              title="Connect Exchange"
-              description="Securely connect your favorite exchanges via API keys."
-              icon={<div className="w-12 h-12 rounded-xl bg-[#00FF9D]/10 text-[#00FF9D] flex items-center justify-center mb-6 ring-1 ring-[#00FF9D]/30 shadow-[0_0_15px_rgba(0,255,157,0.2)]"><Zap size={24} /></div>}
-            />
-            <StepCard
-              number="03"
-              title="Start Trading"
-              description="Select a bot or strategy and start profiting instantly."
-              icon={<div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-6 ring-1 ring-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]"><BarChart2 size={24} /></div>}
-            />
+            <StepCard number="01" title="Sign Up" description="Create your free account in less than 30 seconds." icon={<div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-6 ring-1 ring-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]"><Lock size={24} /></div>} />
+            <StepCard number="02" title="Connect Exchange" description="Securely connect your favorite exchanges via API keys." icon={<div className="w-12 h-12 rounded-xl bg-[#00FF9D]/10 text-[#00FF9D] flex items-center justify-center mb-6 ring-1 ring-[#00FF9D]/30 shadow-[0_0_15px_rgba(0,255,157,0.2)]"><Zap size={24} /></div>} />
+            <StepCard number="03" title="Start Trading" description="Select a bot or strategy and start profiting instantly." icon={<div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-6 ring-1 ring-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]"><BarChart2 size={24} /></div>} />
           </div>
         </div>
       </section>
 
-      {/* --- Features Section --- */}
       <section className="py-24 relative overflow-hidden z-10" id="features">
         <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00A3FF]/5 blur-[120px] rounded-full -z-10"></div>
-
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
           <div className="order-2 lg:order-1 relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-[#00FF9D] to-[#00A3FF] rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
@@ -529,191 +404,95 @@ const LandingPage = () => {
               <div className="absolute inset-0 bg-gradient-to-tr from-[#00FF9D]/5 to-blue-500/5 rounded-2xl"></div>
               <div className="flex items-center justify-between p-4 border-b border-white/5">
                 <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.8)]"></div>
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div><div className="w-3 h-3 rounded-full bg-yellow-500"></div><div className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.8)]"></div>
                 </div>
                 <div className="text-xs text-gray-500">FydBlock Dashboard</div>
               </div>
               <div className="p-6 grid gap-6">
                 <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-gray-400 text-sm">Portfolio Balance</p>
-                    <p className="text-3xl font-bold text-white mt-1">$42,593.00</p>
-                  </div>
+                  <div><p className="text-gray-400 text-sm">Portfolio Balance</p><p className="text-3xl font-bold text-white mt-1">$42,593.00</p></div>
                   <div className="text-[#00FF9D] text-sm font-bold bg-[#00FF9D]/10 px-2 py-1 rounded shadow-[0_0_10px_rgba(0,255,157,0.1)]">+24.5%</div>
                 </div>
-                {/* --- NEW LINE CHART SVG --- */}
                 <div className="h-48 w-full bg-[#0A1014] rounded-lg border border-white/5 relative overflow-hidden group-hover:border-[#00FF9D]/30 transition-colors">
-
-                  {/* Grid Lines (Optional background decoration) */}
                   <div className="absolute inset-0 grid grid-cols-4 grid-rows-4">
-                    <div className="border-r border-white/5"></div>
-                    <div className="border-r border-white/5"></div>
-                    <div className="border-r border-white/5"></div>
-                    <div className="border-r border-white/5"></div>
+                    <div className="border-r border-white/5"></div><div className="border-r border-white/5"></div><div className="border-r border-white/5"></div><div className="border-r border-white/5"></div>
                   </div>
                   <div className="absolute inset-0 grid grid-rows-4">
-                    <div className="border-b border-white/5"></div>
-                    <div className="border-b border-white/5"></div>
-                    <div className="border-b border-white/5"></div>
+                    <div className="border-b border-white/5"></div><div className="border-b border-white/5"></div><div className="border-b border-white/5"></div>
                   </div>
-
-                  {/* The Chart */}
-                  <svg
-                    viewBox="0 0 400 200"
-                    className="w-full h-full absolute bottom-0 left-0"
-                    preserveAspectRatio="none"
-                  >
+                  <svg viewBox="0 0 400 200" className="w-full h-full absolute bottom-0 left-0" preserveAspectRatio="none">
                     <defs>
-                      <linearGradient id="chartGradient2" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="#00FF9D" stopOpacity="0.4" />
-                        <stop offset="100%" stopColor="#00FF9D" stopOpacity="0" />
-                      </linearGradient>
+                      <linearGradient id="chartGradient2" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#00FF9D" stopOpacity="0.4" /><stop offset="100%" stopColor="#00FF9D" stopOpacity="0" /></linearGradient>
                     </defs>
-
-                    {/* The Area Fill (Under the line) */}
-                    <path
-                      d="M0,200 L0,150 L40,130 L80,160 L120,100 L160,120 L200,80 L240,90 L280,50 L320,70 L360,30 L400,10 L400,200 Z"
-                      fill="url(#chartGradient2)"
-                    />
-
-                    {/* The Stroke Line (The actual graph) */}
-                    <path
-                      d="M0,150 L40,130 L80,160 L120,100 L160,120 L200,80 L240,90 L280,50 L320,70 L360,30 L400,10"
-                      fill="none"
-                      stroke="#00FF9D"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="drop-shadow-[0_0_10px_rgba(0,255,157,0.5)]"
-                    />
-
-                    {/* Animated Dot at the end */}
+                    <path d="M0,200 L0,150 L40,130 L80,160 L120,100 L160,120 L200,80 L240,90 L280,50 L320,70 L360,30 L400,10 L400,200 Z" fill="url(#chartGradient2)" />
+                    <path d="M0,150 L40,130 L80,160 L120,100 L160,120 L200,80 L240,90 L280,50 L320,70 L360,30 L400,10" fill="none" stroke="#00FF9D" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_10px_rgba(0,255,157,0.5)]" />
                     <circle cx="400" cy="10" r="4" fill="#00FF9D" className="animate-pulse shadow-[0_0_10px_#00FF9D]" />
                   </svg>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/5 p-4 rounded-xl backdrop-blur-sm">
-                    <p className="text-xs text-gray-400">Active Bots</p>
-                    <p className="text-xl font-bold">12</p>
-                  </div>
-                  <div className="bg-white/5 p-4 rounded-xl backdrop-blur-sm">
-                    <p className="text-xs text-gray-400">24h Profit</p>
-                    <p className="text-xl font-bold text-[#00FF9D]">+$430</p>
-                  </div>
+                  <div className="bg-white/5 p-4 rounded-xl backdrop-blur-sm"><p className="text-xs text-gray-400">Active Bots</p><p className="text-xl font-bold">12</p></div>
+                  <div className="bg-white/5 p-4 rounded-xl backdrop-blur-sm"><p className="text-xs text-gray-400">24h Profit</p><p className="text-xl font-bold text-[#00FF9D]">+$430</p></div>
                 </div>
               </div>
             </div>
           </div>
-
           <div className="order-1 lg:order-2">
-            <div className="inline-block px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider mb-6">
-              All-In-One
-            </div>
+            <div className="inline-block px-4 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider mb-6">All-In-One</div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6">One Platform,<br />Many Trading Tools</h2>
-            <p className="text-gray-400 text-lg mb-8 leading-relaxed">
-              Why switch between apps? Get everything you need to trade successfully in one unified dashboard. Real-time analytics, multiple exchange support, and smart automation.
-            </p>
-
+            <p className="text-gray-400 text-lg mb-8 leading-relaxed">Why switch between apps? Get everything you need to trade successfully in one unified dashboard. Real-time analytics, multiple exchange support, and smart automation.</p>
             <ul className="space-y-4">
               <FeatureItem text="Smart Trade Terminal for Manual Trading" />
               <FeatureItem text="DCA, Grid, and Futures Bots" />
               <FeatureItem text="Trailing Stop-Loss & Take-Profit" />
               <FeatureItem text="Portfolio Tracking & Analytics" />
             </ul>
-
-            <button className="mt-8 bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-colors shadow-[0_0_20px_rgba(0,255,157,0.3)]">
-              Explore Features
-            </button>
+            <button className="mt-8 bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-colors shadow-[0_0_20px_rgba(0,255,157,0.3)]">Explore Features</button>
           </div>
         </div>
       </section>
 
-      {/* --- Bots Section --- */}
       <section className="py-24 relative z-10" id="bots">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">FydBlock Bots For Everyone</h2>
             <p className="text-gray-400">Choose the perfect strategy for your risk level and goals.</p>
           </div>
-
           <div className="grid md:grid-cols-2 gap-6">
-            <BotCard
-              title="DCA Bot"
-              desc="Dollar Cost Averaging strategy to buy low and sell high automatically over time. Best for accumulating assets."
-              icon={<Layers className="text-[#00FF9D]" />}
-            />
-            <BotCard
-              title="Grid Bot"
-              desc="Profit from small price fluctuations in sideways markets. Buys when price drops, sells when it rises."
-              icon={<div className="grid grid-cols-2 gap-1 w-5 h-5"><div className="bg-[#00FF9D] shadow-[0_0_5px_#00FF9D]"></div><div className="bg-[#00FF9D]/30"></div><div className="bg-[#00FF9D]/30"></div><div className="bg-[#00FF9D] shadow-[0_0_5px_#00FF9D]"></div></div>}
-            />
-            <BotCard
-              title="Futures Bot"
-              desc="Advanced bot for trading futures contracts with leverage. Includes long and short strategies."
-              icon={<Activity className="text-[#00FF9D]" />}
-            />
-            <BotCard
-              title="Signal Bot"
-              desc="Execute trades automatically based on TradingView custom signals or technical indicators."
-              icon={<Zap className="text-[#00FF9D]" />}
-            />
+            <BotCard title="DCA Bot" desc="Dollar Cost Averaging strategy to buy low and sell high automatically over time. Best for accumulating assets." icon={<Layers className="text-[#00FF9D]" />} />
+            <BotCard title="Grid Bot" desc="Profit from small price fluctuations in sideways markets. Buys when price drops, sells when it rises." icon={<div className="grid grid-cols-2 gap-1 w-5 h-5"><div className="bg-[#00FF9D] shadow-[0_0_5px_#00FF9D]"></div><div className="bg-[#00FF9D]/30"></div><div className="bg-[#00FF9D]/30"></div><div className="bg-[#00FF9D] shadow-[0_0_5px_#00FF9D]"></div></div>} />
+            <BotCard title="Futures Bot" desc="Advanced bot for trading futures contracts with leverage. Includes long and short strategies." icon={<Activity className="text-[#00FF9D]" />} />
+            <BotCard title="Signal Bot" desc="Execute trades automatically based on TradingView custom signals or technical indicators." icon={<Zap className="text-[#00FF9D]" />} />
           </div>
         </div>
       </section>
 
-      {/* --- Exchanges Marquee --- */}
       <section className="py-20 border-y border-white/5 bg-[#080C0F]/50 backdrop-blur-sm relative z-10">
-        <div className="container mx-auto px-6 text-center mb-10">
-          <h3 className="text-xl text-gray-400 font-medium">Connect All Your Exchanges In Seconds</h3>
-        </div>
-
+        <div className="container mx-auto px-6 text-center mb-10"><h3 className="text-xl text-gray-400 font-medium">Connect All Your Exchanges In Seconds</h3></div>
         <div className="overflow-hidden relative w-full mask-linear-gradient">
           <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#050B0D] to-transparent z-10"></div>
           <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#050B0D] to-transparent z-10"></div>
-
           <div className="flex gap-16 animate-marquee whitespace-nowrap px-6 transition-all duration-500 w-max">
             {MARQUEE_LOGOS.map((ex, i) => (
               <span key={i} className="text-2xl font-bold font-mono tracking-widest text-white/40 flex items-center gap-4 hover:text-[#00FF9D] hover:shadow-[0_0_10px_rgba(0,255,157,0.2)] transition-all cursor-default group">
-                <img
-                  src={`/logos/${ex.logo}`}
-                  alt={ex.name}
-                  className="w-14 h-14 object-contain transition-opacity"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-                <span className="w-14 h-14 rounded bg-white/10 hidden"></span>
-                {ex.name}
+                <img src={`/logos/${ex.logo}`} alt={ex.name} className="w-14 h-14 object-contain transition-opacity" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+                <span className="w-14 h-14 rounded bg-white/10 hidden"></span>{ex.name}
               </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* --- Security Section --- */}
       <section className="py-24 relative z-10">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Secure By Design. Reliable. Transparent.</h2>
             <p className="text-gray-400">Your funds stay on your exchange. We only use API keys for trading.</p>
           </div>
-
           <div className="relative max-w-4xl mx-auto">
-            {/* --- Desktop: Horizontal Arch Line (Existing) --- */}
-            <div className="hidden md:block absolute top-20 left-1/2 -translate-x-1/2 w-[80%] h-[150px] border-t-2 border-r-2 border-l-2 border-dashed border-[#00FF9D]/20 rounded-t-[50px] -z-10"></div> {/* Line Across the shield */}
-
-            {/* --- Mobile: Vertical Arch Line (New) --- */}
+            <div className="hidden md:block absolute top-20 left-1/2 -translate-x-1/2 w-[80%] h-[150px] border-t-2 border-r-2 border-l-2 border-dashed border-[#00FF9D]/20 rounded-t-[50px] -z-10"></div>
             <div className="md:hidden absolute top-12 bottom-12 left-1/2 -translate-x-1/2 w-px border-l-2 border-dashed border-[#00FF9D]/20 -z-10"></div>
-
             <div className="grid md:grid-cols-3 gap-8 text-center pt-8">
-              <SecurityCard
-                title="Encrypted Keys"
-                desc="API keys are encrypted and stored in secure containers using RSA 2048-bit encryption."
-                icon={<Lock size={32} />}
-              />
+              <SecurityCard title="Encrypted Keys" desc="API keys are encrypted and stored in secure containers using RSA 2048-bit encryption." icon={<Lock size={32} />} />
               <div className="relative mt-12 md:mt-0">
                 <div className="w-24 h-24 mx-auto bg-[#00FF9D]/10 rounded-full flex items-center justify-center border border-[#00FF9D] shadow-[0_0_40px_rgba(0,255,157,0.4)] mb-6 z-10 relative backdrop-blur-md">
                   <Shield size={40} className="text-[#00FF9D]" />
@@ -721,25 +500,18 @@ const LandingPage = () => {
                 <h3 className="text-xl font-bold mb-2">Bank-Grade Security</h3>
                 <p className="text-sm text-gray-400">Regular security audits and bounty programs.</p>
               </div>
-              <SecurityCard
-                title="No Withdrawal Rights"
-                desc="Our system only requests 'Trade' permission. We can never withdraw your funds."
-                icon={<CheckCircle2 size={32} />}
-              />
+              <SecurityCard title="No Withdrawal Rights" desc="Our system only requests 'Trade' permission. We can never withdraw your funds." icon={<CheckCircle2 size={32} />} />
             </div>
           </div>
         </div>
       </section>
 
-      {/* --- FAQ Section --- */}
       <section className="py-24 relative z-10" id="faq">
         <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-4">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">FydBlock <br />Frequently Asked Questions</h2>
             <p className="text-gray-400 mb-8">Can't find the answer you're looking for? Reach out to our customer support team.</p>
-            <button className="text-[#00FF9D] font-bold flex items-center gap-2 hover:gap-4 transition-all hover:text-white">
-              Contact Support <ArrowRight size={20} />
-            </button>
+            <button className="text-[#00FF9D] font-bold flex items-center gap-2 hover:gap-4 transition-all hover:text-white">Contact Support <ArrowRight size={20} /></button>
           </div>
           <div className="lg:col-span-8 space-y-4">
             <AccordionItem question="Is my money safe with FydBlock?" answer="Absolutely. Your funds always remain on your exchange account (like Binance or Coinbase). FydBlock simply sends trade commands via API keys which you configure to disable withdrawal permissions." />
@@ -750,77 +522,35 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Globe & Social Proof */}
       <section className="py-32 relative overflow-hidden z-10 min-h-[600px] flex items-center">
-        <div className="absolute inset-0 z-0">
-          <WorldGlobe />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,_#050B0D_90%)] pointer-events-none"></div>
-        </div>
-
+        <div className="absolute inset-0 z-0"><WorldGlobe /><div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,_#050B0D_90%)] pointer-events-none"></div></div>
         <div className="container mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
           <div className="max-w-xl">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">
-              Used by 10,000+ <br />
-              Traders around the World
-            </h2>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">Used by 10,000+ <br /> Traders around the World</h2>
             <p className="text-gray-300 font-medium text-lg drop-shadow-md">Join a global community of smart investors trading from over 150 countries.</p>
-
-            {/* JOIN BUTTON */}
-            <button
-              onClick={() => navigate('/signup')}
-              className="mt-8 bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:scale-105 shadow-[0_0_15px_rgba(0,255,157,0.3)]"
-            >
-              Join Now
-            </button>
+            <button onClick={() => navigate('/signup')} className="mt-8 bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all hover:scale-105 shadow-[0_0_15px_rgba(0,255,157,0.3)]">Join Now</button>
           </div>
-
           <div className="bg-[#0A1014]/80 backdrop-blur-md p-6 rounded-2xl border border-white/10 max-w-sm shadow-2xl relative">
-            {/* Ping Animation Dot */}
             <div className="absolute -top-2 -right-2 w-4 h-4 bg-[#00FF9D] rounded-full shadow-[0_0_10px_#00FF9D] animate-ping"></div>
-
             <div className="flex gap-4 items-center mb-4">
-              {/* --- IMAGE ADDED HERE --- */}
-              <img
-                src="./profile1.png"   /* <--- Make sure to put your image file here */
-                alt="Alex M."
-                className="w-12 h-12 rounded-full object-cover border border-white/20"
-                /* This keeps the gray circle if the image fails to load */
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'block';
-                }}
-              />
-              {/* Backup Gray Circle */}
+              <img src="./profile1.png" alt="Alex M." className="w-12 h-12 rounded-full object-cover border border-white/20" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
               <div className="w-12 h-12 bg-gray-600 rounded-full hidden"></div>
-              {/* ------------------------ */}
-
-              <div>
-                <p className="font-bold text-white">Alex M.</p>
-                <p className="text-xs text-gray-400">Pro Trader, UK</p>
-              </div>
+              <div><p className="font-bold text-white">Alex M.</p><p className="text-xs text-gray-400">Pro Trader, UK</p></div>
               <div className="ml-auto text-[#00FF9D] drop-shadow-[0_0_5px_rgba(0,255,157,0.5)]">★★★★★</div>
             </div>
-
-            <p className="text-gray-300 italic text-sm leading-relaxed">
-              "I've tried 3Commas and Cryptohopper, but FydBlock's interface is by far the most intuitive. My DCA bots have been running for 3 months with consistent profits."
-            </p>
+            <p className="text-gray-300 italic text-sm leading-relaxed">"I've tried 3Commas and Cryptohopper, but FydBlock's interface is by far the most intuitive. My DCA bots have been running for 3 months with consistent profits."</p>
           </div>
         </div>
       </section>
 
-      {/* Footer CTA */}
       <section className="py-24 px-6 relative z-10">
         <div className="container mx-auto">
-          {/* Changed p-24 to p-8 md:p-24 to fix mobile view */}
           <div className="bg-gradient-to-r from-[#00FF9D]/10 to-blue-500/10 border border-[#00FF9D]/30 rounded-3xl p-8 md:p-24 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#00FF9D]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-1000"></div>
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
             <h2 className="text-3xl md:text-5xl font-bold mb-6 relative z-10 text-white">Why Aren't You Trading Yet?</h2>
             <p className="text-gray-300 mb-8 max-w-2xl mx-auto relative z-10">Don't leave money on the table. Set up your first bot today and let the AI do the heavy lifting.</p>
-            <button className="bg-white text-black px-10 py-4 rounded-full font-bold hover:bg-[#00FF9D] transition-all hover:scale-105 hover:shadow-[0_0_25px_rgba(0,255,157,0.5)] relative z-10"
-              onClick={() => navigate('/pricing')}>
-              Start Free Trial
-            </button>
+            <button className="bg-white text-black px-10 py-4 rounded-full font-bold hover:bg-[#00FF9D] transition-all hover:scale-105 hover:shadow-[0_0_25px_rgba(0,255,157,0.5)] relative z-10" onClick={() => navigate('/pricing')}>Start Free Trial</button>
           </div>
         </div>
       </section>
