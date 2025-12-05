@@ -1,18 +1,43 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Eye, EyeOff, Check, Wallet } from 'lucide-react';
+import {
+    ArrowLeft, Eye, EyeOff, Check, Wallet,
+    Loader2, AlertCircle, CheckCircle
+} from 'lucide-react'; // Added new icons
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL from './config'; // Import API URL
+import API_BASE_URL from './config';
 
 const SignUp = () => {
     const navigate = useNavigate();
+
+    // Visibility toggles
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     const [activeTab, setActiveTab] = useState('signup');
 
-    // --- Form State ---
+    // Form State
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [agreed, setAgreed] = useState(false);
 
-    // Handle Tab Switching
+    // UI States for UX Improvement
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+
+    // Focus State for showing rules
+    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+
+    // Password Validation Rules
+    const passwordRules = [
+        { label: "8 characters", test: (p) => p.length >= 8 },
+        { label: "1 lowercase letter", test: (p) => /[a-z]/.test(p) },
+        { label: "1 special character", test: (p) => /[^A-Za-z0-9]/.test(p) },
+        { label: "1 uppercase letter", test: (p) => /[A-Z]/.test(p) },
+        { label: "1 number", test: (p) => /\d/.test(p) },
+    ];
+
     const handleTabClick = (tab) => {
         setActiveTab(tab);
         if (tab === 'login') {
@@ -20,9 +45,34 @@ const SignUp = () => {
         }
     };
 
-    // --- Handle Sign Up Submission ---
     const handleSignUp = async (e) => {
         e.preventDefault();
+
+        // Reset previous states
+        setError('');
+        setSuccess('');
+
+        // 1. Validate Terms Agreement
+        if (!agreed) {
+            setError("You must agree to the Terms of Service to create an account.");
+            return;
+        }
+
+        // 2. Validate Password Match
+        if (password !== confirmPassword) {
+            setError("Passwords do not match!");
+            return;
+        }
+
+        // 3. Validate Password Strength
+        const isPasswordValid = passwordRules.every(rule => rule.test(password));
+        if (!isPasswordValid) {
+            setError("Please meet all password requirements.");
+            return;
+        }
+
+        // Start Loading
+        setIsLoading(true);
 
         try {
             const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -34,16 +84,23 @@ const SignUp = () => {
             const data = await response.json();
 
             if (response.ok) {
-                // Ideally, auto-login the user here by getting a token
-                // For now, we redirect them to the Bot Builder as requested
-                alert('Account created! Proceeding to Bot Setup...');
-                navigate('/bot-builder');
+                // Success State
+                setSuccess('Account created successfully! Redirecting...');
+                // Optional: Wait 1.5s so user sees the success message before moving
+                setTimeout(() => {
+                    navigate('/bot-builder');
+                }, 1500);
             } else {
-                alert(data.message || 'Registration failed');
+                // API Error State
+                setError(data.message || 'Registration failed. Please try again.');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Server error. Is the backend running?');
+            setError('Unable to connect to the server. Please check your connection.');
+        } finally {
+            // Stop Loading (unless successful, we might want to keep it while redirecting)
+            // But usually good to stop it to show the success message clearly
+            setIsLoading(false);
         }
     };
 
@@ -78,7 +135,7 @@ const SignUp = () => {
                     <div className="max-w-md w-full">
 
                         {/* Tabs */}
-                        <div className="flex gap-8 mb-10">
+                        <div className="flex gap-8 mb-8">
                             <button
                                 onClick={() => handleTabClick('login')}
                                 className={`text-2xl font-bold pb-2 relative transition-all ${activeTab === 'login' ? 'text-white' : 'text-gray-500'}`}
@@ -99,71 +156,149 @@ const SignUp = () => {
                             </button>
                         </div>
 
+                        {/* --- STATUS MESSAGES (Success/Error) --- */}
+                        {error && (
+                            <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/50 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
+                                <p className="text-sm text-red-200">{error}</p>
+                            </div>
+                        )}
+
+                        {success && (
+                            <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-[#00FF9D]/50 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                <CheckCircle className="text-[#00FF9D] shrink-0 mt-0.5" size={18} />
+                                <p className="text-sm text-green-200">{success}</p>
+                            </div>
+                        )}
+
                         {/* Form */}
-                        <form onSubmit={handleSignUp} className="space-y-6">
+                        <form onSubmit={handleSignUp} className="space-y-5">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-300">Email Address</label>
                                 <input
                                     type="email"
                                     required
+                                    disabled={isLoading}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Enter your email address..."
-                                    className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] placeholder:text-gray-500 transition-all"
+                                    className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] placeholder:text-gray-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                                 />
                             </div>
 
+                            {/* Password Field */}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-300">Password</label>
                                 <div className="relative">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         required
+                                        disabled={isLoading}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        onFocus={() => setIsPasswordFocused(true)}
+                                        onBlur={() => setIsPasswordFocused(false)}
                                         placeholder="Enter your password..."
-                                        className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] placeholder:text-gray-500 transition-all pr-12"
+                                        className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] placeholder:text-gray-500 transition-all pr-12 disabled:opacity-70 disabled:cursor-not-allowed"
                                     />
                                     <button
                                         type="button"
+                                        disabled={isLoading}
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black disabled:opacity-50"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Checklist */}
-                            <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-                                {[
-                                    "8 characters", "1 lowercase letter", "1 special character",
-                                    "1 uppercase letter", "1 number"
-                                ].map((req, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                        <div className="w-4 h-4 rounded bg-[#00FF9D] flex items-center justify-center">
-                                            <Check size={10} className="text-black" strokeWidth={3} />
-                                        </div>
-                                        <span className="text-[10px] text-gray-400 font-medium">{req}</span>
-                                    </div>
-                                ))}
+                            {/* Dynamic Checklist */}
+                            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isPasswordFocused || password.length > 0 ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                <div className="grid grid-cols-2 gap-y-2 gap-x-4 bg-white/5 p-3 rounded-lg border border-white/10">
+                                    {passwordRules.map((req, i) => {
+                                        const isValid = req.test(password);
+                                        return (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <div className={`w-4 h-4 rounded flex items-center justify-center transition-colors ${isValid ? 'bg-[#00FF9D]' : 'bg-gray-600'}`}>
+                                                    <Check size={10} className={isValid ? "text-black" : "text-gray-400"} strokeWidth={3} />
+                                                </div>
+                                                <span className={`text-[10px] font-medium transition-colors ${isValid ? 'text-[#00FF9D]' : 'text-gray-400'}`}>
+                                                    {req.label}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
-                            {/* Terms */}
+                            {/* Confirm Password Field */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Confirm Password</label>
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        required
+                                        disabled={isLoading}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="Confirm your password..."
+                                        className={`w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 placeholder:text-gray-500 transition-all pr-12 disabled:opacity-70 disabled:cursor-not-allowed ${confirmPassword && password !== confirmPassword
+                                                ? 'focus:ring-red-500 ring-2 ring-red-500/50'
+                                                : 'focus:ring-[#00FF9D]'
+                                            }`}
+                                    />
+                                    <button
+                                        type="button"
+                                        disabled={isLoading}
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black disabled:opacity-50"
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                                {confirmPassword && password !== confirmPassword && (
+                                    <p className="text-red-400 text-xs mt-1 pl-1 animate-in fade-in">Passwords do not match</p>
+                                )}
+                            </div>
+
+                            {/* Terms Checkbox */}
                             <div className="flex items-center gap-2 pt-2">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className="w-5 h-5 rounded border border-gray-500 flex items-center justify-center bg-white group-hover:border-[#00FF9D] transition-colors shrink-0">
-                                        <input type="checkbox" className="peer sr-only" />
-                                        <Check size={14} className="text-black opacity-0 peer-checked:opacity-100" />
+                                <label className={`flex items-center gap-2 cursor-pointer group ${isLoading ? 'pointer-events-none opacity-70' : ''}`}>
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0 
+                                        ${agreed ? 'bg-[#00FF9D] border-[#00FF9D]' : 'bg-white border-gray-500 group-hover:border-[#00FF9D]'}
+                                    `}>
+                                        <input
+                                            type="checkbox"
+                                            className="peer sr-only"
+                                            checked={agreed}
+                                            disabled={isLoading}
+                                            onChange={(e) => setAgreed(e.target.checked)}
+                                        />
+                                        <Check size={14} className={`text-black transition-opacity ${agreed ? 'opacity-100' : 'opacity-0'}`} />
                                     </div>
                                     <span className="text-sm text-gray-400 group-hover:text-white transition-colors">
-                                        I agree to fydblock's <a href="#" className="text-[#00FF9D] hover:underline">Terms of Service</a>
+                                        I agree to Fydblock's <a href="#" className="text-[#00FF9D] hover:underline">Terms of Service</a>
                                     </span>
                                 </label>
                             </div>
 
-                            <button className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-blue-500/20">
-                                Create an Account
+                            {/* Submit Button with Loading State */}
+                            <button
+                                className={`w-full font-bold py-3 rounded-lg transition-all shadow-lg flex items-center justify-center gap-2
+                                    ${agreed && !isLoading
+                                        ? 'bg-[#3B82F6] hover:bg-[#2563EB] text-white hover:shadow-blue-500/20'
+                                        : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                disabled={!agreed || isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20} />
+                                        <span>Creating Account...</span>
+                                    </>
+                                ) : (
+                                    "Create an Account"
+                                )}
                             </button>
                         </form>
 
