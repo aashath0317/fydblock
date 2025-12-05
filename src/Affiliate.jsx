@@ -43,7 +43,8 @@ const Affiliate = () => {
                         <a href="#" className="hover:text-white transition-colors">Product</a>
                         <a href="#" className="hover:text-white transition-colors">Company</a>
                         <a href="#" className="hover:text-white transition-colors">Pricing</a>
-                        <a href="#" className="text-white">Affiliate</a>
+                        {/* Updated to Partner */}
+                        <a href="https://partner.fydblock.com" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#00FF9D] transition-colors">Partner</a>
                         <a href="#" className="hover:text-white transition-colors">Contact Us</a>
                     </div>
 
@@ -86,9 +87,9 @@ const Affiliate = () => {
                             </p>
 
                             <div className="pt-4">
-                                <button className="border border-[#00FF9D] text-[#00FF9D] bg-transparent px-10 py-3 rounded-full text-lg font-medium hover:bg-[#00FF9D] hover:text-black transition-all duration-300">
+                                <a href="https://partner.fydblock.com" target="_blank" rel="noopener noreferrer" className="border border-[#00FF9D] text-[#00FF9D] bg-transparent px-10 py-3 rounded-full text-lg font-medium hover:bg-[#00FF9D] hover:text-black transition-all duration-300 inline-block text-center">
                                     Join Now
-                                </button>
+                                </a>
                             </div>
                         </div>
 
@@ -196,8 +197,9 @@ const Affiliate = () => {
                 <div className="grid md:grid-cols-3 gap-6">
                     <StepCard
                         number="1. Join"
-                        title="Sign up for the Affiliate Program"
+                        title="Sign up for the Partner Program"
                         actionLabel="Join Now"
+                        actionLink="https://partner.fydblock.com"
                         isActive={true}
                     />
                     <StepCard
@@ -222,12 +224,12 @@ const Affiliate = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#00FF9D]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
 
                     <div className="relative z-10 text-center md:text-left">
-                        <h3 className="text-2xl font-bold text-white mb-2">Become our Pro Affiliate</h3>
+                        <h3 className="text-2xl font-bold text-white mb-2">Become our Pro Partner</h3>
                         <p className="text-gray-400">Earn lifetime commission + trading volume bonus.</p>
                     </div>
-                    <button className="relative z-10 bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)]">
+                    <a href="https://partner.fydblock.com" target="_blank" rel="noopener noreferrer" className="relative z-10 bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)]">
                         Join Now
-                    </button>
+                    </a>
                 </div>
             </section>
 
@@ -255,7 +257,7 @@ const Affiliate = () => {
 
 /* --- Sub Components --- */
 
-const StepCard = ({ number, title, actionLabel, isActive }) => (
+const StepCard = ({ number, title, actionLabel, actionLink, isActive }) => (
     <div className={`
     relative p-8 rounded-2xl border transition-all duration-300 h-full flex flex-col justify-between
     ${isActive
@@ -268,9 +270,9 @@ const StepCard = ({ number, title, actionLabel, isActive }) => (
         </div>
 
         {actionLabel && (
-            <button className="w-full bg-[#00FF9D] text-black py-2.5 rounded-lg font-bold text-sm hover:bg-[#00cc7d] transition-colors">
+            <a href={actionLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#00FF9D] text-black py-2.5 rounded-lg font-bold text-sm hover:bg-[#00cc7d] transition-colors block text-center">
                 {actionLabel}
-            </button>
+            </a>
         )}
     </div>
 );
