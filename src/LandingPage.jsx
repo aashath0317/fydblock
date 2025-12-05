@@ -106,7 +106,7 @@ const FloatingChartCard = () => {
   return (
     <div
       // UPDATED POSITIONING HERE: Changed -left-6/md:-left-20 to left-4/md:-left-4
-      className="absolute -bottom-20 left-8 md:-left-8 -right-8 md:-right-16 bg-[#0A1014]/1 backdrop-blur border border-[#00FF9D]/20 p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-float z-30 w-[260px] md:w-[300px]"
+      className="absolute -bottom-20 left-8 md:-left-8 -right-8 md:-right-16 bg-[#0A1014]/1 backdrop-blur-sm border border-[#00FF9D]/20 p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-float z-30 w-[260px] md:w-[300px]"
       style={{ animationDelay: '2s' }}
     >
       {/* Header Area: Switch between Default and Hover State */}
@@ -290,16 +290,16 @@ const AnimatedProfitCard = () => {
     window.requestAnimationFrame(step);
   }, []);
   return (
-    <div className="absolute top-10 -left-4 md:-left-12 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float-delayed z-20">
+    <div className="absolute top-28 -left -md:+left bg-[#0A1014]/0 backdrop-blur-sm border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float-delayed z-20">
       <div className="flex items-center gap-3 mb-2">
         <div className="w-8 h-8 rounded-full bg-[#00FF9D]/10 flex items-center justify-center text-[#00FF9D]"><Activity size={16} /></div>
         <div>
           <p className="text-xs text-gray-400">Total Profit</p>
-          <p className="text-sm font-bold text-white">${(targetProfit * progress).toFixed(2)}</p>
+          <p className="text-sm font-bold text-white">$12450.00</p>
         </div>
       </div>
       <div className="h-1 w-32 bg-gray-800 rounded-full overflow-hidden">
-        <div className="h-full bg-[#00FF9D] shadow-[0_0_10px_#00FF9D]" style={{ width: `${targetWidth * progress}%` }}></div>
+        <div className="h-full bg-[#00FF9D] shadow-[0_0_10px_#00FF9D]" style={{ width: `${targetWidth}%` }}></div>
       </div>
     </div>
   );
@@ -357,7 +357,7 @@ const LandingPage = () => {
               <AnimatedProfitCard />
 
               {/* Existing Card 2: Bottom Right (MOVED UP to bottom-32) */}
-              <div className="absolute top-10 -right-4 md:right-0 bg-[#0A1014]/90 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float z-20">
+              <div className="absolute top-10 -right-4 md:right-0 bg-[#0A1014]/10 backdrop-blur-xl border border-[#00FF9D]/20 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-float z-20">
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400"><Cpu size={20} /></div>
