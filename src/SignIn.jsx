@@ -1,5 +1,9 @@
+// src/SignIn.jsx
 import React, { useState } from 'react';
-import { ArrowLeft, Eye, EyeOff, Check, Wallet } from 'lucide-react';
+import {
+    ArrowLeft, Eye, EyeOff, Check, Wallet,
+    Loader2, AlertCircle, CheckCircle
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from './config';
 
@@ -8,22 +12,31 @@ const SignIn = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [activeTab, setActiveTab] = useState('login');
 
-    // --- NEW: Form State ---
+    // UI States for UX Improvement
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+
+    // Form State
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // --- FIXED: Handle Tab Switching ---
     const handleTabClick = (tab) => {
         setActiveTab(tab);
         if (tab === 'signup') {
-            navigate('/signup'); // <--- Fixed: Use 'navigate' instead of 'navigateTo'
+            navigate('/signup');
         }
     };
 
-    // --- NEW: Handle Login Submission ---
+    // --- UPDATED HANDLE LOGIN ---
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError('');
+        setSuccess('');
+        setIsLoading(true);
+
         try {
+            // 1. Login Request
             const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -33,23 +46,48 @@ const SignIn = () => {
             const data = await response.json();
 
             if (response.ok) {
-                // Save the token to browser storage
+                // 2. Save Token
                 localStorage.setItem('token', data.token);
-                alert('Login Successful!');
-                navigate('/'); // Redirect to Home/Dashboard
+
+                // 3. Check Profile Status (Requires working backend endpoint /user/me)
+                const userRes = await fetch(`${API_BASE_URL}/user/me`, {
+                    headers: { 'Authorization': `Bearer ${data.token}` }
+                });
+
+                if (userRes.ok) {
+                    const userData = await userRes.json();
+
+                    setSuccess('Login successful! Checking profile...');
+
+                    // 4. Conditional Redirect Logic
+                    setTimeout(() => {
+                        if (!userData.profileComplete || !userData.botCreated) {
+                            navigate('/bot-builder');
+                        } else {
+                            navigate('/dashboard');
+                        }
+                    }, 1500); // Wait for user to see success message
+
+                } else {
+                    // Fallback if /user/me fails (e.g., backend not updated yet)
+                    setSuccess('Login successful! Redirecting...');
+                    setTimeout(() => navigate('/bot-builder'), 1500);
+                }
             } else {
-                alert(data.message || 'Login failed');
+                // Login failed based on response.ok
+                setError(data.message || 'Login failed. Invalid credentials.');
             }
         } catch (error) {
             console.error('Login Error:', error);
-            alert('Server error. Is the backend running?');
+            setError('Server connection error. Please check your network.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <div className="min-h-screen bg-[#050B0D] text-white font-sans relative overflow-hidden animate-in fade-in duration-500">
-
-            {/* --- Global Ambient Background Effects --- */}
+            {/* Background Effects */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vh] bg-[#00FF9D]/10 rounded-full blur-[150px]" />
                 <div className="absolute top-[10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/5 rounded-full blur-[150px]" />
@@ -65,12 +103,10 @@ const SignIn = () => {
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
-
-                    {/* --- Left Column: Form --- */}
+                    {/* Left Column: Form */}
                     <div className="max-w-md w-full">
-
                         {/* Tabs */}
-                        <div className="flex gap-8 mb-10">
+                        <div className="flex gap-8 mb-8">
                             <button className="text-2xl font-bold pb-2 relative text-white">
                                 Log In
                                 <span className="absolute bottom-0 left-0 w-1/2 h-1 bg-[#00FF9D] rounded-full"></span>
@@ -80,7 +116,23 @@ const SignIn = () => {
                             </button>
                         </div>
 
-                        {/* Form - Connected to handleLogin */}
+                        {/* --- STATUS MESSAGES (Error/Success) --- */}
+                        {error && (
+                            <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/50 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
+                                <p className="text-sm text-red-200">{error}</p>
+                            </div>
+                        )}
+
+                        {success && (
+                            <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-[#00FF9D]/50 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                <CheckCircle className="text-[#00FF9D] shrink-0 mt-0.5" size={18} />
+                                <p className="text-sm text-green-200">{success}</p>
+                            </div>
+                        )}
+                        {/* -------------------------------------- */}
+
+                        {/* Form */}
                         <form onSubmit={handleLogin} className="space-y-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-300">Email Address</label>
@@ -89,8 +141,9 @@ const SignIn = () => {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
+                                    disabled={isLoading}
                                     placeholder="Enter your email address..."
-                                    className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] transition-all"
+                                    className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] transition-all disabled:opacity-70"
                                 />
                             </div>
 
@@ -102,13 +155,15 @@ const SignIn = () => {
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
+                                        disabled={isLoading}
                                         placeholder="Enter your password..."
-                                        className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] transition-all pr-12"
+                                        className="w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-[#00FF9D] transition-all pr-12 disabled:opacity-70"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black"
+                                        disabled={isLoading}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black disabled:opacity-50"
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -119,23 +174,33 @@ const SignIn = () => {
                             <div className="flex items-center justify-between">
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <div className="w-5 h-5 rounded border border-gray-500 flex items-center justify-center bg-white group-hover:border-[#00FF9D] transition-colors">
-                                        <input type="checkbox" className="peer sr-only" />
+                                        <input type="checkbox" className="peer sr-only" disabled={isLoading} />
                                         <Check size={14} className="text-black opacity-0 peer-checked:opacity-100" />
                                     </div>
                                     <span className="text-sm text-gray-400 group-hover:text-white transition-colors">Remember me</span>
                                 </label>
-                                <button type="button" onClick={() => navigate('/resetpass')} className="text-sm text-[#00FF9D] hover:underline">
+                                <button type="button" onClick={() => navigate('/resetpass')} className="text-sm text-[#00FF9D] hover:underline" disabled={isLoading}>
                                     Forget your password
                                 </button>
                             </div>
 
                             {/* Submit Button */}
-                            <button className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-blue-500/20">
-                                Log In
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full bg-[#3B82F6] text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-blue-500/20 flex items-center justify-center gap-2 disabled:bg-gray-600 disabled:shadow-none"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={20} />
+                                        <span>Logging In...</span>
+                                    </>
+                                ) : (
+                                    "Log In"
+                                )}
                             </button>
                         </form>
 
-                        {/* Social Divider */}
                         <div className="relative my-8 text-center">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-white/10"></div>
@@ -143,21 +208,19 @@ const SignIn = () => {
                             <span className="relative bg-[#050B0D] px-4 text-sm text-gray-400">OR</span>
                         </div>
 
-                        {/* Social Buttons */}
                         <div className="space-y-4">
-                            <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all">
+                            <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50" disabled={isLoading}>
                                 <GoogleIcon />
                                 Continue with Google
                             </button>
-                            <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all">
+                            <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50" disabled={isLoading}>
                                 <Wallet size={20} className="text-[#3B82F6]" />
                                 Continue with Wallet
                             </button>
                         </div>
-
                     </div>
 
-                    {/* --- Right Column: Illustration Card --- */}
+                    {/* Right Column: Illustration Card */}
                     <div className="hidden lg:block relative h-[600px] w-full bg-[#0B2323] rounded-3xl overflow-hidden border border-white/5">
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="relative w-[80%] h-[80%]">
@@ -171,7 +234,6 @@ const SignIn = () => {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -179,7 +241,6 @@ const SignIn = () => {
 };
 
 // --- Icons ---
-
 const GoogleIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
