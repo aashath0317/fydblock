@@ -106,7 +106,7 @@ const FloatingChartCard = () => {
   return (
     <div
       // UPDATED POSITIONING HERE: Changed -left-6/md:-left-20 to left-4/md:-left-4
-      className="absolute bottom-0 left-8 md:-left-8 -right-8 md:-right-16 bg-[#0A1014]/1 backdrop-blur border border-[#00FF9D]/20 p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-float z-30 w-[260px] md:w-[300px]"
+      className="absolute -bottom-20 left-8 md:-left-8 -right-8 md:-right-16 bg-[#0A1014]/1 backdrop-blur border border-[#00FF9D]/20 p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-float z-30 w-[260px] md:w-[300px]"
       style={{ animationDelay: '2s' }}
     >
       {/* Header Area: Switch between Default and Hover State */}
