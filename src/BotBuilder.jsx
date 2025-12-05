@@ -1,123 +1,203 @@
 import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft,
-    ArrowRight,
     Check,
     ChevronRight,
-    Server,
-    Zap,
-    Activity,
-    Layers,
-    DollarSign,
-    ArrowUpRight
+    ArrowUpRight,
+    CheckCircle2,
+    Loader2,
+    Zap, // Added for placeholder icon
+    Lock, // Added for placeholder icon
+    BarChart2, // Added for placeholder icon
+    Layers // Added for placeholder icon
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from './config';
 
 // --- MOCK DATA ---
 const EXCHANGES = [
-    { id: 'binance', name: 'Binance', color: '#F3BA2F' },
-    { id: 'bybit', name: 'Bybit', color: '#17181e' }, // usually black/orange
-    { id: 'okx', name: 'OKX', color: '#fff' },        // usually white/black checker
-    { id: 'coinbase', name: 'Coinbase', color: '#0052FF' },
-    { id: 'kraken', name: 'Kraken', color: '#5741D9' },
+    { id: 'binance', name: 'Binance', logo: '/logos/BINANCE.png' },
+    { id: 'bybit', name: 'Bybit', logo: '/logos/BYBIT.png' },
+    { id: 'okx', name: 'OKX', logo: '/logos/OKX.jpg' },
 ];
 
-const BOT_TYPES = [
-    { id: 'dca', name: 'DCA Bot', desc: 'Buy steadily to average out entry price.', icon: <Layers size={24} /> },
-    { id: 'grid', name: 'Grid Bot', desc: 'Profit from sideways market volatility.', icon: <Server size={24} /> },
-    { id: 'futures', name: 'Futures Bot', desc: 'High risk/reward with leverage.', icon: <Activity size={24} /> },
-    { id: 'signal', name: 'Signal Bot', desc: 'Trade based on TradingView signals.', icon: <Zap size={24} /> },
+const CURRENCIES = [
+    { id: 'USDT', name: 'USDT', icon: 'T', symbol: '$' },
+    { id: 'USDC', name: 'USDC', icon: '$', symbol: '$' },
+    { id: 'BNB', name: 'BNB', icon: 'B', symbol: 'B' },
+    { id: 'BTC', name: 'BTC', icon: '₿', symbol: '₿' },
+    { id: 'EUR', name: 'EUR', icon: '€', symbol: '€' },
 ];
 
 // --- COMPONENTS ---
 
 // 1. Breadcrumb Navigation
-const Breadcrumbs = ({ currentStep, setStep }) => {
+const Breadcrumbs = ({ currentStep }) => {
     const steps = [
-        { id: 1, label: 'General Information' },
-        { id: 2, label: 'Connect Exchange' },
-        { id: 3, label: 'Bot Type' },
-        { id: 4, label: 'Bot Builder' },
-        { id: 5, label: 'Summary' },
+        { id: 1, label: '1. General Information' },
+        { id: 2, label: '3. Connect Exchange' }, // Matches design label '3'
+        { id: 3, label: '4. Select Currency' }, // Matches design label '4'
+        { id: 4, label: '2. Bot Type & Plans' }, // Matches design label '2'
+        { id: 5, label: '5. Let\'s Trade' },
     ];
+    // Note: The code uses 1, 2, 3, 4, 5 for logic, but displays the labels from the designs.
+    const stepsInFlow = [1, 2, 3, 4, 5];
 
     return (
-        <div className="flex flex-wrap justify-center items-center gap-2 md:gap-4 mb-12 text-sm font-medium">
-            {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center gap-2 md:gap-4">
-                    <button
-                        onClick={() => step.id < currentStep && setStep(step.id)}
-                        disabled={step.id > currentStep}
-                        className={`
-              px-4 py-2 rounded-full transition-all duration-300 flex items-center gap-2
-              ${currentStep === step.id
+        <div className="flex flex-wrap justify-center items-center gap-4 mb-12 text-sm font-medium">
+            {stepsInFlow.map((flowStep, index) => {
+                const step = steps[index];
+                return (
+                    <div key={step.id} className="flex items-center gap-3">
+                        <span className={`
+                            px-3 py-2 rounded transition-all duration-300 flex items-center gap-2 whitespace-nowrap
+                            ${currentStep === flowStep
                                 ? 'bg-[#00FF9D] text-black font-bold shadow-[0_0_15px_rgba(0,255,157,0.3)]'
-                                : step.id < currentStep
-                                    ? 'text-gray-400 hover:text-white cursor-pointer'
-                                    : 'text-gray-600 cursor-default'
+                                : flowStep < currentStep
+                                    ? 'text-[#00FF9D]'
+                                    : 'text-gray-500'
                             }
-            `}
-                    >
-                        {step.id}. {step.label}
-                    </button>
-
-                    {index < steps.length - 1 && (
-                        <ArrowRight size={14} className="text-gray-700" />
-                    )}
-                </div>
-            ))}
+                        `}>
+                            {step.label}
+                        </span>
+                        {index < steps.length - 1 && <span className="text-gray-700">→</span>}
+                    </div>
+                );
+            })}
         </div>
     );
 };
 
-// Main Application Component
 const BotBuilder = () => {
+    const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
 
-    // Form State
     const [wizardData, setWizardData] = useState({
         name: '',
         country: '',
+        phone: '',
         exchange: '',
         apiKey: '',
         apiSecret: '',
-        botType: '',
-        investment: '',
-        riskLevel: 'medium',
+        currency: 'USDT', // Default
+        plan: 'signature', // Default plan
+        billingCycle: 'monthly', // Default billing
         agreed: false
     });
 
-    // Helper to simulate navigation without Router for this preview
-    const handleExit = () => {
-        // In your real app: navigate('/dashboard');
-        console.log("Navigating back...");
-        alert("Navigating back to dashboard (Mock)");
-    };
+    // --- ACCESS CONTROL & INITIALIZATION ---
+    useEffect(() => {
+        const token = localStorage.getItem('token');
 
-    const nextStep = () => {
-        if (currentStep < 5) setCurrentStep(prev => prev + 1);
-    };
+        // 1. Check Login
+        if (!token) {
+            navigate('/signin');
+            return;
+        }
 
-    const prevStep = () => {
-        if (currentStep > 1) setCurrentStep(prev => prev - 1);
-    };
+        // 2. Check User Status (Block if already completed)
+        const checkStatus = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/user/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
 
-    const handleFinalSubmit = async () => {
+                // If user has a bot, block access to the builder
+                if (data.botCreated) {
+                    navigate('/dashboard');
+                    return;
+                }
+
+                // If user has profile data, pre-fill and possibly skip step 1
+                if (data.profileComplete) {
+                    setWizardData(prev => ({
+                        ...prev,
+                        name: data.user.full_name,
+                        country: data.user.country,
+                        phone: data.user.phone_number,
+                        agreed: true
+                    }));
+                    // Logic to continue the flow if already started
+                    // For now, we'll keep it simple and just allow continuing from 1
+                }
+
+            } catch (err) {
+                // If token is invalid or endpoint fails, redirect to login
+                navigate('/signin');
+            }
+        };
+
+        checkStatus();
+    }, [navigate]);
+
+    // --- API HANDLERS (Same logic as provided in previous turn) ---
+    const submitStep1 = async () => {
+        if (!wizardData.name || !wizardData.country || !wizardData.phone || !wizardData.agreed) {
+            return alert("Please fill all fields and agree to the terms.");
+        }
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
-            alert("Bot Created Successfully! (Mock)");
-            handleExit();
-        }, 1500);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/user/profile`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    full_name: wizardData.name, country: wizardData.country, phone: wizardData.phone
+                })
+            });
+            if (res.ok) { setCurrentStep(2); } else { alert("Failed to save profile."); }
+        } catch (e) { console.error(e); }
+        setLoading(false);
     };
 
-    // Render Helpers to keep JSX clean
+    const submitStep2 = async () => {
+        if (!wizardData.exchange) return alert("Please select an exchange.");
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/user/exchange`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ exchange_name: wizardData.exchange, api_key: wizardData.apiKey || "dummy_key", api_secret: wizardData.apiSecret || "dummy_secret" })
+            });
+
+            if (res.ok) { setCurrentStep(3); } else { alert("Failed to connect exchange."); }
+        } catch (e) { console.error(e); }
+        setLoading(false);
+    };
+
+    const submitFinalBot = async () => {
+        if (!wizardData.plan) return alert("Please select a plan.");
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/user/bot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    bot_name: `${wizardData.plan} Bot`,
+                    quote_currency: wizardData.currency,
+                    bot_type: 'DCA',
+                    plan: wizardData.plan,
+                    billing_cycle: wizardData.billingCycle
+                })
+            });
+
+            if (res.ok) { setCurrentStep(5); } else { alert("Failed to create bot."); }
+        } catch (e) { console.error(e); }
+        setLoading(false);
+    };
+
+    // --- RENDER HELPERS (UI REWRITE) ---
+
+    // STEP 1 UI
     const renderStep1 = () => (
         <div className="w-full max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-10">
-                <h1 className="text-4xl font-normal text-white mb-3">General Information</h1>
-                <p className="text-gray-400 font-light">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">General Information</h1>
+                <p className="text-gray-400 font-light text-lg">
                     Please provide us with some details about yourself so that you can continue creating your first bot!
                 </p>
             </div>
@@ -128,340 +208,352 @@ const BotBuilder = () => {
                     <input
                         type="text"
                         className="w-full bg-white text-black text-lg rounded-lg px-4 py-3 outline-none focus:ring-4 focus:ring-[#00FF9D]/30 transition-shadow"
-                        placeholder="e.g. Shaafi"
+                        placeholder="Shaafi"
                         value={wizardData.name}
                         onChange={(e) => setWizardData({ ...wizardData, name: e.target.value })}
                     />
                 </div>
 
+                {/* Country of Resident (Using Select for dropdown visual) */}
                 <div>
                     <label className="block text-white text-lg font-medium mb-2">Country of Resident</label>
-                    <div className="relative">
-                        <select
-                            className="w-full bg-white text-black text-lg rounded-lg px-4 py-3 outline-none appearance-none focus:ring-4 focus:ring-[#00FF9D]/30 transition-shadow cursor-pointer"
-                            value={wizardData.country}
-                            onChange={(e) => setWizardData({ ...wizardData, country: e.target.value })}
-                        >
-                            <option value="" disabled>Select Country</option>
-                            <option value="US">United States</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="SG">Singapore</option>
-                            <option value="JP">Japan</option>
-                            <option value="Global">Global / Other</option>
-                        </select>
-                        <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 rotate-90" size={20} />
-                    </div>
+                    <select
+                        className="w-full bg-white text-black text-lg rounded-lg px-4 py-3 outline-none appearance-none focus:ring-4 focus:ring-[#00FF9D]/30 transition-shadow cursor-pointer"
+                        value={wizardData.country}
+                        onChange={(e) => setWizardData({ ...wizardData, country: e.target.value })}
+                    >
+                        <option value="" disabled>Select Country</option>
+                        <option value="US">United States</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="Global">Global / Other</option>
+                    </select>
                 </div>
 
-                {/* Extra field to match visual balance of screenshot if needed, 
-            or just keep it clean with what logic requires. */}
+                {/* Phone Number (Using Select for dropdown visual, though input is better for data) */}
+                <div>
+                    <label className="block text-white text-lg font-medium mb-2">Phone Number</label>
+                    <select
+                        className="w-full bg-white text-black text-lg rounded-lg px-4 py-3 outline-none appearance-none focus:ring-4 focus:ring-[#00FF9D]/30 transition-shadow cursor-pointer"
+                        value={wizardData.phone}
+                        onChange={(e) => setWizardData({ ...wizardData, phone: e.target.value })}
+                    >
+                        <option value="" disabled>Select Country</option>
+                        <option value="+1">+1 (US)</option>
+                        <option value="+44">+44 (UK)</option>
+                    </select>
+                </div>
 
                 <div className="pt-2">
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                        <div className={`
-              w-5 h-5 rounded border border-gray-400 flex items-center justify-center transition-colors
-              ${wizardData.agreed ? 'bg-[#00FF9D] border-[#00FF9D]' : 'bg-transparent'}
-            `}>
-                            {wizardData.agreed && <Check size={14} className="text-black" />}
-                        </div>
+                    <label className="flex items-center gap-3 cursor-pointer">
                         <input
                             type="checkbox"
-                            className="hidden"
+                            className="w-5 h-5 rounded accent-[#00FF9D] checked:bg-[#00FF9D] peer"
                             checked={wizardData.agreed}
                             onChange={() => setWizardData({ ...wizardData, agreed: !wizardData.agreed })}
                         />
-                        <span className="text-gray-400 group-hover:text-[#00FF9D] transition-colors">
-                            I agree to Fydblock's <span className="text-[#00FF9D] underline underline-offset-4">Terms of Service</span>
+                        <span className="text-gray-400 text-sm">
+                            I agree to fydblock's <span className="text-[#00FF9D]">Terms of Service</span>
                         </span>
                     </label>
                 </div>
 
                 <button
-                    onClick={nextStep}
-                    disabled={!wizardData.name || !wizardData.country || !wizardData.agreed}
+                    onClick={submitStep1}
+                    disabled={!wizardData.name || !wizardData.country || !wizardData.phone || !wizardData.agreed || loading}
                     className={`
-            mt-6 px-10 py-3 rounded bg-[#00FF9D] text-black font-semibold text-lg hover:bg-[#00cc7d] transition-all
-            ${(!wizardData.name || !wizardData.country || !wizardData.agreed) ? 'opacity-50 cursor-not-allowed' : 'opacity-100 shadow-[0_0_20px_rgba(0,255,157,0.4)]'}
-          `}
+                        mt-8 px-10 py-3 rounded-lg bg-[#00FF9D] text-black font-bold text-lg hover:bg-[#00cc7d] transition-all w-40
+                        ${loading || !wizardData.name ? 'opacity-50 cursor-not-allowed' : 'shadow-[0_0_20px_rgba(0,255,157,0.4)]'}
+                    `}
                 >
-                    Submit
+                    {loading ? <Loader2 className="animate-spin mx-auto" size={24} /> : "Submit"}
                 </button>
             </div>
         </div>
     );
 
+    // STEP 2 UI
     const renderStep2 = () => (
-        <div className="w-full max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-normal text-white mb-4 leading-tight">
+        <div className="w-full max-w-6xl mx-auto animate-in fade-in duration-500">
+            <div className="text-center mb-16">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
                     Connect An Exchange To Start<br />Trading
                 </h1>
-                <p className="text-gray-400 max-w-2xl mx-auto font-light">
+                <p className="text-gray-400 max-w-2xl mx-auto font-light text-lg">
                     Automate your strategy without code, test it on historical data, optimize, and execute across all connected accounts.
                 </p>
             </div>
 
+            {/* Exchange Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                {EXCHANGES.slice(0, 3).map((ex) => (
+                {EXCHANGES.map((ex) => (
                     <div
                         key={ex.id}
                         onClick={() => setWizardData({ ...wizardData, exchange: ex.id })}
                         className={`
-              relative group cursor-pointer h-48 rounded-xl border transition-all duration-300 flex items-center justify-center overflow-hidden
-              ${wizardData.exchange === ex.id
-                                ? 'bg-gradient-to-br from-[#0A1A20] to-[#050B0D] border-[#00FF9D]'
-                                : 'bg-transparent border-gray-800 hover:border-gray-600'
+                            relative group cursor-pointer h-52 rounded-xl border transition-all duration-300 flex items-center justify-center overflow-hidden bg-[#0A1014]
+                            ${wizardData.exchange === ex.id
+                                ? 'border-[#00FF9D] shadow-[0_0_30px_rgba(0,255,157,0.1)]'
+                                : 'border-gray-800 hover:border-gray-500'
                             }
-            `}
+                        `}
                     >
-                        {/* Hover Arrow Icon */}
+                        {/* Selected Indicator Arrow */}
                         <div className={`
-              absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300
-              ${wizardData.exchange === ex.id ? 'bg-[#00FF9D] text-black scale-100' : 'bg-gray-800 text-gray-400 scale-0 group-hover:scale-100'}
-            `}>
-                            <ArrowUpRight size={18} />
+                            absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300
+                            ${wizardData.exchange === ex.id ? 'bg-[#00FF9D] text-black scale-100' : 'bg-gray-800 text-gray-400'}
+                        `}>
+                            <ArrowUpRight size={16} />
                         </div>
 
-                        {/* Logo Placeholder (using text/styled div since we don't have actual images) */}
-                        <div className="flex items-center gap-3">
-                            {/* Simulating Logo */}
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs bg-white text-black">
-                                {ex.name[0]}
-                            </div>
-                            <span className="text-2xl font-bold uppercase tracking-wider text-white">
-                                {ex.name}
-                            </span>
-                        </div>
+                        {/* Logo */}
+                        <img
+                            src={ex.logo}
+                            alt={ex.name}
+                            className="h-14 object-contain"
+                        />
                     </div>
                 ))}
             </div>
 
-            <div className="flex flex-col items-center space-y-6">
-                <button
-                    className="px-8 py-3 rounded border border-gray-700 text-gray-300 hover:border-white hover:text-white transition-all text-sm uppercase tracking-wide"
-                >
+            {/* CTA/Skip Buttons */}
+            <div className="flex flex-col items-center space-y-4">
+                <button className="px-10 py-3 rounded border border-gray-700 text-gray-400 hover:border-white hover:text-white transition-all text-sm uppercase tracking-wider">
                     View other exchanges
                 </button>
-
-                <button onClick={nextStep} className="text-gray-500 hover:text-gray-300 text-sm">
+                <p className="text-gray-500">Or</p>
+                <button onClick={() => setCurrentStep(3)} className="text-[#00FF9D] hover:text-[#00cc7d] hover:underline text-lg">
                     I will do it later
                 </button>
             </div>
 
-            {/* API Key Form (Conditional - appears if exchange selected) */}
+            {/* Disclaimer Footer */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-24 pt-8 border-t border-gray-800/50 text-xs text-gray-500">
+                <div className="flex items-start gap-3">
+                    <Lock size={16} className="text-[#00FF9D] shrink-0 mt-1" />
+                    <span>We will not have access to transfer or withdraw your assets. Your funds remain secure with encrypted API keys.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                    <Zap size={16} className="text-[#00FF9D] shrink-0 mt-1" />
+                    <span>Your data is protected by Cloudflare, defending against attacks and encrypting all information.</span>
+                </div>
+            </div>
             {wizardData.exchange && (
-                <div className="mt-12 p-8 border border-gray-800 rounded-xl bg-[#0A1014] animate-in slide-in-from-bottom-4">
-                    <h3 className="text-xl text-white mb-6">Enter API Credentials for <span className="text-[#00FF9D] capitalize">{wizardData.exchange}</span></h3>
-                    <div className="space-y-4">
-                        <input
-                            className="w-full bg-[#050B0D] border border-gray-700 text-white rounded-lg px-4 py-3 outline-none focus:border-[#00FF9D]"
-                            placeholder="API Key"
-                            value={wizardData.apiKey}
-                            onChange={(e) => setWizardData({ ...wizardData, apiKey: e.target.value })}
-                        />
-                        <input
-                            className="w-full bg-[#050B0D] border border-gray-700 text-white rounded-lg px-4 py-3 outline-none focus:border-[#00FF9D]"
-                            placeholder="API Secret"
-                            type="password"
-                            value={wizardData.apiSecret}
-                            onChange={(e) => setWizardData({ ...wizardData, apiSecret: e.target.value })}
-                        />
-                        <div className="flex justify-end pt-4">
-                            <button onClick={nextStep} className="bg-[#00FF9D] text-black px-6 py-2 rounded font-bold hover:bg-[#00cc7d]">
-                                Connect & Continue
-                            </button>
-                        </div>
-                    </div>
+                <div className="flex justify-center mt-12">
+                    <button onClick={submitStep2} className="bg-[#00FF9D] text-black px-12 py-3 rounded-lg font-bold hover:bg-[#00cc7d]">Connect & Continue</button>
                 </div>
             )}
         </div>
     );
 
+    // STEP 3 UI
     const renderStep3 = () => (
-        <div className="w-full max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-normal text-white mb-4">Select Bot Strategy</h1>
-                <p className="text-gray-400">Choose the algorithmic logic that suits your market outlook.</p>
-            </div>
+        <div className="w-full max-w-6xl mx-auto animate-in fade-in duration-500 flex flex-col md:flex-row items-start justify-between gap-16">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {BOT_TYPES.map((bot) => (
-                    <div
-                        key={bot.id}
-                        onClick={() => setWizardData({ ...wizardData, botType: bot.id })}
-                        className={`
-              cursor-pointer rounded-xl border p-6 flex items-start gap-4 transition-all duration-300
-              ${wizardData.botType === bot.id
-                                ? 'bg-[#00FF9D] text-black border-[#00FF9D] scale-[1.02]'
-                                : 'bg-[#0A1014] border-gray-800 hover:border-gray-600 text-white hover:bg-white/5'
-                            }
-            `}
-                    >
-                        <div className={`p-3 rounded-lg ${wizardData.botType === bot.id ? 'bg-black/10' : 'bg-white/5'}`}>
-                            {bot.icon}
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg mb-1">{bot.name}</h3>
-                            <p className={`text-sm ${wizardData.botType === bot.id ? 'text-black/70' : 'text-gray-400'}`}>
-                                {bot.desc}
-                            </p>
-                        </div>
-                        {wizardData.botType === bot.id && <Check className="ml-auto" size={20} />}
-                    </div>
-                ))}
-            </div>
+            {/* Left Side: Currency List */}
+            <div className="flex-1 max-w-xl">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                    Select Quote Currency
+                </h1>
+                <p className="text-gray-400 mb-10 text-lg leading-relaxed">
+                    Select the quote currency that your bot will use for all trades on your Bybit account.
+                    This will determine which asset your bot uses as the base for executing and settling trades.
+                </p>
 
-            <div className="mt-8 flex justify-center">
-                <button onClick={nextStep} disabled={!wizardData.botType} className="bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+                <div className="space-y-2 bg-[#050B0D] border border-gray-700 rounded-xl overflow-hidden">
+                    {CURRENCIES.map((curr) => (
+                        <div
+                            key={curr.id}
+                            onClick={() => setWizardData({ ...wizardData, currency: curr.id })}
+                            className={`
+                                flex items-center gap-4 px-6 py-4 border-b border-gray-800 last:border-0 cursor-pointer transition-colors
+                                ${wizardData.currency === curr.id ? 'bg-[#00FF9D]/10 border-[#00FF9D]' : 'hover:bg-white/5'}
+                            `}
+                        >
+                            <div className={`
+                                w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                                ${wizardData.currency === curr.id ? 'bg-[#00FF9D] text-black' : 'bg-gray-700 text-gray-300'}
+                            `}>
+                                {curr.symbol}
+                            </div>
+                            <span className={`text-lg ${wizardData.currency === curr.id ? 'text-[#00FF9D]' : 'text-gray-300'}`}>
+                                {curr.name}
+                            </span>
+                            {wizardData.currency === curr.id && <Check size={20} className="text-[#00FF9D] ml-auto" />}
+                        </div>
+                    ))}
+                </div>
+
+                <button
+                    onClick={() => setCurrentStep(4)}
+                    className="mt-8 bg-[#00FF9D] text-black px-10 py-3 rounded-lg font-bold hover:bg-[#00cc7d] transition-colors"
+                >
                     Continue
                 </button>
             </div>
+
+            {/* Right Side: 3D Coin Visual */}
+            <div className="flex-1 flex justify-center md:justify-end relative min-h-[400px]">
+                <div className="relative w-64 h-64 md:w-96 md:h-96">
+                    <div className="absolute top-0 right-0 w-full h-full rounded-full bg-[#00FF9D]/10 blur-[80px]"></div>
+                    {/* Placeholder for 3D coin image - Using image tag for better instruction */}
+                </div>
+            </div>
         </div>
     );
 
+    // STEP 4 UI
     const renderStep4 = () => (
-        <div className="w-full max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="w-full max-w-6xl mx-auto animate-in fade-in duration-500">
             <div className="text-center mb-10">
-                <h1 className="text-4xl text-white mb-3">Configuration</h1>
-                <p className="text-gray-400">Set your risk parameters and investment amount.</p>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Choose Your Path To Automated Trading</h1>
+                <p className="text-gray-400 max-w-xl mx-auto">Select the perfect bot based on your goals: effortless long-term growth or full control over complex strategies.</p>
             </div>
 
-            <div className="bg-[#0A1014] border border-gray-800 rounded-2xl p-8 space-y-8">
-                {/* Investment Input */}
-                <div>
-                    <label className="flex justify-between text-gray-300 mb-3 font-medium">
-                        <span>Investment Amount (USDT)</span>
-                        <span className="text-[#00FF9D] font-mono">${wizardData.investment || 0}</span>
-                    </label>
-                    <div className="relative">
-                        <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                        <input
-                            type="number"
-                            className="w-full bg-[#050B0D] border border-gray-700 rounded-xl pl-12 pr-4 py-4 text-white outline-none focus:border-[#00FF9D]"
-                            placeholder="5000"
-                            value={wizardData.investment}
-                            onChange={(e) => setWizardData({ ...wizardData, investment: e.target.value })}
-                        />
-                    </div>
-                </div>
-
-                {/* Risk Slider */}
-                <div>
-                    <div className="flex justify-between mb-4">
-                        <label className="text-gray-300 font-medium">Risk Level</label>
-                        <span className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider
-                  ${wizardData.riskLevel === 'low' ? 'bg-green-500/20 text-green-400' :
-                                wizardData.riskLevel === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                                    'bg-red-500/20 text-red-400'
-                            }
-               `}>
-                            {wizardData.riskLevel}
-                        </span>
-                    </div>
-                    <input
-                        type="range"
-                        min="1" max="3" step="1"
-                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#00FF9D]"
-                        value={wizardData.riskLevel === 'low' ? 1 : wizardData.riskLevel === 'medium' ? 2 : 3}
-                        onChange={(e) => {
-                            const val = Number(e.target.value);
-                            setWizardData({ ...wizardData, riskLevel: val === 1 ? 'low' : val === 2 ? 'medium' : 'high' });
-                        }}
-                    />
-                    <div className="flex justify-between mt-2 text-xs text-gray-500">
-                        <span>Low</span>
-                        <span>Medium</span>
-                        <span>High</span>
-                    </div>
+            {/* Toggle */}
+            <div className="flex justify-center mb-16">
+                <div className="bg-[#1A2226] p-1 rounded-full flex items-center">
+                    <button
+                        onClick={() => setWizardData({ ...wizardData, billingCycle: 'monthly' })}
+                        className={`px-8 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${wizardData.billingCycle === 'monthly' ? 'bg-[#53565A] text-white' : 'text-gray-400'}`}
+                    >
+                        Monthly <span className="bg-[#E2F708] text-black text-[10px] px-1 rounded">40%</span>
+                    </button>
+                    <button
+                        onClick={() => setWizardData({ ...wizardData, billingCycle: 'annual' })}
+                        className={`px-8 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${wizardData.billingCycle === 'annual' ? 'bg-[#53565A] text-white' : 'text-gray-400'}`}
+                    >
+                        Annual <span className="bg-[#E2F708] text-black text-[10px] px-1 rounded">40%</span>
+                    </button>
                 </div>
             </div>
 
-            <div className="mt-8 flex justify-center">
-                <button onClick={nextStep} className="bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:bg-[#00cc7d]">
-                    Review Settings
+            {/* Plans */}
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
+                {/* Signature Bot */}
+                <div
+                    onClick={() => setWizardData({ ...wizardData, plan: 'signature' })}
+                    className={`
+                        rounded-3xl p-8 border cursor-pointer transition-all duration-300 relative overflow-hidden
+                        ${wizardData.plan === 'signature' ? 'border-[#00FF9D] bg-[#0A1014] shadow-[0_0_30px_rgba(0,255,157,0.1)]' : 'border-gray-800 bg-[#0A1014] hover:border-gray-600'}
+                    `}
+                >
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#E2F708] text-black text-xs font-bold px-3 py-1 rounded-b-lg">Up to 40% off</div>
+
+                    <h3 className="text-xl text-white mb-2 mt-4">FydBlock Signature Bot</h3>
+                    <div className="flex items-end gap-2 mb-6">
+                        <span className="text-5xl font-bold text-white">$19</span>
+                        <span className="text-xl text-gray-500 line-through">$59</span>
+                        <span className="text-gray-400">/Month</span>
+                    </div>
+                    <p className="text-gray-400 text-sm mb-6">Set and forget Diversified Portfolios</p>
+
+                    <ul className="space-y-4 mb-8">
+                        {['1X Signature Bot Slot', 'AI Native Includes', 'Unlimited Coins', '24/7 Rebalancing'].map((item, i) => (
+                            <li key={i} className="flex items-center gap-3 text-white text-sm">
+                                <Check className="text-[#00FF9D]" size={16} /> {item}
+                            </li>
+                        ))}
+                    </ul>
+
+                    <button className="w-full bg-[#00FF9D] text-black font-bold py-3 rounded-full hover:bg-[#00cc7d]">
+                        7 Days Free Trail
+                    </button>
+                </div>
+
+                {/* Pro Bot */}
+                <div
+                    onClick={() => setWizardData({ ...wizardData, plan: 'pro' })}
+                    className={`
+                        rounded-3xl p-8 border cursor-pointer transition-all duration-300 relative overflow-hidden
+                        ${wizardData.plan === 'pro' ? 'bg-[#00FF9D] border-[#00FF9D] scale-[1.02]' : 'bg-[#00FF9D] border-[#00FF9D]'}
+                    `}
+                >
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#E2F708] text-black text-xs font-bold px-3 py-1 rounded-b-lg">Up to 40% off</div>
+
+                    <h3 className="text-xl text-black mb-2 mt-4">Pro Custom Strategy Bot</h3>
+                    <div className="flex items-end gap-2 mb-6">
+                        <span className="text-5xl font-bold text-black">$34</span>
+                        <span className="text-xl text-black/60 line-through">$89</span>
+                        <span className="text-black/80">/Month</span>
+                    </div>
+                    <p className="text-black/80 text-sm mb-6">A full-featured suite for seasoned traders.</p>
+
+                    <ul className="space-y-4 mb-8">
+                        {['Unlimited Grid bot', 'Suggested Coin', 'Advanced Parameter', 'Access 6 Custom bots'].map((item, i) => (
+                            <li key={i} className="flex items-center gap-3 text-black text-sm font-medium">
+                                <Check className="text-black" size={16} /> {item}
+                            </li>
+                        ))}
+                    </ul>
+
+                    <button className="w-full bg-black text-white font-bold py-3 rounded-full hover:bg-gray-900">
+                        7 Days Free Trail
+                    </button>
+                </div>
+            </div>
+
+            {/* Custom Plan Footer */}
+            <div className="max-w-4xl mx-auto bg-[#0A1014] border border-gray-800 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                    <h3 className="text-xl font-bold text-white mb-2">Custom Plan</h3>
+                    <p className="text-gray-400 text-xs">Go beyond pre-set plans. Unlock more bots, more analytics...</p>
+                </div>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-300">
+                    <div className="flex items-center gap-2"><Check className="text-[#00FF9D]" size={14} /> Everything In Plus</div>
+                    <div className="flex items-center gap-2"><Check className="text-[#00FF9D]" size={14} /> Dedicated ML</div>
+                    <div className="flex items-center gap-2"><Check className="text-[#00FF9D]" size={14} /> Custom Bot Setting</div>
+                    <div className="flex items-center gap-2"><Check className="text-[#00FF9D]" size={14} /> Advanced analytics</div>
+                </div>
+                <button className="bg-[#FFDDA1] text-black px-6 py-2 rounded-full text-sm font-bold hover:bg-[#ffe5b5]">
+                    Contact US
                 </button>
             </div>
+
+            {/* Continue Button for flow */}
+            {wizardData.plan && (
+                <div className="flex justify-center mt-12">
+                    <button onClick={() => setCurrentStep(5)} className="bg-[#00FF9D] text-black px-12 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(0,255,157,0.4)]">
+                        Continue with {wizardData.plan === 'signature' ? 'Signature' : 'Pro'} Bot
+                    </button>
+                </div>
+            )}
         </div>
     );
 
+    // STEP 5 UI
     const renderStep5 = () => (
-        <div className="w-full max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-10">
-                <h1 className="text-4xl text-white mb-3">Review Summary</h1>
-                <p className="text-gray-400">Launch your bot into the market.</p>
+        <div className="w-full h-[60vh] flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500">
+            <div className="w-32 h-32 rounded-full bg-[#00FF9D]/10 flex items-center justify-center mb-8 animate-pulse">
+                <CheckCircle2 size={64} className="text-[#00FF9D]" />
             </div>
 
-            <div className="bg-[#0A1014] border border-gray-800 rounded-2xl overflow-hidden">
-                <div className="p-6 border-b border-gray-800 bg-white/5 flex justify-between items-center">
-                    <h3 className="text-xl text-white font-bold">{wizardData.name}</h3>
-                    <span className="text-[#00FF9D] text-sm bg-[#00FF9D]/10 px-3 py-1 rounded-full border border-[#00FF9D]/20">
-                        Ready to Launch
-                    </span>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div className="flex justify-between py-2 border-b border-gray-800/50">
-                        <span className="text-gray-500">Exchange</span>
-                        <span className="text-white uppercase font-medium">{wizardData.exchange}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-800/50">
-                        <span className="text-gray-500">Strategy</span>
-                        <span className="text-white capitalize font-medium">{wizardData.botType}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-800/50">
-                        <span className="text-gray-500">Investment</span>
-                        <span className="text-[#00FF9D] font-mono">${wizardData.investment}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                        <span className="text-gray-500">Risk Profile</span>
-                        <span className="text-white capitalize font-medium">{wizardData.riskLevel}</span>
-                    </div>
-                </div>
-            </div>
+            <h1 className="text-4xl text-white font-bold mb-4">Let's Trade</h1>
+            <p className="text-gray-400 mb-12 text-xl">Your bot is configured and ready to start trading.</p>
 
-            <div className="mt-8 flex justify-between items-center">
-                <button onClick={prevStep} className="text-gray-500 hover:text-white transition-colors">
-                    Back to edit
-                </button>
-                <button
-                    onClick={handleFinalSubmit}
-                    disabled={loading}
-                    className="bg-[#00FF9D] text-black px-12 py-4 rounded-lg font-bold text-lg hover:bg-[#00cc7d] transition-all flex items-center gap-2"
-                >
-                    {loading ? 'Deploying...' : 'Launch Bot 🚀'}
-                </button>
-            </div>
+            <button
+                onClick={submitFinalBot}
+                className="bg-[#00FF9D] text-black text-xl font-bold px-16 py-4 rounded-lg shadow-[0_0_30px_rgba(0,255,157,0.4)] hover:bg-[#00cc7d] hover:scale-105 transition-all"
+            >
+                {loading ? "Launching..." : "Let's Trade"}
+            </button>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#020B0F] text-white font-sans selection:bg-[#00FF9D] selection:text-black flex flex-col">
-            {/* Background Gradients (Subtle) */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[#05181E] to-transparent opacity-50" />
-                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#00FF9D]/5 blur-[120px] rounded-full" />
-            </div>
-
-            <div className="relative z-10 container mx-auto px-6 py-8 flex-1 flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <button
-                        onClick={currentStep === 1 ? handleExit : prevStep}
-                        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                    >
-                        <ArrowLeft size={20} /> <span className="text-lg">Back</span>
+        <div className="min-h-screen bg-[#020B0F] text-white font-sans flex flex-col pt-8 pb-12">
+            <div className="container mx-auto px-6">
+                {/* Header/Back Button */}
+                <div className="flex items-center gap-4 mb-8">
+                    <button onClick={currentStep === 1 ? () => navigate('/') : () => setCurrentStep(c => c - 1)} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                        <ArrowLeft size={20} /> Back
                     </button>
-                    <div className="flex items-center gap-3">
-                        <span className="font-bold text-xl tracking-tight text-white">Fydblock.</span>
-                        <span className="w-px h-6 bg-gray-700 mx-2"></span>
-                        <span className="text-gray-400">Bot Builder</span>
-                    </div>
+                    <div className="h-6 w-px bg-gray-700 mx-2 hidden md:block"></div>
+                    <span className="font-bold text-xl text-white">Bot Builder</span>
                 </div>
 
-                {/* Dynamic Breadcrumbs */}
-                <Breadcrumbs currentStep={currentStep} setStep={setCurrentStep} />
+                <Breadcrumbs currentStep={currentStep} />
 
-                {/* Content Area */}
-                <div className="flex-1 flex flex-col justify-center py-8">
+                <div className="mt-8">
                     {currentStep === 1 && renderStep1()}
                     {currentStep === 2 && renderStep2()}
                     {currentStep === 3 && renderStep3()}
