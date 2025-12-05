@@ -1,127 +1,204 @@
 import React, { useState } from 'react';
 import {
-    Check, ArrowRight, Plus, Minus,
+    Check, ArrowRight,
     ChevronDown
 } from 'lucide-react';
 
 const PricingAndPlans = () => {
+    // State for the billing toggle: true = Annual (Default), false = Monthly
+    const [isAnnual, setIsAnnual] = useState(true);
+
     return (
         <div className="pt-32 pb-20 relative z-10 animate-in fade-in duration-500">
 
             {/* --- Header Section --- */}
-            <section className="container mx-auto px-6 text-center mb-16">
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">Plan & Pricing</h1>
-                <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-                    All FydBlock pricing plans come with a 7-day free trial on the PRO plan.
+            <section className="container mx-auto px-6 text-center mb-12">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+                    Choose Your Path To Automated Trading
+                </h1>
+                <p className="text-gray-400 max-w-2xl mx-auto text-lg leading-relaxed">
+                    Select the perfect bot based on your goals: effortless long-term growth or full control over complex strategies.
                 </p>
             </section>
 
-            {/* --- Main Pricing Section --- */}
-            <section className="container mx-auto px-6 mb-24">
-                <div className="flex flex-col gap-12">
+            {/* --- Billing Toggle --- */}
+            <div className="flex justify-center mb-16">
+                <div className="bg-[#2D3035] p-1 rounded-lg flex items-center relative">
+                    {/* Monthly Button */}
+                    <button
+                        onClick={() => setIsAnnual(false)}
+                        className={`
+                            px-8 py-3 rounded-md text-sm font-medium transition-all duration-300 flex items-center gap-2
+                            ${!isAnnual ? 'bg-[#53565A] text-white shadow-sm' : 'text-gray-400 hover:text-white'}
+                        `}
+                    >
+                        Monthly
+                        <span className="text-[10px] bg-[#E2F708] text-black px-1.5 py-0.5 rounded font-bold">-15%</span>
+                    </button>
 
-                    {/* 1. Text Description - Centered Above Cards */}
-                    <div className="text-center max-w-4xl mx-auto space-y-6">
-                        <h2 className="text-4xl md:text-5xl font-bold text-white leading-tight">
-                            Automation that pays for<br className="hidden md:block" />
-                            itself.
-                        </h2>
-                        <p className="text-sm text-gray-500 leading-relaxed max-w-2xl mx-auto">
-                            All prices on this website are excluding VAT (if applicable).
-                            Free 7 days trial for Explorer package starts directly with each sign up.
-                        </p>
-                    </div>
+                    {/* Annual Button */}
+                    <button
+                        onClick={() => setIsAnnual(true)}
+                        className={`
+                            px-8 py-3 rounded-md text-sm font-medium transition-all duration-300 flex items-center gap-2
+                            ${isAnnual ? 'bg-[#53565A] text-white shadow-sm' : 'text-gray-400 hover:text-white'}
+                        `}
+                    >
+                        Annual
+                        <span className="text-[10px] bg-[#E2F708] text-black px-1.5 py-0.5 rounded font-bold">-54%</span>
+                    </button>
+                </div>
+            </div>
 
-                    {/* 2. Pricing Cards - Below the Text */}
-                    <div className="grid md:grid-cols-3 gap-6">
+            {/* --- Main Pricing Cards --- */}
+            <section className="container mx-auto px-6 mb-20">
+                {/* CHANGED: max-w-3xl (Small Width) for the cards only */}
+                <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
 
-                        {/* Card 1: Basic */}
-                        <PricingCard
-                            title="Basic Plan"
-                            price="$14"
-                            period="/Month"
-                            description="Essential features for starting traders"
-                            features={[
-                                "3 Active Grid bots",
-                                "AI Assistant",
-                                "Unlimited Coins",
-                                "Unlimited Smart orders"
-                            ]}
-                            buttonText="Choose Plan"
-                            buttonStyle="green-outline"
-                        />
+                    {/* Card 1: FydBlock Signature Bot (Dark) */}
+                    <div className="bg-[#0A1014] border border-white/10 rounded-3xl p-8 relative flex flex-col hover:border-white/20 transition-all mt-8 md:mt-0">
 
-                        {/* Card 2: Advance (Highlighted) */}
-                        <div className="bg-[#00FF9D] text-black rounded-2xl p-6 relative transform md:-translate-y-4 shadow-[0_0_30px_rgba(0,255,157,0.3)] flex flex-col h-full">
-                            <div className="absolute top-4 right-4 bg-black text-[#00FF9D] text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                                Most Popular
-                            </div>
-                            <h3 className="text-xl font-bold mb-2">Advance Plan</h3>
-                            <div className="flex items-baseline gap-1 mb-4">
-                                <span className="text-4xl font-bold">$35</span>
-                                <span className="text-sm font-medium opacity-80">/Month</span>
-                            </div>
-                            <p className="text-sm font-medium mb-8 opacity-80 h-10">A full-featured suite for seasoned traders.</p>
-
-                            <ul className="space-y-4 mb-8 flex-1">
-                                {["Unlimited Grid Bots", "Suggested Coin", "30 Days backtest", "Priority email support"].map((feat, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-sm font-bold">
-                                        <Check size={16} className="shrink-0" />
-                                        {feat}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <button className="w-full bg-black text-white py-3 rounded-full font-bold hover:bg-gray-900 transition-colors mt-auto">
-                                Choose Plan
-                            </button>
+                        {/* VISUAL: Yellow Badge (Only shows on Annual) */}
+                        <div className={`absolute -top-4 left-1/2 -translate-x-1/2 bg-[#E2F708] text-black text-xs font-bold px-6 py-2 rounded-md uppercase tracking-wider shadow-[0_0_15px_rgba(226,247,8,0.3)] whitespace-nowrap transition-opacity duration-300 ${isAnnual ? 'opacity-100' : 'opacity-0'}`}>
+                            Up to 40% off
                         </div>
 
-                        {/* Card 3: Custom */}
-                        <PricingCard
-                            title="Custom Plan"
-                            price="Performance Fees"
-                            period=""
-                            description="Go beyond pre-set plans. Unlock more bots, for above $2M Capital Clients."
-                            features={[
-                                "Everything in Plus",
-                                "Custom Bot Setting",
-                                "Dedicated ML",
-                                "Advanced analytics"
-                            ]}
-                            buttonText="Contact US"
-                            buttonStyle="tan"
-                        />
+                        <div className="mt-4 mb-6">
+                            <h3 className="text-xl font-bold text-white mb-4">FydBlock Signature Bot</h3>
+                            <div className="flex items-baseline gap-3 mb-2">
+                                {/* Price Changes Logic: $19 (Annual) vs $50 (Monthly - 15% off $59) */}
+                                <span className="text-5xl font-bold text-white">
+                                    ${isAnnual ? '19' : '50'}
+                                </span>
 
+                                {/* Cross-out price always shows to anchor the value */}
+                                <span className="text-xl text-gray-500 line-through decoration-gray-500">$59</span>
+
+                                <span className="text-sm text-gray-400">/Month</span>
+                            </div>
+                            <p className="text-gray-400 text-sm mt-4">Set and forget Diversified Portfolios</p>
+                        </div>
+
+                        <ul className="space-y-5 mb-10 flex-1">
+                            {[
+                                "1X Signature Bot Slot",
+                                "AI Native Includes",
+                                "Unlimited Coins",
+                                "24/7 Rebalancing"
+                            ].map((feat, i) => (
+                                <li key={i} className="flex items-center gap-3 text-sm font-medium text-white">
+                                    <div className="shrink-0">
+                                        <Check size={18} className="text-[#00FF9D]" strokeWidth={3} />
+                                    </div>
+                                    {feat}
+                                </li>
+                            ))}
+                        </ul>
+
+                        <button className="w-full bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-4 rounded-full transition-all shadow-[0_0_20px_rgba(0,255,157,0.2)]">
+                            7 Days Free Trial
+                        </button>
                     </div>
+
+                    {/* Card 2: Pro Custom Strategy Bot (Green) */}
+                    <div className="bg-[#00FF9D] rounded-3xl p-8 relative flex flex-col shadow-[0_0_40px_rgba(0,255,157,0.1)] mt-8 md:mt-0">
+
+                        {/* VISUAL: Yellow Badge (Only shows on Annual) */}
+                        <div className={`absolute -top-4 left-1/2 -translate-x-1/2 bg-[#E2F708] text-black text-xs font-bold px-6 py-2 rounded-md uppercase tracking-wider shadow-lg whitespace-nowrap transition-opacity duration-300 ${isAnnual ? 'opacity-100' : 'opacity-0'}`}>
+                            Up to 40% off
+                        </div>
+
+                        <div className="mt-4 mb-6">
+                            <h3 className="text-xl font-bold text-black mb-4">Pro Custom Strategy Bot</h3>
+                            <div className="flex items-baseline gap-3 mb-2">
+                                {/* Price Changes Logic: $34 (Annual) vs $76 (Monthly - 15% off $89) */}
+                                <span className="text-5xl font-bold text-black">
+                                    ${isAnnual ? '34' : '76'}
+                                </span>
+
+                                {/* Cross-out price always shows */}
+                                <span className="text-xl text-black/60 line-through decoration-black/40">$89</span>
+
+                                <span className="text-sm text-black/80">/Month</span>
+                            </div>
+                            <p className="text-black/80 text-sm font-medium mt-4">A full-featured suite for seasoned traders.</p>
+                        </div>
+
+                        <ul className="space-y-5 mb-10 flex-1">
+                            {[
+                                "Unlimited Grid bot",
+                                "Suggested Coin",
+                                "Advanced Parameter",
+                                "Access 6 Custom bots"
+                            ].map((feat, i) => (
+                                <li key={i} className="flex items-center gap-3 text-sm font-bold text-black">
+                                    <div className="shrink-0">
+                                        <Check size={18} className="text-black" strokeWidth={3} />
+                                    </div>
+                                    {feat}
+                                </li>
+                            ))}
+                        </ul>
+
+                        <button className="w-full bg-black hover:bg-gray-900 text-white font-bold py-4 rounded-full transition-all shadow-xl">
+                            7 Days Free Trial
+                        </button>
+                    </div>
+
+                </div>
+
+                <div className="text-center mt-16">
+                    <p className="text-xs text-gray-500 max-w-2xl mx-auto">
+                        All prices on this website are excluding VAT (if applicable). Free 7 day trial for Explorer package starts directly with each sign up.
+                    </p>
                 </div>
             </section>
 
-            {/* --- Free Plan Banner --- */}
+            {/* --- Custom Plan (Wide Card) --- */}
             <section className="container mx-auto px-6 mb-24">
-                <div className="border border-white/10 bg-[#0A1014]/50 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Free</h3>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-bold text-white">$0</span>
-                            <span className="text-gray-400">/Month</span>
+                {/* KEPT: max-w-5xl (Wide Width) for the bottom section */}
+                <div className="max-w-5xl mx-auto bg-[#0A1014] border border-white/10 rounded-3xl p-8 md:p-12 relative overflow-hidden">
+                    {/* Subtle Background Decoration */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#00FF9D]/5 rounded-full blur-[80px] pointer-events-none"></div>
+
+                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
+                        {/* Left: Text Info */}
+                        <div className="flex-1 text-center lg:text-left">
+                            <h3 className="text-3xl font-bold text-white mb-2">Custom Plan</h3>
+                            <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto lg:mx-0">
+                                Go beyond pre-set plans. Unlock more bots, more analytics, and dedicated support strategies.
+                            </p>
+                        </div>
+
+                        {/* Center: Features Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">
+                            {[
+                                "Everything in Plus",
+                                "Dedicated ML",
+                                "Custom Bot Setting",
+                                "Advanced analytics"
+                            ].map((feat, i) => (
+                                <div key={i} className="flex items-center gap-3 justify-start">
+                                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                                        <Check size={18} className="text-[#00FF9D]" strokeWidth={3} />
+                                    </div>
+                                    <span className="text-sm text-white font-medium">{feat}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Right: Button */}
+                        <div>
+                            <button className="bg-[#FFDDA1] hover:bg-[#ffe5b5] text-black px-10 py-3 rounded-full font-bold transition-all shadow-[0_0_20px_rgba(255,221,161,0.2)] whitespace-nowrap">
+                                Contact US
+                            </button>
                         </div>
                     </div>
-
-                    <div className="flex flex-col sm:flex-row gap-6 text-gray-400 text-sm">
-                        <div className="flex items-center gap-2"><Check size={16} className="text-[#00FF9D]" /> 5 Bots Free on OKX</div>
-                        <div className="flex items-center gap-2"><Check size={16} className="text-[#00FF9D]" /> Unlimited Manual trading</div>
-                        <div className="flex items-center gap-2"><Check size={16} className="text-[#00FF9D]" /> 1 Bot Backtest (30D)</div>
-                    </div>
-
-                    <button className="bg-[#00FF9D] text-black px-8 py-3 rounded-full font-bold hover:bg-[#00cc7d] transition-colors shadow-[0_0_15px_rgba(0,255,157,0.3)]">
-                        sign up for free
-                    </button>
                 </div>
             </section>
 
             {/* --- FAQ Section --- */}
-            <section className="py-24 relative z-10" id="faq">
+            <section className="py-12 relative z-10" id="faq">
                 <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-12">
                     <div className="lg:col-span-4">
                         <h2 className="text-3xl md:text-4xl font-bold mb-6">FydBlock <br />Frequently Asked Questions</h2>
@@ -144,39 +221,6 @@ const PricingAndPlans = () => {
 };
 
 /* --- Sub Components --- */
-
-const PricingCard = ({ title, price, period, description, features, buttonText, buttonStyle }) => {
-    const isTan = buttonStyle === 'tan';
-
-    return (
-        <div className="bg-[#0A1014] border border-white/10 rounded-2xl p-6 flex flex-col h-full hover:border-[#00FF9D]/30 transition-all">
-            <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-            <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-bold text-white">{price}</span>
-                {period && <span className="text-xs text-gray-500 font-medium">{period}</span>}
-            </div>
-            <p className="text-sm text-gray-400 mb-8 h-10">{description}</p>
-
-            <ul className="space-y-4 mb-8 flex-1">
-                {features.map((feat, i) => (
-                    <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
-                        <Check size={16} className="text-[#00FF9D] shrink-0" />
-                        {feat}
-                    </li>
-                ))}
-            </ul>
-
-            <button
-                className={`w-full py-3 rounded-full font-bold transition-all mt-auto ${isTan
-                    ? 'bg-[#EBCB8B] text-black hover:bg-[#d0b070]'
-                    : 'bg-[#00FF9D] text-black hover:bg-[#00cc7d]'
-                    }`}
-            >
-                {buttonText}
-            </button>
-        </div>
-    );
-};
 
 const AccordionItem = ({ question, answer }) => {
     const [isOpen, setIsOpen] = useState(false);
