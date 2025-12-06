@@ -1,18 +1,18 @@
-// src/SignIn.jsx
 import React, { useState } from 'react';
 import {
     ArrowLeft, Eye, EyeOff, Check, Wallet,
     Loader2, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL from './config';
+import { useGoogleLogin } from '@react-oauth/google'; // Import Google Hook
+import API_BASE_URL from './config'; // Ensure this points to your backend URL
 
 const SignIn = () => {
     const navigate = useNavigate();
+
+    // UI States
     const [showPassword, setShowPassword] = useState(false);
     const [activeTab, setActiveTab] = useState('login');
-
-    // UI States for UX Improvement
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -28,7 +28,7 @@ const SignIn = () => {
         }
     };
 
-    // --- UPDATED HANDLE LOGIN ---
+    // --- 1. HANDLE MANUAL LOGIN ---
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
@@ -36,7 +36,7 @@ const SignIn = () => {
         setIsLoading(true);
 
         try {
-            // 1. Login Request
+            // Login Request
             const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -46,35 +46,32 @@ const SignIn = () => {
             const data = await response.json();
 
             if (response.ok) {
-                // 2. Save Token
+                // Save Token
                 localStorage.setItem('token', data.token);
 
-                // 3. Check Profile Status (Requires working backend endpoint /user/me)
+                // Check Profile Status to decide redirect
                 const userRes = await fetch(`${API_BASE_URL}/user/me`, {
                     headers: { 'Authorization': `Bearer ${data.token}` }
                 });
 
                 if (userRes.ok) {
                     const userData = await userRes.json();
-
                     setSuccess('Login successful! Checking profile...');
 
-                    // 4. Conditional Redirect Logic
+                    // Conditional Redirect: Bot Builder vs Dashboard
                     setTimeout(() => {
                         if (!userData.profileComplete || !userData.botCreated) {
                             navigate('/bot-builder');
                         } else {
                             navigate('/dashboard');
                         }
-                    }, 1500); // Wait for user to see success message
-
+                    }, 1500);
                 } else {
-                    // Fallback if /user/me fails (e.g., backend not updated yet)
-                    setSuccess('Login successful! Redirecting...');
+                    // Fallback redirect
+                    setSuccess('Login successful!');
                     setTimeout(() => navigate('/bot-builder'), 1500);
                 }
             } else {
-                // Login failed based on response.ok
                 setError(data.message || 'Login failed. Invalid credentials.');
             }
         } catch (error) {
@@ -84,6 +81,55 @@ const SignIn = () => {
             setIsLoading(false);
         }
     };
+
+    // --- 2. HANDLE GOOGLE LOGIN ---
+    const handleGoogleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setIsLoading(true);
+            setError('');
+            try {
+                // Send access_token to backend
+                const res = await fetch(`${API_BASE_URL}/auth/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: tokenResponse.access_token }),
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    setSuccess('Google Login successful!');
+
+                    // Check profile status for redirection
+                    const userRes = await fetch(`${API_BASE_URL}/user/me`, {
+                        headers: { 'Authorization': `Bearer ${data.token}` }
+                    });
+
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        setTimeout(() => {
+                            if (!userData.profileComplete || !userData.botCreated) {
+                                navigate('/bot-builder');
+                            } else {
+                                navigate('/dashboard');
+                            }
+                        }, 1500);
+                    } else {
+                        setTimeout(() => navigate('/dashboard'), 1500);
+                    }
+                } else {
+                    setError(data.message || 'Google Login Failed');
+                }
+            } catch (err) {
+                console.error("Google Login Error", err);
+                setError('Server connection error during Google Login.');
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        onError: () => setError('Google Login Failed'),
+    });
 
     return (
         <div className="min-h-screen bg-[#050B0D] text-white font-sans relative overflow-hidden animate-in fade-in duration-500">
@@ -116,7 +162,7 @@ const SignIn = () => {
                             </button>
                         </div>
 
-                        {/* --- STATUS MESSAGES (Error/Success) --- */}
+                        {/* --- STATUS MESSAGES --- */}
                         {error && (
                             <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/50 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
                                 <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
@@ -130,7 +176,6 @@ const SignIn = () => {
                                 <p className="text-sm text-green-200">{success}</p>
                             </div>
                         )}
-                        {/* -------------------------------------- */}
 
                         {/* Form */}
                         <form onSubmit={handleLogin} className="space-y-6">
@@ -209,11 +254,21 @@ const SignIn = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50" disabled={isLoading}>
+                            {/* GOOGLE BUTTON */}
+                            <button
+                                type="button"
+                                onClick={() => handleGoogleLogin()}
+                                disabled={isLoading}
+                                className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50"
+                            >
                                 <GoogleIcon />
                                 Continue with Google
                             </button>
-                            <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50" disabled={isLoading}>
+
+                            <button
+                                className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50"
+                                disabled={isLoading}
+                            >
                                 <Wallet size={20} className="text-[#3B82F6]" />
                                 Continue with Wallet
                             </button>
