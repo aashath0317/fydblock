@@ -1,67 +1,106 @@
 # FydBlock - AI-Powered Crypto Trading Platform
 
+![FydBlock Hero](public/hero.png)
+
 🚀 **Project Overview**
 
-FydBlock is a high-fidelity, responsive frontend interface for a next-generation crypto trading bot platform. Designed with a dark, neon-green aesthetic inspired by premium fintech dashboards, it features immersive glassmorphism effects, interactive 3D elements, and a complete multi-page navigation structure.
+FydBlock is a high-fidelity, responsive frontend interface for a next-generation crypto trading bot platform. Designed with a dark, neon-green aesthetic (`#00FF9D`) inspired by premium fintech dashboards, it features immersive glassmorphism effects, interactive 3D elements, and a complete multi-page navigation structure.
 
-The platform showcases a modern trading ecosystem including a **Landing Page**, **Pricing Plans**, **Affiliate System**, **Company Info**, and fully styled **Authentication Flows** (Login, Register, Password Reset).
+The platform includes a **Trading Dashboard**, **Bot Builder Wizard**, **Authentication System** (with Google OAuth), and a high-conversion **Landing Page**.
 
 ---
 
 ## ✨ Key Features
 
-- 🎨 **Immersive Dark Mode UI** — Deep forest/black backgrounds with neon green `#00FF9D` accents and glowing ambient effects.
-- 🌍 **Interactive 3D Globe** — HTML5 Canvas rendering of a rotating network globe (custom `WorldGlobe` component).
-- 📱 **Fully Responsive** — Optimized for mobile, tablet, and desktop with a custom mobile hamburger menu.
-- ⚡ **High Performance** — Built with Vite for instant server start and optimized production builds.
-- 🔄 **Seamless Navigation** — State-based routing system managing Home, Company, Affiliate, Pricing, and Contact views.
-- 🔐 **Authentication UI** — Professionally designed Sign In, Sign Up, and Forgot Password pages with form validation states.
-- 💎 **Glassmorphism** — Heavy use of backdrop filters, gradients, and frosted UI panels.
-- 📊 **Animated Statistics** — Real-time counter animations for platform metrics (Volume, Users, Uptime).
+- **🎨 Immersive Dark Mode UI** — Deep forest/black backgrounds with neon green accents and glowing ambient effects.
+- **🌍 Interactive 3D Globe** — Custom HTML5 Canvas rendering of a rotating network globe.
+- **🤖 Bot Builder Wizard** — A multi-step flow (`BotBuilder.jsx`) for users to configure trading strategies, exchange connections, and pricing plans.
+- **📊 Real-Time Dashboard** — A comprehensive user dashboard (`Dashboard.jsx`) displaying portfolio value, active bots, and profit analytics.
+- **🔐 Advanced Authentication** — Fully integrated Sign In/Up flows with:
+  - Google OAuth 2.0 integration via `@react-oauth/google`.
+  - JWT token management.
+  - Password strength validation and visual toggles.
+- **📱 Fully Responsive** — Optimized for mobile, tablet, and desktop with a custom drawer navigation.
+- **⚡ High Performance** — Built with **Vite** for instant server start and optimized production builds.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Framework:** React 18  
-- **Build Tool:** Vite  
-- **Styling:** Tailwind CSS  
-- **Icons:** Lucide React  
-- **Animations:** CSS Keyframes (Float, Marquee) & Canvas API  
+- **Framework:** React 18
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS
+- **Routing:** React Router DOM v6+
+- **Authentication:** React OAuth Google
+- **Icons:** Lucide React
+- **Animations:** CSS Keyframes & HTML5 Canvas
 
 ---
 
 ## 🏁 Getting Started
 
-Follow these steps to run the project locally.
+Follow these steps to set up the project locally.
 
-### **Prerequisites**
+### 1. Prerequisites
 
-- Node.js v18+
+- Node.js (v18+ recommended)
 - npm or yarn
+- A running instance of the **FydBlock Backend** (for Auth/Dashboard features)
 
-### **Installation**
+### 2. Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/fydblock.git
-   cd fydblock
-   ```
+```bash
+git clone https://github.com/yourusername/fydblock.git
+cd fydblock
+npm install
+```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 3. Configuration
 
-3. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
+⚠️ **Important:** This project requires API and Google OAuth configuration.
 
-4. **Build for Production**
-   ```bash
-   npm run build
-   ```
+#### A. Backend Connection
+
+Update `API_BASE_URL` in:
+
+```
+src/config.js
+```
+
+Example:
+
+```javascript
+const API_BASE_URL = "http://localhost:5000/api";
+export default API_BASE_URL;
+```
+
+#### B. Google OAuth Setup
+
+Update your Google Client ID inside:
+
+```
+src/main.jsx
+```
+
+```javascript
+const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+```
+
+### 4. Run Development Server
+
+```bash
+npm run dev
+```
+
+Visit: **http://localhost:5173**
+
+### 5. Build for Production
+
+```bash
+npm run build
+```
+
+Output will be generated inside `/dist`.
 
 ---
 
@@ -73,27 +112,27 @@ fydblock/
 │   └── logos/              # Exchange logos (Binance, Coinbase, etc.)
 ├── src/
 │   ├── App.jsx             # Main Application & Router Logic
-│   ├── main.jsx            # React Entry Point
-│   ├── index.css           # Global Styles & Custom Animations
+│   ├── main.jsx            # Entry Point & Google OAuth Provider
+│   ├── config.js           # API Base URL Configuration
+│   ├── index.css           # Global Styles & Tailwind Directives
 │   │
-│   {/* Layout & Components */}
-│   ├── Navbar.jsx          # Responsive Navigation Bar
+│   {/* Components */}
+│   ├── Navbar.jsx          # Responsive Navigation
 │   ├── Footer.jsx          # Site Footer
-│   ├── WorldGlobe.jsx      # Reusable 3D Globe Animation
+│   ├── WorldGlobe.jsx      # 3D Canvas Globe Animation
 │   │
-│   {/* Pages */}
-│   ├── LandingPage.jsx     # Homepage (Hero, Features, Stats, Marquee)
-│   ├── Company.jsx         # About Us, History & Founders
-│   ├── PricingAndPlans.jsx # Pricing Cards & FAQ
-│   ├── Affiliate.jsx       # Affiliate Program & Calculator
-│   ├── ContactPage.jsx     # Contact Form & Info
+│   {/* Feature Pages */}
+│   ├── LandingPage.jsx     # Home (Hero, Features, Stats)
+│   ├── Dashboard.jsx       # User Dashboard & Analytics
+│   ├── BotBuilder.jsx      # 5-Step Bot Creation Wizard
+│   ├── PricingAndPlans.jsx # Pricing Cards & Billing Toggle
 │   │
-│   {/* Authentication Pages */}
-│   ├── SignIn.jsx          # Login Page with Toggle
-│   ├── SignUp.jsx          # Registration Page
-│   └── ResetPass.jsx       # Forgot Password Page
+│   {/* Authentication */}
+│   ├── SignIn.jsx          # Login Page
+│   ├── SignUp.jsx          # Registration Page with Validation
+│   └── ResetPass.jsx       # Password Reset Flow
 │
-├── tailwind.config.js      # Tailwind Configuration (Custom Container widths)
+├── tailwind.config.js      # Custom Theme Configuration
 └── vite.config.js          # Vite Configuration
 ```
 
@@ -101,16 +140,22 @@ fydblock/
 
 ## 🚀 Deployment
 
-FydBlock is optimized for deployment on **Vercel** or **Netlify**.
+### Deploying on Vercel
 
-1. Push your project to GitHub.  
-2. Import the repository into Vercel/Netlify.  
-3. Build command: `vite build`  
-4. Output directory: `dist`  
+1. Push project to GitHub  
+2. Import into Vercel  
+3. Vercel auto-detects Vite  
+4. Deploy 🎉
+
+The included `vercel.json` ensures correct SPA routing.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License**.
+Licensed under the **MIT License**.  
+See the `LICENSE` file for details.
 
+---
+
+**Developed by FydBlock Team**
