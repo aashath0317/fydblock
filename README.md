@@ -1,6 +1,6 @@
 # FydBlock - AI-Powered Crypto Trading Platform
 
-![FydBlock Hero](public/hero.png)
+![FydBlock Hero](public/logo.png)
 
 🚀 **Project Overview**
 
