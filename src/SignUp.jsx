@@ -176,7 +176,7 @@ const SignUp = () => {
 
                 {/* --- Header / Back Button --- */}
                 <div className="mb-8">
-                    <img src="/logo.png" alt="FydBlock" className="h-8 mb-8" />
+                    <img src="/logo.png" alt="FydBlock" className="h-8 md:h-10 object-contain" />
 
                     <button
                         onClick={() => navigate('/')}
@@ -373,20 +373,12 @@ const SignUp = () => {
                             <button
                                 type="button"
                                 onClick={() => handleGoogleSignUp()}
-                                disabled={isLoading || !agreed} // <--- FIXED: Button is now physically disabled if not agreed
+                                disabled={isLoading || !agreed}
                                 className={`w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50 ${!agreed ? 'cursor-not-allowed hover:border-white/20' : ''}`}
                                 title={!agreed ? "Please agree to Terms of Service first" : ""}
                             >
                                 <GoogleIcon />
                                 Continue with Google
-                            </button>
-
-                            <button
-                                className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50"
-                                disabled={isLoading}
-                            >
-                                <Wallet size={20} className="text-[#3B82F6]" />
-                                Continue with Wallet
                             </button>
                         </div>
 
