@@ -142,7 +142,7 @@ const SignIn = () => {
 
             <div className="container mx-auto px-6 py-8 relative z-10">
                 <div className="mb-8">
-                    <img src="/logo.png" alt="FydBlock" className="h-8 mb-8" />
+                    <img src="/logo.png" alt="FydBlock" className="h-8 md:h-10 object-contain" />
                     <button onClick={() => navigate('/')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
                         <ArrowLeft size={20} /> <span>Back</span>
                     </button>
@@ -265,13 +265,6 @@ const SignIn = () => {
                                 Continue with Google
                             </button>
 
-                            <button
-                                className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50"
-                                disabled={isLoading}
-                            >
-                                <Wallet size={20} className="text-[#3B82F6]" />
-                                Continue with Wallet
-                            </button>
                         </div>
                     </div>
 
