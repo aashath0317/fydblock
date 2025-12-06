@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import {
     ArrowLeft, Eye, EyeOff, Check, Wallet,
     Loader2, AlertCircle, CheckCircle
-} from 'lucide-react'; // Added new icons
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google'; // Import Google Hook
 import API_BASE_URL from './config';
 
 const SignUp = () => {
@@ -21,7 +22,7 @@ const SignUp = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [agreed, setAgreed] = useState(false);
 
-    // UI States for UX Improvement
+    // UI States
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -45,6 +46,7 @@ const SignUp = () => {
         }
     };
 
+    // --- 1. HANDLE MANUAL SIGN UP ---
     const handleSignUp = async (e) => {
         e.preventDefault();
 
@@ -52,19 +54,19 @@ const SignUp = () => {
         setError('');
         setSuccess('');
 
-        // 1. Validate Terms Agreement
+        // Validate Terms Agreement
         if (!agreed) {
             setError("You must agree to the Terms of Service to create an account.");
             return;
         }
 
-        // 2. Validate Password Match
+        // Validate Password Match
         if (password !== confirmPassword) {
             setError("Passwords do not match!");
             return;
         }
 
-        // 3. Validate Password Strength
+        // Validate Password Strength
         const isPasswordValid = passwordRules.every(rule => rule.test(password));
         if (!isPasswordValid) {
             setError("Please meet all password requirements.");
@@ -85,8 +87,10 @@ const SignUp = () => {
 
             if (response.ok) {
                 // Success State
+                localStorage.setItem('token', data.token); // Auto-login after register
                 setSuccess('Account created successfully! Redirecting...');
-                // Optional: Wait 1.5s so user sees the success message before moving
+
+                // Redirect to profile setup
                 setTimeout(() => {
                     navigate('/bot-builder');
                 }, 1500);
@@ -98,11 +102,65 @@ const SignUp = () => {
             console.error('Error:', error);
             setError('Unable to connect to the server. Please check your connection.');
         } finally {
-            // Stop Loading (unless successful, we might want to keep it while redirecting)
-            // But usually good to stop it to show the success message clearly
             setIsLoading(false);
         }
     };
+
+    // --- 2. HANDLE GOOGLE SIGN UP ---
+    const handleGoogleSignUp = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            if (!agreed) {
+                setError("You must agree to the Terms of Service to sign up.");
+                return;
+            }
+
+            setIsLoading(true);
+            setError('');
+
+            try {
+                // Send access_token to backend (Backend handles creation if user doesn't exist)
+                const res = await fetch(`${API_BASE_URL}/auth/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: tokenResponse.access_token }),
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    setSuccess('Google Sign-Up successful!');
+
+                    // Check profile status to determine next step
+                    const userRes = await fetch(`${API_BASE_URL}/user/me`, {
+                        headers: { 'Authorization': `Bearer ${data.token}` }
+                    });
+
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        setTimeout(() => {
+                            if (!userData.profileComplete || !userData.botCreated) {
+                                navigate('/bot-builder');
+                            } else {
+                                navigate('/dashboard');
+                            }
+                        }, 1500);
+                    } else {
+                        // Default to builder for new users
+                        setTimeout(() => navigate('/bot-builder'), 1500);
+                    }
+                } else {
+                    setError(data.message || 'Google Sign-Up Failed');
+                }
+            } catch (err) {
+                console.error("Google Sign-Up Error", err);
+                setError('Server connection error during Google Sign-Up.');
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        onError: () => setError('Google Sign-Up Failed'),
+    });
 
     return (
         <div className="min-h-screen bg-[#050B0D] text-white font-sans relative overflow-hidden animate-in fade-in duration-500">
@@ -243,8 +301,8 @@ const SignUp = () => {
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         placeholder="Confirm your password..."
                                         className={`w-full bg-white text-black rounded-lg px-4 py-3 outline-none focus:ring-2 placeholder:text-gray-500 transition-all pr-12 disabled:opacity-70 disabled:cursor-not-allowed ${confirmPassword && password !== confirmPassword
-                                                ? 'focus:ring-red-500 ring-2 ring-red-500/50'
-                                                : 'focus:ring-[#00FF9D]'
+                                            ? 'focus:ring-red-500 ring-2 ring-red-500/50'
+                                            : 'focus:ring-[#00FF9D]'
                                             }`}
                                     />
                                     <button
@@ -311,11 +369,22 @@ const SignUp = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all">
+                            {/* GOOGLE BUTTON */}
+                            <button
+                                type="button"
+                                onClick={() => handleGoogleSignUp()}
+                                disabled={isLoading}
+                                className={`w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50 ${!agreed ? 'opacity-50 cursor-not-allowed hover:border-white/20' : ''}`}
+                                title={!agreed ? "Please agree to Terms of Service first" : ""}
+                            >
                                 <GoogleIcon />
                                 Continue with Google
                             </button>
-                            <button className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all">
+
+                            <button
+                                className="w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50"
+                                disabled={isLoading}
+                            >
                                 <Wallet size={20} className="text-[#3B82F6]" />
                                 Continue with Wallet
                             </button>
