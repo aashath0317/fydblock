@@ -13,7 +13,7 @@ import {
     ChevronDown,
     AlertCircle
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import API_BASE_URL from './config';
 
 // --- CONSTANTS ---
@@ -291,10 +291,18 @@ const Breadcrumbs = ({ currentStep }) => {
 
 const BotBuilder = () => {
     const navigate = useNavigate();
-    const [currentStep, setCurrentStep] = useState(1);
+    const [searchParams] = useSearchParams();
+
+    // Check if user returned from OAuth (e.g. ?step=3)
+    const initialStep = parseInt(searchParams.get('step')) || 1;
+    const [currentStep, setCurrentStep] = useState(initialStep);
+
     const [loading, setLoading] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [phoneError, setPhoneError] = useState('');
+
+    // New state for toggling between Fast (OAuth) and Manual connection
+    const [connectMethod, setConnectMethod] = useState('fast'); // 'fast' | 'manual'
 
     const [wizardData, setWizardData] = useState({
         name: '',
@@ -332,7 +340,7 @@ const BotBuilder = () => {
                     return;
                 }
 
-                if (data.profileComplete) {
+                if (data.profileComplete && currentStep === 1) {
                     const countryObj = COUNTRIES.find(c => c.name === data.user.country);
                     const pCode = countryObj ? countryObj.code : '';
                     let pNum = data.user.phone_number || '';
@@ -355,7 +363,7 @@ const BotBuilder = () => {
         };
 
         checkStatus();
-    }, [navigate]);
+    }, [navigate, currentStep]);
 
     // --- HANDLERS ---
     const handleCountryChange = (e) => {
@@ -392,6 +400,19 @@ const BotBuilder = () => {
         }
     };
 
+    // --- NEW: Handle Fast Connect (OAuth Redirect) ---
+    const handleFastConnect = async () => {
+        if (!wizardData.exchange) return alert("Please select an exchange first.");
+
+        // 🛑 RESTRICTION: Only allow Binance for now
+        if (wizardData.exchange !== 'binance') {
+            return alert("Fast Connect is not available right now for this exchange. Please use Manual Entry.");
+        }
+
+        // This endpoint will be responsible for redirecting the browser to Binance
+        window.location.href = `${API_BASE_URL}/user/exchange/auth/${wizardData.exchange}?token=${localStorage.getItem('token')}`;
+    };
+
     // --- API HANDLERS ---
     const submitStep1 = async () => {
         if (phoneError) return;
@@ -421,13 +442,28 @@ const BotBuilder = () => {
 
     const submitStep2 = async () => {
         if (!wizardData.exchange) return alert("Please select an exchange.");
+
+        // For Manual connection, validate keys
+        if (connectMethod === 'manual') {
+            if (!wizardData.apiKey || !wizardData.apiSecret) {
+                return alert("Please enter both API Key and API Secret.");
+            }
+        } else {
+            // If they are on "Fast Connect" tab but clicked a submit button (unlikely with new UI, but safety check)
+            return handleFastConnect();
+        }
+
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${API_BASE_URL}/user/exchange`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ exchange_name: wizardData.exchange, api_key: wizardData.apiKey || "dummy_key", api_secret: wizardData.apiSecret || "dummy_secret" })
+                body: JSON.stringify({
+                    exchange_name: wizardData.exchange,
+                    api_key: wizardData.apiKey,
+                    api_secret: wizardData.apiSecret
+                })
             });
 
             if (res.ok) { setCurrentStep(3); } else { alert("Failed to connect exchange."); }
@@ -572,7 +608,7 @@ const BotBuilder = () => {
 
     const renderStep2 = () => (
         <div className="w-full max-w-6xl mx-auto animate-in fade-in duration-500 relative z-10">
-            <div className="text-center mb-16">
+            <div className="text-center mb-10">
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
                     Connect An Exchange To Start<br />Trading
                 </h1>
@@ -581,29 +617,125 @@ const BotBuilder = () => {
                 </p>
             </div>
 
+            {/* 1. Exchange Selection Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 {EXCHANGES.map((ex) => (
                     <div
                         key={ex.id}
                         onClick={() => setWizardData({ ...wizardData, exchange: ex.id })}
                         className={`
-                            relative group cursor-pointer h-52 rounded-xl border transition-all duration-300 flex items-center justify-center overflow-hidden bg-[#0A1014]/80 backdrop-blur-sm
+                            relative group cursor-pointer h-52 rounded-xl border transition-all duration-300 flex flex-col gap-4 items-center justify-center overflow-hidden bg-[#0A1014]/80 backdrop-blur-sm
                             ${wizardData.exchange === ex.id
-                                ? 'border-[#00FF9D] shadow-[0_0_30px_rgba(0,255,157,0.1)]'
+                                ? 'border-[#00FF9D] shadow-[0_0_30px_rgba(0,255,157,0.1)] bg-[#00FF9D]/5'
                                 : 'border-gray-800 hover:border-gray-500'
                             }
                         `}
                     >
-                        <div className={`
-                            absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300
-                            ${wizardData.exchange === ex.id ? 'bg-[#00FF9D] text-black scale-100' : 'bg-gray-800 text-gray-400'}
-                        `}>
-                            <ArrowUpRight size={16} />
-                        </div>
+                        {wizardData.exchange === ex.id && (
+                            <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-[#00FF9D] text-black flex items-center justify-center animate-in fade-in zoom-in">
+                                <CheckCircle2 size={16} />
+                            </div>
+                        )}
                         <img src={ex.logo} alt={ex.name} className="h-14 object-contain" />
+                        <span className={`font-bold text-lg ${wizardData.exchange === ex.id ? 'text-[#00FF9D]' : 'text-gray-400'}`}>{ex.name}</span>
                     </div>
                 ))}
             </div>
+
+            {wizardData.exchange && (
+                <div className="max-w-xl mx-auto bg-[#0A1014] border border-white/10 rounded-2xl p-6 md:p-8 mb-12 animate-in fade-in slide-in-from-bottom-4">
+
+                    {/* 2. Toggle Switch: Fast vs Manual */}
+                    <div className="flex bg-white/5 p-1 rounded-lg mb-8">
+                        <button
+                            onClick={() => setConnectMethod('fast')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${connectMethod === 'fast' ? 'bg-[#00FF9D] text-black shadow-lg' : 'text-gray-400 hover:text-white'
+                                }`}
+                        >
+                            Fast Connect
+                        </button>
+                        <button
+                            onClick={() => setConnectMethod('manual')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${connectMethod === 'manual' ? 'bg-[#00FF9D] text-black shadow-lg' : 'text-gray-400 hover:text-white'
+                                }`}
+                        >
+                            Manual Entry
+                        </button>
+                    </div>
+
+                    {/* 3A. Fast Connect View */}
+                    {connectMethod === 'fast' && (
+                        <div className="text-center space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                            <div className="w-16 h-16 mx-auto bg-[#00FF9D]/10 rounded-full flex items-center justify-center text-[#00FF9D] shadow-[0_0_20px_rgba(0,255,157,0.2)]">
+                                <Zap size={32} fill="currentColor" />
+                            </div>
+
+                            {/* Logic for Title and Description */}
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-2">
+                                    {wizardData.exchange === 'binance'
+                                        ? `Connect to ${EXCHANGES.find(e => e.id === wizardData.exchange)?.name}`
+                                        : "Unavailable right now"
+                                    }
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                    {wizardData.exchange === 'binance'
+                                        ? "You will be redirected to the exchange to approve the connection. No need to copy API keys manually."
+                                        : `Fast connect is currently not supported for ${EXCHANGES.find(e => e.id === wizardData.exchange)?.name}. Please use Manual Entry.`
+                                    }
+                                </p>
+                            </div>
+
+                            {/* Logic for Button */}
+                            <button
+                                onClick={handleFastConnect}
+                                disabled={wizardData.exchange !== 'binance'}
+                                className={`w-full font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2
+                                    ${wizardData.exchange === 'binance'
+                                        ? 'bg-[#00FF9D] text-black hover:bg-[#00cc7d] shadow-[0_0_20px_rgba(0,255,157,0.3)]'
+                                        : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                    }
+                                `}
+                            >
+                                Continue to {EXCHANGES.find(e => e.id === wizardData.exchange)?.name}
+                                <ArrowUpRight size={20} />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* 3B. Manual Connect View */}
+                    {connectMethod === 'manual' && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                            <div>
+                                <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">API Key</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-[#00FF9D] outline-none transition-colors"
+                                    placeholder="Paste API Key"
+                                    value={wizardData.apiKey}
+                                    onChange={(e) => setWizardData({ ...wizardData, apiKey: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">API Secret</label>
+                                <input
+                                    type="password"
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-[#00FF9D] outline-none transition-colors"
+                                    placeholder="Paste API Secret"
+                                    value={wizardData.apiSecret}
+                                    onChange={(e) => setWizardData({ ...wizardData, apiSecret: e.target.value })}
+                                />
+                            </div>
+                            <button
+                                onClick={submitStep2}
+                                className="w-full mt-4 bg-white/10 text-white font-bold py-3 rounded-xl hover:bg-[#00FF9D] hover:text-black transition-all border border-white/10 hover:border-[#00FF9D]"
+                            >
+                                Connect Manually
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="flex flex-col items-center space-y-4">
                 <button className="px-10 py-3 rounded border border-gray-700 text-gray-400 hover:border-white hover:text-white transition-all text-sm uppercase tracking-wider">
@@ -615,7 +747,7 @@ const BotBuilder = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-24 pt-8 border-t border-gray-800/50 text-xs text-gray-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 pt-8 border-t border-gray-800/50 text-xs text-gray-500 max-w-4xl mx-auto">
                 <div className="flex items-start gap-3">
                     <Lock size={16} className="text-[#00FF9D] shrink-0 mt-1" />
                     <span>We will not have access to transfer or withdraw your assets. Your funds remain secure with encrypted API keys.</span>
@@ -625,11 +757,6 @@ const BotBuilder = () => {
                     <span>Your data is protected by Cloudflare, defending against attacks and encrypting all information.</span>
                 </div>
             </div>
-            {wizardData.exchange && (
-                <div className="flex justify-center mt-12">
-                    <button onClick={submitStep2} className="bg-[#00FF9D] text-black px-12 py-3 rounded-lg font-bold hover:bg-[#00cc7d]">Connect & Continue</button>
-                </div>
-            )}
         </div>
     );
 
