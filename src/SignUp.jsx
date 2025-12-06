@@ -373,8 +373,8 @@ const SignUp = () => {
                             <button
                                 type="button"
                                 onClick={() => handleGoogleSignUp()}
-                                disabled={isLoading}
-                                className={`w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50 ${!agreed ? 'opacity-50 cursor-not-allowed hover:border-white/20' : ''}`}
+                                disabled={isLoading || !agreed} // <--- FIXED: Button is now physically disabled if not agreed
+                                className={`w-full bg-transparent border border-white/20 hover:border-white text-white font-medium py-3 rounded-lg flex items-center justify-center gap-3 transition-all disabled:opacity-50 ${!agreed ? 'cursor-not-allowed hover:border-white/20' : ''}`}
                                 title={!agreed ? "Please agree to Terms of Service first" : ""}
                             >
                                 <GoogleIcon />
