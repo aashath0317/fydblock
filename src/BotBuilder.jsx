@@ -447,7 +447,7 @@ const BotBuilder = () => {
                     <label className="block text-white text-lg font-medium mb-2">Full name</label>
                     <input
                         type="text"
-                        className="w-full bg-[#0A1014]/80 backdrop-blur-sm border border-white/10 text-white text-lg rounded-lg px-4 py-3 outline-none focus:border-[#00FF9D] transition-all"
+                        className="w-full bg-white border border-white/10 text-white text-lg rounded-lg px-4 py-3 outline-none focus:border-[#00FF9D] transition-all"
                         placeholder="Shaafi"
                         value={wizardData.name}
                         onChange={(e) => setWizardData({ ...wizardData, name: e.target.value })}
@@ -458,7 +458,7 @@ const BotBuilder = () => {
                     <label className="block text-white text-lg font-medium mb-2">Country of Resident</label>
                     <div className="relative">
                         <select
-                            className="w-full bg-[#0A1014]/80 backdrop-blur-sm border border-white/10 text-white text-lg rounded-lg px-4 py-3 outline-none appearance-none focus:border-[#00FF9D] transition-all cursor-pointer"
+                            className="w-full bg-white border border-white/10 text-gray-400 text-lg rounded-lg px-4 py-3 outline-none appearance-none focus:border-[#00FF9D] transition-all cursor-pointer"
                             value={wizardData.country}
                             onChange={handleCountryChange}
                         >
@@ -484,7 +484,7 @@ const BotBuilder = () => {
                                 type="text"
                                 readOnly
                                 value={wizardData.phoneCode}
-                                className="w-full bg-[#0A1014]/80 backdrop-blur-sm border border-white/10 text-white text-lg rounded-lg px-4 py-3 outline-none text-center cursor-default"
+                                className="w-full bg-white border border-white/10 text-gray-600 text-lg rounded-lg px-4 py-3 outline-none text-center cursor-default"
                                 placeholder="+1"
                             />
                         </div>
@@ -494,7 +494,7 @@ const BotBuilder = () => {
                                 type="tel"
                                 value={wizardData.phoneNumber}
                                 onChange={(e) => setWizardData({ ...wizardData, phoneNumber: e.target.value.replace(/\D/g, '') })}
-                                className="w-full bg-[#0A1014]/80 backdrop-blur-sm border border-white/10 text-white text-lg rounded-lg px-4 py-3 outline-none focus:border-[#00FF9D] transition-all"
+                                className="w-full bg-white border border-white/10 text-white text-lg rounded-lg px-4 py-3 outline-none focus:border-[#00FF9D] transition-all"
                                 placeholder="123 456 7890"
                             />
                         </div>
@@ -503,7 +503,7 @@ const BotBuilder = () => {
 
                 <div className="pt-2">
                     <label className="flex items-center gap-3 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${wizardData.agreed ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-500'}`}>
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center bg-white transition-colors ${wizardData.agreed ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-500'}`}>
                             <input
                                 type="checkbox"
                                 className="hidden"
