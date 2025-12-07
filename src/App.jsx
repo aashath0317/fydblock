@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react'; // Import Loader for the checking state
+import { Loader2 } from 'lucide-react'; 
 import Navbar from './Navbar';
 import Footer from './Footer';
 import LandingPage from './LandingPage';
@@ -15,9 +15,10 @@ import SignUp from './SignUp';
 import ResetPass from './ResetPass';
 import BotBuilder from './BotBuilder';
 import Dashboard from './Dashboard';
-import API_BASE_URL from './config'; // Make sure to import your API URL
+import Portfolio from './Portfolio'; // <--- 1. IMPORT ADDED
+import API_BASE_URL from './config'; 
 
-// --- UPDATED ROUTE PROTECTION ---
+// --- ROUTE PROTECTION ---
 const PrivateRoute = ({ element }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -44,7 +45,6 @@ const PrivateRoute = ({ element }) => {
           // Check if the user has actually finished the bot builder
           setHasBot(data.botCreated);
         } else {
-          // Token invalid or expired
           localStorage.removeItem('token');
           setIsAuthenticated(false);
         }
@@ -60,7 +60,6 @@ const PrivateRoute = ({ element }) => {
   }, []);
 
   if (isLoading) {
-    // Show a loading spinner while we check the database
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050B0D]">
         <Loader2 className="animate-spin text-[#00FF9D]" size={48} />
@@ -72,7 +71,7 @@ const PrivateRoute = ({ element }) => {
     return <Navigate to="/signin" replace />;
   }
 
-  // KEY FIX: If they haven't created a bot, force them to the builder
+  // Force new users to builder if they haven't created a bot yet
   if (!hasBot) {
     return <Navigate to="/bot-builder" replace />;
   }
@@ -87,10 +86,12 @@ const App = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const hideNavAndFooterPaths = ['/signin', '/signup', '/resetpass', '/dashboard', '/bot-builder'];
+  // <--- 2. ADD '/portfolio' TO THIS LIST
+  const hideNavAndFooterPaths = ['/signin', '/signup', '/resetpass', '/dashboard', '/bot-builder', '/portfolio'];
   const showNavAndFooter = !hideNavAndFooterPaths.includes(location.pathname);
 
-  const isFullPage = location.pathname === '/dashboard' || location.pathname === '/bot-builder';
+  // Check if we are in a dashboard-like page (Full screen app mode)
+  const isFullPage = ['/dashboard', '/bot-builder', '/portfolio'].includes(location.pathname);
   const mainClass = isFullPage ? "relative z-10 p-0" : "relative z-10";
 
   return (
@@ -116,13 +117,16 @@ const App = () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/resetpass" element={<ResetPass />} />
 
-          {/* Bot Builder is technically private (needs login) but doesn't require a bot to exist yet */}
+          {/* Bot Builder */}
           <Route path="/bot-builder" element={
             localStorage.getItem('token') ? <BotBuilder /> : <Navigate to="/signin" replace />
           } />
 
-          {/* Dashboard is fully protected (Needs Login + Bot Created) */}
+          {/* Dashboard */}
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+          
+          {/* <--- 3. ADD PORTFOLIO ROUTE */}
+          <Route path="/portfolio" element={<PrivateRoute element={<Portfolio />} />} />
         </Routes>
       </main>
 
