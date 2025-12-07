@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react'; 
+import { Loader2 } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import LandingPage from './LandingPage';
@@ -16,9 +16,8 @@ import ResetPass from './ResetPass';
 import BotBuilder from './BotBuilder';
 import Dashboard from './Dashboard';
 import Portfolio from './Portfolio'; // <--- 1. IMPORT ADDED
-import API_BASE_URL from './config'; 
+import API_BASE_URL from './config';
 
-// --- ROUTE PROTECTION ---
 const PrivateRoute = ({ element }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -42,7 +41,7 @@ const PrivateRoute = ({ element }) => {
         if (response.ok) {
           const data = await response.json();
           setIsAuthenticated(true);
-          // Check if the user has actually finished the bot builder
+
           setHasBot(data.botCreated);
         } else {
           localStorage.removeItem('token');
@@ -124,7 +123,7 @@ const App = () => {
 
           {/* Dashboard */}
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
-          
+
           {/* <--- 3. ADD PORTFOLIO ROUTE */}
           <Route path="/portfolio" element={<PrivateRoute element={<Portfolio />} />} />
         </Routes>
