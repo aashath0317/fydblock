@@ -1,12 +1,16 @@
 // src/Dashboard.jsx
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, PieChart, Briefcase, Activity, Terminal,
     Users, UserPlus, BookOpen, Radio, CreditCard,
     Bell, Plus, ChevronUp, Wallet, Loader2, X, Zap, CheckCircle2, ChevronDown
 } from 'lucide-react';
 import API_BASE_URL from './config';
+
+// --- Import Portfolio Content ---
+import PortfolioContent from './Portfolio';
 
 // --- CONSTANTS ---
 const EXCHANGES = [
@@ -21,6 +25,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
     const [selectedExchange, setSelectedExchange] = useState(EXCHANGES[0]);
     const [apiKey, setApiKey] = useState('');
     const [apiSecret, setApiSecret] = useState('');
+    const [passphrase, setPassphrase] = useState('');
     const [loading, setLoading] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -28,6 +33,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
 
     const handleSubmit = async () => {
         if (!apiKey || !apiSecret) return alert("Please enter API Key and Secret");
+        if (selectedExchange.id === 'okx' && !passphrase) return alert("Please enter Passphrase");
 
         setLoading(true);
         try {
@@ -38,12 +44,13 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                 body: JSON.stringify({
                     exchange_name: selectedExchange.id,
                     api_key: apiKey,
-                    api_secret: apiSecret
+                    api_secret: apiSecret,
+                    passphrase: passphrase
                 })
             });
 
             if (res.ok) {
-                onSuccess(); // Refresh dashboard
+                onSuccess();
                 onClose();
             } else {
                 alert("Connection failed. Please check your keys.");
@@ -57,9 +64,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
     };
 
     return (
-        // MODAL BACKDROP: Heavy blur for focus
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-            {/* MODAL CONTENT: Glass Effect */}
             <div className="bg-[#0A1014]/80 backdrop-blur-2xl border border-white/20 w-full max-w-lg rounded-3xl p-8 relative shadow-[0_0_50px_rgba(0,0,0,0.5)]">
 
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
@@ -68,7 +73,6 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
 
                 <h2 className="text-2xl font-bold text-white mb-6">Connect Exchange</h2>
 
-                {/* Exchange Selector */}
                 <div className="mb-6 relative">
                     <label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Select Exchange</label>
                     <div
@@ -99,7 +103,6 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                     )}
                 </div>
 
-                {/* Tabs */}
                 <div className="flex bg-black/20 p-1 rounded-xl mb-6 border border-white/5">
                     <button
                         onClick={() => setActiveTab('fast')}
@@ -115,7 +118,6 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                     </button>
                 </div>
 
-                {/* Content */}
                 {activeTab === 'fast' ? (
                     <div className="text-center py-8 bg-white/5 rounded-2xl border border-white/5 border-dashed">
                         <div className="w-12 h-12 mx-auto bg-gray-800/50 rounded-full flex items-center justify-center text-gray-500 mb-4 backdrop-blur-sm">
@@ -151,6 +153,12 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                                 placeholder={`Enter your ${selectedExchange.name} API Secret`}
                             />
                         </div>
+                        {selectedExchange.id === 'okx' && (
+                            <div>
+                                <label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Passphrase</label>
+                                <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-[#00FF9D] outline-none" placeholder="Enter OKX Passphrase" />
+                            </div>
+                        )}
                         <button
                             onClick={handleSubmit}
                             disabled={loading}
@@ -165,7 +173,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
     );
 };
 
-// --- HELPER: CONNECT API OVERLAY (Modified to use callback) ---
+// --- HELPER: CONNECT API OVERLAY (Used in Dashboard and Portfolio) ---
 const ConnectApiOverlay = ({ onConnect, title = "Connect" }) => (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#050B0D]/40 backdrop-blur-[4px] transition-all rounded-3xl border border-white/5">
         <div className="text-center animate-in fade-in zoom-in duration-300">
@@ -236,7 +244,6 @@ const PerformanceChart = ({ isConnected }) => (
 
 // --- CARD COMPONENTS ---
 const StatCard = ({ title, value, percentage, icon, isConnected, onConnect }) => (
-    // GLASS EFFECT APPLIED HERE: Lower opacity, higher blur, hover border
     <div className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-6 border border-white/5 relative overflow-hidden group hover:border-white/10 transition-all duration-300 h-40 flex flex-col justify-between hover:shadow-[0_0_30px_rgba(0,255,157,0.05)]">
         {!isConnected && <ConnectApiOverlay onConnect={onConnect} title="Connect API" />}
         <div className={`${!isConnected ? 'filter blur-[3px] opacity-30 pointer-events-none select-none' : ''} transition-all h-full flex flex-col justify-between`}>
@@ -264,7 +271,6 @@ const BotCard = ({ bot, isConnected, onConnect }) => {
     const displayPercent = isConnected && !isPlaceholder ? "0.00%" : (isPlaceholder ? '+2.4%' : "--");
 
     return (
-        // GLASS EFFECT APPLIED HERE
         <div className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-5 border border-white/5 min-w-[260px] relative overflow-hidden group transition-all duration-300 ${isConnected ? 'hover:border-[#00FF9D]/30 hover:shadow-[0_0_20px_rgba(0,255,157,0.1)]' : ''}`}>
             {!isConnected && !isPlaceholder && <ConnectApiOverlay onConnect={onConnect} title="Connect" />}
             <div className={`${!isConnected && !isPlaceholder ? 'filter blur-[2px] opacity-60 pointer-events-none' : ''} transition-all`}>
@@ -303,11 +309,18 @@ const BotCard = ({ bot, isConnected, onConnect }) => {
     );
 };
 
+
+// --- MAIN DASHBOARD COMPONENT (Now serves as the Layout/Router) ---
+
 const Dashboard = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [loading, setLoading] = useState(true);
     const [hasExchange, setHasExchange] = useState(false);
     const [user, setUser] = useState({ name: "Trader", plan: "Pro Plan Active" });
+    const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+
+    // State for dashboard data
     const [statsData, setStatsData] = useState({
         daily: { value: "$0.00", percentage: "0.00%" },
         monthly: { value: "$0.00", percentage: "0.00%" },
@@ -315,41 +328,49 @@ const Dashboard = () => {
     });
     const [activeBots, setActiveBots] = useState([]);
 
-    // MODAL STATE
-    const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+    // State for Portfolio data (to pass to PortfolioContent)
+    const [portfolioData, setPortfolioData] = useState({
+        totalValue: 0,
+        changePercent: 0,
+        assets: [],
+        history: []
+    });
 
+    const currentView = location.pathname;
+
+    // Unified Fetch function
     const fetchData = async () => {
         const token = localStorage.getItem('token');
         if (!token) return navigate('/signin');
 
         try {
-            const res = await fetch(`${API_BASE_URL}/user/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
+            const res = await fetch(`${API_BASE_URL}/user/me`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (res.ok) {
                 const data = await res.json();
                 setUser({ name: data.user.full_name || "Trader", plan: "Pro Plan Active" });
-
-                // Check BOTH bots OR exchange connection
                 let isConnected = data.hasExchange === true;
+                setHasExchange(isConnected);
 
-                if (isConnected) {
-                    const dashRes = await fetch(`${API_BASE_URL}/user/dashboard`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                // Fetch Dashboard Stats/Bots
+                const dashRes = await fetch(`${API_BASE_URL}/user/dashboard`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (dashRes.ok) {
+                    const dashData = await dashRes.json();
+                    setStatsData({
+                        daily: { value: dashData.stats[0].value, percentage: dashData.stats[0].percentage },
+                        monthly: { value: dashData.stats[1].value, percentage: dashData.stats[1].percentage },
+                        assets: { value: dashData.stats[2].value, percentage: dashData.stats[2].percentage }
                     });
+                    setActiveBots(dashData.bots || []);
+                }
 
-                    if (dashRes.ok) {
-                        const dashData = await dashRes.json();
-                        setStatsData({
-                            daily: { value: dashData.stats[0].value, percentage: dashData.stats[0].percentage },
-                            monthly: { value: dashData.stats[1].value, percentage: dashData.stats[1].percentage },
-                            assets: { value: dashData.stats[2].value, percentage: dashData.stats[2].percentage }
-                        });
-                        setActiveBots(dashData.bots || []);
+                // Fetch Portfolio Data (only if on portfolio view)
+                if (isConnected && currentView === '/portfolio') {
+                    const portRes = await fetch(`${API_BASE_URL}/user/portfolio`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (portRes.ok) {
+                        const portData = await portRes.json();
+                        setPortfolioData(portData);
                     }
                 }
-                setHasExchange(isConnected);
             }
         } catch (err) {
             console.error(err);
@@ -359,39 +380,124 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
-        fetchData();
-    }, [navigate]);
+        if (currentView === '/dashboard' || currentView === '/portfolio') {
+            fetchData();
+        }
+    }, [navigate, currentView]);
 
     const validBots = activeBots.filter(bot => !isInvalidBot(bot.bot_type));
 
-    if (loading) return (
-        <div className="min-h-screen bg-[#050B0D] flex items-center justify-center">
-            <Loader2 className="animate-spin text-[#00FF9D]" size={48} />
-        </div>
-    );
+    // --- CONDITIONAL RENDERING OF MAIN CONTENT ---
+    const renderMainContent = () => {
+
+        if (currentView === '/portfolio') {
+            const portfolioContentProps = {
+                loading,
+                hasExchange,
+                portfolioData,
+                // Simple filter to pass down
+                filteredAssets: portfolioData.assets.filter(a => a.value > 1),
+                chartColor: portfolioData.changePercent >= 0 ? "#00FF9D" : "#EF4444",
+                isPositiveChange: portfolioData.changePercent >= 0,
+                // Handlers passed to PortfolioContent
+                setIsConnectModalOpen,
+                navigate,
+                setSearchQuery: () => { }, // Placeholder if needed or handle search state here
+                searchQuery: '' // Placeholder
+            };
+
+            return <PortfolioContent {...portfolioContentProps} />;
+
+        } else {
+            // Default: Dashboard View
+            return (
+                <>
+                    <header className="flex justify-between items-center mb-10">
+                        <h1 className="text-3xl font-bold text-[#00FF9D] drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">Dashboard</h1>
+                        <div className="flex items-center gap-4">
+                            <button className="w-10 h-10 rounded-xl bg-[#0A1014]/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:border-[#00FF9D] transition-colors relative">
+                                <Bell size={20} />
+                                <div className="absolute top-2 right-2 w-2 h-2 bg-[#00FF9D] rounded-full shadow-[0_0_5px_#00FF9D]"></div>
+                            </button>
+                            <button onClick={() => navigate('/bot-builder')} className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.5)]">
+                                <Plus size={18} strokeWidth={3} />
+                                New Bot
+                            </button>
+                        </div>
+                    </header>
+                    {loading ? (
+                        <div className="flex items-center justify-center h-full min-h-[60vh]">
+                            <Loader2 className="animate-spin text-[#00FF9D]" size={48} />
+                        </div>
+                    ) : (
+                        <>
+                            <section className="grid md:grid-cols-3 gap-6 mb-8">
+                                <StatCard title="Today's Profit" value={statsData.daily.value} percentage={statsData.daily.percentage} icon={<span className="font-bold text-lg">$</span>} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
+                                <StatCard title="30 Days Profit" value={statsData.monthly.value} percentage={statsData.monthly.percentage} icon={<span className="font-bold text-lg">30</span>} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
+                                <StatCard title="Assets Value" value={statsData.assets.value} percentage={statsData.assets.percentage} icon={<PieChart size={20} />} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
+                            </section>
+
+                            <section className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 mb-8 relative overflow-hidden min-h-[400px] hover:border-white/10 transition-colors">
+                                {!hasExchange && <ConnectApiOverlay onConnect={() => setIsConnectModalOpen(true)} title="Connect Exchange" />}
+                                <div className={`${!hasExchange ? 'filter blur-md opacity-30 pointer-events-none select-none' : ''} transition-all duration-500 h-full`}>
+                                    <div className="flex justify-between items-center mb-8">
+                                        <div>
+                                            <h2 className="text-lg font-bold text-white mb-2">Performance Analytics</h2>
+                                            <p className="text-2xl font-bold text-white">{hasExchange ? statsData.daily.value : "$0.00"}</p>
+                                        </div>
+                                        <div className="flex bg-black/20 p-1 rounded-lg border border-white/5 backdrop-blur-sm">
+                                            {['1h', '3h', '1d', '1w', '1m'].map((tf, i) => (
+                                                <button key={tf} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${i === 2 ? 'bg-[#00FF9D] text-black shadow-[0_0_10px_rgba(0,255,157,0.3)]' : 'text-gray-500 hover:text-white'}`}>{tf}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <PerformanceChart isConnected={hasExchange} />
+                                </div>
+                            </section>
+
+                            <section className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 relative hover:border-white/10 transition-colors">
+                                <h2 className="text-lg font-bold text-white mb-6">Active Bots</h2>
+                                <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+                                    {validBots.map((bot, i) => <BotCard key={bot.id || i} bot={bot} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />)}
+                                    <div onClick={() => navigate('/bot-builder')} className="min-w-[200px] rounded-2xl border border-dashed border-white/20 flex flex-col items-center justify-center p-6 cursor-pointer hover:border-[#00FF9D] hover:bg-[#00FF9D]/5 transition-all group bg-white/5 backdrop-blur-sm">
+                                        <div className="w-12 h-12 bg-[#050B0D] rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-white/5 group-hover:border-[#00FF9D]">
+                                            <Plus size={24} className="text-[#00FF9D]" />
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-400 group-hover:text-white">Deploy New Bot</span>
+                                    </div>
+                                </div>
+                            </section>
+                        </>
+                    )}
+                </>
+            );
+        }
+    }
 
     return (
+        // --- MASTER LAYOUT CONTAINER (Static) ---
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black relative">
 
-            {/* Background Glows */}
+            {/* Synchronized Background Glows (STATIC) */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00FF9D]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
                 <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
                 <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/20 rounded-full blur-[180px] opacity-70"></div>
             </div>
 
+            {/* Modal (Static) */}
             <ConnectExchangeModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} onSuccess={fetchData} />
 
-            {/* SIDEBAR: Increased Glass Effect */}
-            <aside className="w-64 bg-[#050B0D]/40 backdrop-blur-2xl border-r border-white/5 flex flex-col justify-between py-6 z-20 hidden md:flex">
+            {/* --- SIDEBAR (STATIC - DOES NOT RELOAD) --- */}
+            <aside className="w-64 bg-[#050B0D]/80 backdrop-blur-md border-r border-white/5 flex flex-col justify-between py-6 z-20 hidden md:flex">
                 <div className="px-6">
                     <div className="flex items-center gap-2 mb-12 cursor-pointer" onClick={() => navigate('/')}>
                         <img src="/logo.png" alt="FydBlock" className="h-8 object-contain" />
                     </div>
                     <nav className="space-y-1">
                         {[
-                            { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", active: true },
-                            { name: "My Portfolio", icon: PieChart, path: "/portfolio" }, // <--- Defined Path
+                            { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", active: currentView === '/dashboard' },
+                            { name: "My Portfolio", icon: PieChart, path: "/portfolio", active: currentView === '/portfolio' },
                             { name: "Bots", icon: Briefcase, path: "/dashboard" },
                             { name: "Backtest", icon: Wallet, path: "#" },
                             { name: "My Exchanges", icon: Terminal, path: "#" },
@@ -399,12 +505,9 @@ const Dashboard = () => {
                         ].map((item) => (
                             <button
                                 key={item.name}
-                                // CRITICAL FIX: Added onClick handler here
-                                onClick={() => item.path && navigate(item.path)}
+                                onClick={() => navigate(item.path)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group 
-                                ${item.active
-                                        ? 'bg-[#00FF9D] text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]'
-                                        : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                                ${item.active ? 'bg-[#00FF9D] text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
                             >
                                 <item.icon size={18} className={item.active ? "text-black" : "group-hover:text-[#00FF9D] transition-colors"} />
                                 {item.name}
@@ -425,59 +528,9 @@ const Dashboard = () => {
                 </div>
             </aside>
 
+            {/* --- MAIN CONTENT (Only this re-renders) --- */}
             <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
-                <header className="flex justify-between items-center mb-10">
-                    <h1 className="text-3xl font-bold text-[#00FF9D] drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">Dashboard</h1>
-                    <div className="flex items-center gap-4">
-                        <button className="w-10 h-10 rounded-xl bg-[#0A1014]/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:border-[#00FF9D] transition-colors relative">
-                            <Bell size={20} />
-                            <div className="absolute top-2 right-2 w-2 h-2 bg-[#00FF9D] rounded-full shadow-[0_0_5px_#00FF9D]"></div>
-                        </button>
-                        <button onClick={() => navigate('/bot-builder')} className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.5)]">
-                            <Plus size={18} strokeWidth={3} />
-                            New Bot
-                        </button>
-                    </div>
-                </header>
-
-                <section className="grid md:grid-cols-3 gap-6 mb-8">
-                    <StatCard title="Today's Profit" value={statsData.daily.value} percentage={statsData.daily.percentage} icon={<span className="font-bold text-lg">$</span>} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
-                    <StatCard title="30 Days Profit" value={statsData.monthly.value} percentage={statsData.monthly.percentage} icon={<span className="font-bold text-lg">30</span>} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
-                    <StatCard title="Assets Value" value={statsData.assets.value} percentage={statsData.assets.percentage} icon={<PieChart size={20} />} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
-                </section>
-
-                {/* MAIN CHART: Stronger Glass */}
-                <section className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 mb-8 relative overflow-hidden min-h-[400px] hover:border-white/10 transition-colors">
-                    {!hasExchange && <ConnectApiOverlay onConnect={() => setIsConnectModalOpen(true)} title="Connect Exchange" />}
-                    <div className={`${!hasExchange ? 'filter blur-md opacity-30 pointer-events-none select-none' : ''} transition-all duration-500 h-full`}>
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h2 className="text-lg font-bold text-white mb-2">Performance Analytics</h2>
-                                <p className="text-2xl font-bold text-white">{hasExchange ? statsData.daily.value : "$0.00"}</p>
-                            </div>
-                            <div className="flex bg-black/20 p-1 rounded-lg border border-white/5 backdrop-blur-sm">
-                                {['1h', '3h', '1d', '1w', '1m'].map((tf, i) => (
-                                    <button key={tf} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${i === 2 ? 'bg-[#00FF9D] text-black shadow-[0_0_10px_rgba(0,255,157,0.3)]' : 'text-gray-500 hover:text-white'}`}>{tf}</button>
-                                ))}
-                            </div>
-                        </div>
-                        <PerformanceChart isConnected={hasExchange} />
-                    </div>
-                </section>
-
-                {/* ACTIVE BOTS: Stronger Glass */}
-                <section className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 relative hover:border-white/10 transition-colors">
-                    <h2 className="text-lg font-bold text-white mb-6">Active Bots</h2>
-                    <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-                        {validBots.map((bot, i) => <BotCard key={bot.id || i} bot={bot} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />)}
-                        <div onClick={() => navigate('/bot-builder')} className="min-w-[200px] rounded-2xl border border-dashed border-white/20 flex flex-col items-center justify-center p-6 cursor-pointer hover:border-[#00FF9D] hover:bg-[#00FF9D]/5 transition-all group bg-white/5 backdrop-blur-sm">
-                            <div className="w-12 h-12 bg-[#050B0D] rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-white/5 group-hover:border-[#00FF9D]">
-                                <Plus size={24} className="text-[#00FF9D]" />
-                            </div>
-                            <span className="text-sm font-bold text-gray-400 group-hover:text-white">Deploy New Bot</span>
-                        </div>
-                    </div>
-                </section>
+                {renderMainContent()}
             </main>
         </div>
     );
