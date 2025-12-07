@@ -459,7 +459,6 @@ const BotBuilder = () => {
     };
 
     const submitFinalBot = async () => {
-        if (!wizardData.plan) return alert("Please select a plan.");
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
@@ -467,18 +466,18 @@ const BotBuilder = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
-                    bot_name: `${wizardData.plan} Bot`,
-                    quote_currency: wizardData.currency,
-                    bot_type: 'DCA',
-                    plan: wizardData.plan,
-                    billing_cycle: wizardData.billingCycle
+                    bot_name: 'Setup Skipped',
+                    quote_currency: wizardData.currency || 'USDT',
+                    bot_type: 'SKIPPED',
+                    plan: 'free',
+                    billing_cycle: 'monthly'
                 })
             });
 
             if (res.ok) {
                 navigate('/dashboard');
             } else {
-                alert("Failed to create bot.");
+                alert("Connection failed. Please try again.");
             }
         } catch (e) { console.error(e); }
         setLoading(false);
@@ -973,13 +972,15 @@ const BotBuilder = () => {
                 </div>
             </div>
 
-            {wizardData.plan && (
-                <div className="flex justify-center mt-12">
-                    <button onClick={() => setCurrentStep(5)} className="bg-[#00FF9D] text-black px-12 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(0,255,157,0.4)] hover:bg-[#00cc7d]">
-                        Continue with {wizardData.plan === 'signature' ? 'Signature' : 'Pro'} Bot
-                    </button>
-                </div>
-            )}
+            {/* REPLACED BUTTON SECTION */}
+            <div className="flex flex-col items-center justify-center mt-12 gap-6">
+                <button
+                    onClick={submitFinalBot}
+                    className="text-gray-400 hover:text-white transition-colors text-lg border-b border-transparent hover:border-gray-500 pb-1"
+                >
+                    I will set it later
+                </button>
+            </div>
         </div>
     );
 
