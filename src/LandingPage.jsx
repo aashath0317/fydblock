@@ -312,9 +312,6 @@ const LandingPage = () => {
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden z-10">
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[#00FF9D] text-xs font-bold uppercase tracking-wider backdrop-blur-sm shadow-[0_0_15px_rgba(0,255,157,0.1)]">
-              <span className="w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]"></span> AI Powered Trading 2.0
-            </div>
             <h1 className="text-5xl lg:text-7xl 3xl:text-9xl font-light leading-[1.1] tracking-tight text-white drop-shadow-2xl">
               Smarter Business <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF9D] via-[#00FF9D] to-[#00A3FF]">Powered by AI</span>
             </h1>
