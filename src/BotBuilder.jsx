@@ -312,6 +312,7 @@ const BotBuilder = () => {
         exchange: '',
         apiKey: '',
         apiSecret: '',
+        passphrase: '', // ADDED: For OKX and others requiring it
         currency: 'USDT',
         plan: 'signature',
         billingCycle: 'monthly',
@@ -435,6 +436,10 @@ const BotBuilder = () => {
             if (!wizardData.apiKey || !wizardData.apiSecret) {
                 return alert("Please enter both API Key and API Secret.");
             }
+            // UPDATED: Check for Passphrase on OKX
+            if (wizardData.exchange === 'okx' && !wizardData.passphrase) {
+                return alert("Please enter the API Passphrase for OKX.");
+            }
         } else {
             // Fast connect is now disabled, so this shouldn't be reachable via UI
             return;
@@ -449,7 +454,8 @@ const BotBuilder = () => {
                 body: JSON.stringify({
                     exchange_name: wizardData.exchange,
                     api_key: wizardData.apiKey,
-                    api_secret: wizardData.apiSecret
+                    api_secret: wizardData.apiSecret,
+                    passphrase: wizardData.passphrase // UPDATED: Send passphrase
                 })
             });
 
@@ -696,6 +702,23 @@ const BotBuilder = () => {
                                     onChange={(e) => setWizardData({ ...wizardData, apiSecret: e.target.value })}
                                 />
                             </div>
+
+                            {/* UPDATED: CONDITIONAL PASSPHRASE INPUT FOR OKX */}
+                            {wizardData.exchange === 'okx' && (
+                                <div>
+                                    <label className="block text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">
+                                        Passphrase <span className="text-[#00FF9D]">*</span>
+                                    </label>
+                                    <input
+                                        type="password"
+                                        className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-[#00FF9D] outline-none transition-colors"
+                                        placeholder="Enter OKX Passphrase"
+                                        value={wizardData.passphrase}
+                                        onChange={(e) => setWizardData({ ...wizardData, passphrase: e.target.value })}
+                                    />
+                                </div>
+                            )}
+
                             <button
                                 onClick={submitStep2}
                                 className="w-full mt-4 bg-white/10 text-white font-bold py-3 rounded-xl hover:bg-[#00FF9D] hover:text-black transition-all border border-white/10 hover:border-[#00FF9D]"
