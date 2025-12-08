@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard, PieChart, Briefcase, Activity, Terminal,
     Bell, Plus, Search, ArrowUpRight, ArrowDownRight, Wallet, Loader2, X, Zap, CheckCircle2, ChevronDown
 } from 'lucide-react';
 import API_BASE_URL from './config';
-import Dash_nav from './Dash_nav';
+import Dash_nav from './Dash_nav'; // <--- 1. Import Sidebar
+import CreateBotModal from './CreateBotModal'; // <--- 2. Import Modal
 
 // --- CONSTANTS ---
 const EXCHANGES = [
@@ -30,7 +30,7 @@ const CryptoIcon = ({ src, alt }) => {
     );
 };
 
-// --- HELPER COMPONENT: ASSET ROW (FIXED REFERENCE) ---
+// --- HELPER COMPONENT: ASSET ROW ---
 const AssetRow = ({ asset }) => {
     const isPositive = asset.change >= 0;
     const price = asset.price || 0;
@@ -250,6 +250,9 @@ const Portfolio = () => {
     const [hasExchange, setHasExchange] = useState(false);
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
 
+    // <--- 3. ADD MODAL STATE
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
     const [portfolioData, setPortfolioData] = useState({
         totalValue: 0,
         changePercent: 0,
@@ -313,7 +316,9 @@ const Portfolio = () => {
                 <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/20 rounded-full blur-[180px] opacity-70"></div>
             </div>
 
+            {/* Modals */}
             <ConnectExchangeModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} onSuccess={fetchPortfolio} />
+            <CreateBotModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} /> {/* <--- 4. Render Modal */}
 
             {/* --- REPLACED SIDEBAR WITH DASH_NAV --- */}
             <Dash_nav user={user} />
@@ -327,7 +332,10 @@ const Portfolio = () => {
                             <Bell size={20} />
                             <div className="absolute top-2 right-2 w-2 h-2 bg-[#00FF9D] rounded-full shadow-[0_0_5px_#00FF9D]"></div>
                         </button>
-                        <button onClick={() => navigate('/bot-builder')} className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)]">
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)} // <--- 5. Hook up New Bot Button
+                            className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)]"
+                        >
                             <Plus size={18} strokeWidth={3} />
                             New Bot
                         </button>
