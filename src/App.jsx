@@ -18,6 +18,8 @@ import Dashboard from './Dashboard';
 import Portfolio from './Portfolio';
 import Bots from './Bots';
 import ConfigureBot from './ConfigureBot';
+import Backtest from './Backtest';
+import LiveMarket from './LiveMarket';
 import API_BASE_URL from './config';
 
 const PrivateRoute = ({ element }) => {
@@ -43,7 +45,6 @@ const PrivateRoute = ({ element }) => {
         if (response.ok) {
           const data = await response.json();
           setIsAuthenticated(true);
-
           setHasBot(data.botCreated);
         } else {
           localStorage.removeItem('token');
@@ -72,7 +73,6 @@ const PrivateRoute = ({ element }) => {
     return <Navigate to="/signin" replace />;
   }
 
-  // Force new users to builder if they haven't created a bot yet
   if (!hasBot) {
     return <Navigate to="/bot-builder" replace />;
   }
@@ -87,12 +87,31 @@ const App = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // <--- 2. UPDATED: Add '/bots' to hide nav/footer
-  const hideNavAndFooterPaths = ['/signin', '/signup', '/resetpass', '/dashboard', '/bot-builder', '/portfolio', '/bots'];
+  // --- UPDATED: Added '/backtest' to this list to hide the top Navbar ---
+  const hideNavAndFooterPaths = [
+    '/signin',
+    '/signup',
+    '/resetpass',
+    '/dashboard',
+    '/bot-builder',
+    '/portfolio',
+    '/bots',
+    '/backtest',
+    '/live-market'
+  ];
+
   const showNavAndFooter = !hideNavAndFooterPaths.includes(location.pathname);
 
-  // <--- 3. UPDATED: Add '/bots' to full page layout logic
-  const isFullPage = ['/dashboard', '/bot-builder', '/portfolio', '/bots'].includes(location.pathname);
+  // --- UPDATED: Added '/backtest' to this list to fix the layout "jump" ---
+  const isFullPage = [
+    '/dashboard',
+    '/bot-builder',
+    '/portfolio',
+    '/bots',
+    '/backtest',
+    '/live-market'
+  ].includes(location.pathname);
+
   const mainClass = isFullPage ? "relative z-10 p-0" : "relative z-10";
 
   return (
@@ -124,15 +143,15 @@ const App = () => {
             localStorage.getItem('token') ? <BotBuilder /> : <Navigate to="/signin" replace />
           } />
 
-          {/* Dashboard */}
+          {/* Dashboard Routes */}
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
-
-          {/* Portfolio */}
           <Route path="/portfolio" element={<PrivateRoute element={<Portfolio />} />} />
-
-          {/* <--- 4. ADD BOTS ROUTE */}
           <Route path="/bots" element={<PrivateRoute element={<Bots />} />} />
           <Route path="/configure-bot" element={<PrivateRoute element={<ConfigureBot />} />} />
+          <Route path="/live-market" element={<PrivateRoute element={<LiveMarket />} />} />
+
+          {/* Backtest Route */}
+          <Route path="/backtest" element={<PrivateRoute element={<Backtest />} />} />
         </Routes>
       </main>
 
