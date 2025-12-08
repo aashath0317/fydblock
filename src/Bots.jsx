@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import API_BASE_URL from './config';
 import Dash_nav from './Dash_nav';
+import CreateBotModal from './CreateBotModal'; // <--- 1. Import Modal
 
 // --- Sparkline Component ---
 const BotSparkline = ({ data, color }) => (
@@ -30,6 +31,9 @@ const Bots = () => {
     const [bots, setBots] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [user, setUser] = useState({ name: "Trader", plan: "Pro Plan Active" });
+
+    // <--- 2. Add Modal State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchBots = async () => {
@@ -75,10 +79,14 @@ const Bots = () => {
                 <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/20 rounded-full blur-[180px] opacity-70"></div>
             </div>
 
-            {/* Sidebar */}
+            {/* <--- 3. Render Modal */}
+            <CreateBotModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+            />
+
             <Dash_nav user={user} />
 
-            {/* Main Content - FIXED PADDING TO MATCH DASHBOARD */}
             <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
 
                 {/* Header */}
@@ -89,7 +97,10 @@ const Bots = () => {
                             <Bell size={20} />
                             <div className="absolute top-2 right-2 w-2 h-2 bg-[#00FF9D] rounded-full shadow-[0_0_5px_#00FF9D]"></div>
                         </button>
-                        <button onClick={() => navigate('/bot-builder')} className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.5)]">
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)} // <--- 4. Hook up Header Button
+                            className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.5)]"
+                        >
                             <Plus size={18} strokeWidth={3} />
                             New Bot
                         </button>
@@ -169,7 +180,7 @@ const Bots = () => {
                             <h3 className="text-xl font-bold text-white mb-2">No Running Bots Available</h3>
                             <p className="text-gray-400 mb-6 text-sm">You currently don't have any active trading bots.</p>
                             <button
-                                onClick={() => navigate('/bot-builder')}
+                                onClick={() => setIsCreateModalOpen(true)} // <--- 5. Hook up Empty State Button
                                 className="bg-[#00FF9D] text-black px-8 py-3 rounded-xl font-bold hover:bg-[#00cc7d] transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] flex items-center gap-2"
                             >
                                 <Plus size={18} strokeWidth={3} />
@@ -191,7 +202,7 @@ const Bots = () => {
                         ].map((bot, i) => (
                             <div
                                 key={i}
-                                onClick={() => navigate('/bot-builder')}
+                                onClick={() => setIsCreateModalOpen(true)} // <--- 6. Hook up Available Bots Grid
                                 className="h-48 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-[#00FF9D] hover:bg-[#00FF9D]/5 transition-all group bg-[#0A1014]/40"
                             >
                                 <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform group-hover:bg-[#00FF9D] group-hover:text-black border border-white/5 group-hover:border-[#00FF9D]">
