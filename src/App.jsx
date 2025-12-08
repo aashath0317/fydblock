@@ -15,7 +15,8 @@ import SignUp from './SignUp';
 import ResetPass from './ResetPass';
 import BotBuilder from './BotBuilder';
 import Dashboard from './Dashboard';
-import Portfolio from './Portfolio'; // <--- 1. IMPORT ADDED
+import Portfolio from './Portfolio';
+import Bots from './Bots';
 import API_BASE_URL from './config';
 
 const PrivateRoute = ({ element }) => {
@@ -85,12 +86,12 @@ const App = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // <--- 2. ADD '/portfolio' TO THIS LIST
-  const hideNavAndFooterPaths = ['/signin', '/signup', '/resetpass', '/dashboard', '/bot-builder', '/portfolio'];
+  // <--- 2. UPDATED: Add '/bots' to hide nav/footer
+  const hideNavAndFooterPaths = ['/signin', '/signup', '/resetpass', '/dashboard', '/bot-builder', '/portfolio', '/bots'];
   const showNavAndFooter = !hideNavAndFooterPaths.includes(location.pathname);
 
-  // Check if we are in a dashboard-like page (Full screen app mode)
-  const isFullPage = ['/dashboard', '/bot-builder', '/portfolio'].includes(location.pathname);
+  // <--- 3. UPDATED: Add '/bots' to full page layout logic
+  const isFullPage = ['/dashboard', '/bot-builder', '/portfolio', '/bots'].includes(location.pathname);
   const mainClass = isFullPage ? "relative z-10 p-0" : "relative z-10";
 
   return (
@@ -124,8 +125,11 @@ const App = () => {
           {/* Dashboard */}
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
 
-          {/* <--- 3. ADD PORTFOLIO ROUTE */}
+          {/* Portfolio */}
           <Route path="/portfolio" element={<PrivateRoute element={<Portfolio />} />} />
+
+          {/* <--- 4. ADD BOTS ROUTE */}
+          <Route path="/bots" element={<PrivateRoute element={<Bots />} />} />
         </Routes>
       </main>
 
