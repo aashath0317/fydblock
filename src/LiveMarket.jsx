@@ -5,6 +5,7 @@ import {
     Clock, Sliders, MoreHorizontal, Activity, Wallet, X, CheckCircle2, History
 } from 'lucide-react';
 import Dash_nav from './Dash_nav';
+import API_BASE_URL from './config';
 
 // --- 1. CONFIGURATION & DATA ---
 
@@ -20,7 +21,7 @@ const MARKETS = [
     { id: 'BTC', name: 'BTC', balance: '0.000000' },
 ];
 
-// Full Pair List (Parsed from your request)
+// Full Pair List
 const RAW_PAIRS_LIST = `SOL to USDT, BTC to USDT, ETH to USDT, BNB to USDT, XRP to USDT, ADA to USDT, AVAX to USDT, DOGE to USDT, DOT to USDT, LINK to USDT, TRX to USDT, MATIC to USDT, UNI to USDT, LTC to USDT, BCH to USDT, NEAR to USDT, APT to USDT, TUSD to USDT, WBTC to USDT, PAXG to USDT, SC to USDT, SFP to USDT, QTUM to USDT, CAKE to USDT, THETA to USDT, UMA to USDT, DODO to USDT, DENT to USDT, WIN to USDT, PUNDIX to USDT, CHZ to USDT, CTSI to USDT, DGB to USDT, CHR to USDT, RUNE to USDT, MANA to USDT, BAKE to USDT, KAVA to USDT, VTHO to USDT, PSG to USDT, FLOKI to USDT, AR to USDT, SPELL to USDT, MBOX to USDT, KDA to USDT, PYR to USDT, DYDX to USDT, MOVR to USDT, ROSE to USDT, YGG to USDT, IMX to USDT, JOE to USDT, CVX to USDT, FLOW to USDT, ILV to USDT, IOTA to USDT, AUDIO to USDT, STG to USDT, METIS to USDT, XDC to USDT, GMX to USDT, GNO to USDT, LQTY to USDT, TWT to USDT, CELR to USDT, ENS to USDT, BONK to USDT, BLUR to USDT, TON to USDT, CFX to USDT, PEPE to USDT, SUI to USDT, ACH to USDT, RSR to USDT, SKL to USDT, MDT to USDT, ARPA to USDT, INJ to USDT, SYS to USDT, MINA to USDT, MAGIC to USDT, TURBO to USDT, ORDI to USDT, PHB to USDT, ANKR to USDT, HOT to USDT, WOO to USDT, BICO to USDT, ASTR to USDT, DUSK to USDT, MAV to USDT, CKB to USDT, XVG to USDT, ID to USDT, RDNT to USDT, PENDLE to USDT, ARKM to USDT, WLD to USDT, HFT to USDT, CYBER to USDT, SEI to USDT, KMD to USDT, LPT to USDT, OG to USDT, HIFI to USDT, FDUSD to USDT, GMT to USDT, AVA to USDT, FORTH to USDT, MLN to USDT, MTL to USDT, EDU to USDT, API3 to USDT, JASMY to USDT, HIGH to USDT, SSV to USDT, QNT to USDT, FIDA to USDT, TIA to USDT, MEME to USDT, VIC to USDT, PYTH to USDT, JTO to USDT, 1000SATS to USDT, ACE to USDT, DATA to USDT, XAI to USDT, MANTA to USDT, JUP to USDT, RAY to USDT, STRK to USDT, ALT to USDT, PIXEL to USDT, WIF to USDT, SUPER to USDT, BOME to USDT, W to USDT, ENA to USDT, TAO to USDT, JST to USDT, SUN to USDT, BB to USDT, OM to USDT, PEOPLE to USDT, RLC to USDT, POLYX to USDT, PHA to USDT, IOST to USDT, SLP to USDT, ZK to USDT, ZRO to USDT, IO to USDT, ETHFI to USDT, LISTA to USDT, REZ to USDT, VANRY to USDT, NTRN to USDT, PORTAL to USDT, AXL to USDT, DYM to USDT, GLM to USDT, BANANA to USDT, RENDER to USDT, DOGS to USDT, POL to USDT, SLF to USDT, NEIRO to USDT, CATI to USDT, HMSTR to USDT, EIGEN to USDT, ACT to USDT, PNUT to USDT, ME to USDT, MOVE to USDT, PENGU to USDT, CETUS to USDT, COW to USDT, ACX to USDT, LUMIA to USDT, ORCA to USDT, DEGO to USDT, TNSR to USDT, AGLD to USDT, G to USDT, PIVX to USDT, UTK to USDT, XVS to USDT, VELODROME to USDT, TRUMP to USDT, USDQ to USDT, EURQ to USDT, WCT to USDT, A to USDT, USDR to USDT, EURR to USDT, WLFI to USDT, XEC to USDT, TRB to USDT, MBL to USDT, AEVO to USDT, 1INCH to USDT`;
 
 // Helper: Parse and Sort Pairs
@@ -68,9 +69,20 @@ const TradingViewWidget = ({ exchange, pair }) => {
         script.async = true;
         script.onload = () => {
             if (window.TradingView) {
+                // Map internal exchange IDs to TradingView Exchange IDs
+                const tvExchangeMap = {
+                    'binance': 'BINANCE',
+                    'bybit': 'BYBIT',
+                    'okx': 'OKX'
+                };
+
+                const tvExchange = tvExchangeMap[exchange.toLowerCase()] || 'BINANCE';
+                // Remove any slashes for TradingView (e.g. BTC/USDT -> BTCUSDT)
+                const tvSymbol = pair.replace('/', '');
+
                 new window.TradingView.widget({
                     "autosize": true,
-                    "symbol": `BINANCE:${pair}`, // Defaulting to Binance for better data availability
+                    "symbol": `${tvExchange}:${tvSymbol}`,
                     "interval": "1H",
                     "timezone": "Etc/UTC",
                     "theme": "dark",
@@ -103,76 +115,86 @@ const TradingViewWidget = ({ exchange, pair }) => {
     );
 };
 
-const OrderBook = ({ pair }) => {
-    // Generate static looking data that refreshes slightly
-    const basePrice = pair.includes('BTC') ? 96500 : pair.includes('SOL') ? 155 : 1.25;
+const OrderBook = ({ exchange, pair }) => {
+    const [orderBook, setOrderBook] = useState({ bids: [], asks: [], currentPrice: 0 });
+    const [loading, setLoading] = useState(true);
 
-    // Asks (Sell Orders) - Red
-    const asks = Array.from({ length: 14 }, (_, i) => ({
-        price: (basePrice + (i * basePrice * 0.0001) + 0.01).toFixed(2),
-        total: (Math.random() * 5 + 0.1).toFixed(2),
-        amount: (Math.random() * 1000).toFixed(2)
-    })).reverse();
+    useEffect(() => {
+        const fetchOrderBook = async () => {
+            setLoading(true);
+            try {
+                // Ensure we strip slashes for the URL query if needed, or pass as is
+                const symbol = pair.replace('/', '') + 'USDT';
 
-    // Bids (Buy Orders) - Green
-    const bids = Array.from({ length: 14 }, (_, i) => ({
-        price: (basePrice - (i * basePrice * 0.0001) - 0.01).toFixed(2),
-        total: (Math.random() * 5 + 0.1).toFixed(2),
-        amount: (Math.random() * 1000).toFixed(2)
-    }));
+                // Use API_BASE_URL here
+                const res = await fetch(`${API_BASE_URL}/user/market-data?exchange=${exchange}&symbol=${pair}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    // Calculate a rough "mid price" from the top bid/ask
+                    const topBid = data.bids[0] ? data.bids[0][0] : 0;
+                    const topAsk = data.asks[0] ? data.asks[0][0] : 0;
+                    const midPrice = (topBid + topAsk) / 2;
+
+                    setOrderBook({
+                        bids: data.bids.slice(0, 14),
+                        asks: data.asks.slice(0, 14).reverse(),
+                        currentPrice: midPrice
+                    });
+                }
+            } catch (err) {
+                console.error("OrderBook fetch error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOrderBook();
+
+        // Optional: Poll every 5 seconds
+        const interval = setInterval(fetchOrderBook, 5000);
+        return () => clearInterval(interval);
+
+    }, [exchange, pair]);
 
     return (
         <div className="bg-[#0A1014] border border-white/10 rounded-2xl h-full flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex justify-between p-3 border-b border-white/5 bg-[#0F1619]">
-                <div className="flex gap-2">
-                    <div className="w-4 h-4 bg-white/10 rounded flex items-center justify-center cursor-pointer hover:bg-white/20">
-                        <div className="w-2 h-1 bg-red-500 mb-0.5"></div>
-                        <div className="w-2 h-1 bg-green-500"></div>
-                    </div>
-                    <div className="w-4 h-4 bg-white/10 rounded flex items-center justify-center cursor-pointer hover:bg-white/20">
-                        <div className="w-2 h-2 bg-green-500"></div>
-                    </div>
-                    <div className="w-4 h-4 bg-white/10 rounded flex items-center justify-center cursor-pointer hover:bg-white/20">
-                        <div className="w-2 h-2 bg-red-500"></div>
-                    </div>
-                </div>
-                <span className="text-[10px] text-gray-500">20</span>
+                <span className="text-xs text-gray-400 font-bold">Order Book</span>
+                <span className="text-[10px] text-gray-500">Real-time</span>
             </div>
 
             {/* Table Header */}
             <div className="grid grid-cols-3 px-3 py-2 text-[9px] font-bold text-gray-500 uppercase">
-                <span>Ask Price</span>
-                <span className="text-right">Total</span>
+                <span>Price (USDT)</span>
                 <span className="text-right">Amount</span>
+                <span className="text-right">Total</span>
             </div>
 
-            {/* Asks */}
+            {/* Asks (Sells) */}
             <div className="flex-1 overflow-hidden space-y-0.5">
-                {asks.map((a, i) => (
+                {orderBook.asks.map((ask, i) => (
                     <div key={i} className="grid grid-cols-3 px-3 text-[10px] relative hover:bg-white/5 cursor-pointer">
-                        <span className="text-red-500">{a.price}</span>
-                        <span className="text-gray-500 text-right">{a.total}</span>
-                        <span className="text-gray-400 text-right">{a.amount}</span>
-                        <div className="absolute top-0 right-0 bottom-0 bg-red-500/10 z-0" style={{ width: `${Math.random() * 80}%` }}></div>
+                        <span className="text-red-500">{ask[0].toFixed(2)}</span>
+                        <span className="text-gray-500 text-right">{ask[1].toFixed(4)}</span>
+                        <span className="text-gray-400 text-right">{(ask[0] * ask[1]).toFixed(2)}</span>
                     </div>
                 ))}
             </div>
 
-            {/* Mid Price */}
+            {/* Current Price Display */}
             <div className="py-2 px-3 border-y border-white/5 bg-[#0A1014] flex justify-between items-center my-1">
-                <span className="text-sm font-bold text-[#00FF9D]">{basePrice.toFixed(2)}</span>
+                <span className="text-sm font-bold text-[#00FF9D]">{orderBook.currentPrice.toLocaleString()}</span>
                 <ArrowUp size={12} className="text-[#00FF9D]" />
             </div>
 
-            {/* Bids */}
+            {/* Bids (Buys) */}
             <div className="flex-1 overflow-hidden space-y-0.5">
-                {bids.map((b, i) => (
+                {orderBook.bids.map((bid, i) => (
                     <div key={i} className="grid grid-cols-3 px-3 text-[10px] relative hover:bg-white/5 cursor-pointer">
-                        <span className="text-[#00FF9D]">{b.price}</span>
-                        <span className="text-gray-500 text-right">{b.total}</span>
-                        <span className="text-gray-400 text-right">{b.amount}</span>
-                        <div className="absolute top-0 right-0 bottom-0 bg-[#00FF9D]/10 z-0" style={{ width: `${Math.random() * 80}%` }}></div>
+                        <span className="text-[#00FF9D]">{bid[0].toFixed(2)}</span>
+                        <span className="text-gray-500 text-right">{bid[1].toFixed(4)}</span>
+                        <span className="text-gray-400 text-right">{(bid[0] * bid[1]).toFixed(2)}</span>
                     </div>
                 ))}
             </div>
@@ -286,9 +308,10 @@ const LiveMarket = () => {
 
             <Dash_nav user={user} />
 
-            <main className="flex-1 p-6 relative z-10 flex flex-col h-screen overflow-hidden">
+            {/* --- FIX IS HERE: changed overflow-hidden to overflow-y-auto --- */}
+            <main className="flex-1 p-6 relative z-10 flex flex-col h-full overflow-y-auto">
 
-                {/* 1. Header (MATCHING BOTS/DASHBOARD STYLE) */}
+                {/* 1. Header */}
                 <header className="flex justify-between items-center mb-6 shrink-0">
                     <h1 className="text-3xl font-bold text-[#00FF9D] drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">Terminals</h1>
                     <div className="flex items-center gap-4">
@@ -302,7 +325,7 @@ const LiveMarket = () => {
                     </div>
                 </header>
 
-                {/* 2. Top Filter Bar (MATCHING IMAGE) */}
+                {/* 2. Top Filter Bar */}
                 <div className="bg-[#0A1014] border border-white/10 rounded-2xl p-4 mb-4 grid grid-cols-1 md:grid-cols-12 gap-4 shrink-0 shadow-lg">
 
                     {/* Exchange */}
@@ -403,8 +426,8 @@ const LiveMarket = () => {
                     </div>
                 </div>
 
-                {/* 3. GRID CONTENT (MATCHING LAYOUT) */}
-                <div className="flex-1 grid grid-cols-12 gap-4 min-h-0">
+                {/* 3. GRID CONTENT */}
+                <div className="flex-1 grid grid-cols-12 gap-4 min-h-0 pb-6">
 
                     {/* --- ROW 1 --- */}
 
@@ -423,13 +446,19 @@ const LiveMarket = () => {
                             </div>
                         </div>
                         <div className="flex-1">
-                            <TradingViewWidget exchange={selectedExchange.id} pair={selectedPair.value} />
+                            <TradingViewWidget
+                                exchange={selectedExchange.id}
+                                pair={selectedPair.value}
+                            />
                         </div>
                     </div>
 
                     {/* ORDER BOOK (RIGHT SMALL) */}
                     <div className="col-span-12 lg:col-span-3 h-[450px]">
-                        <OrderBook pair={selectedPair.value} />
+                        <OrderBook
+                            exchange={selectedExchange.id}
+                            pair={selectedPair.value}
+                        />
                     </div>
 
                     {/* --- ROW 2 --- */}
