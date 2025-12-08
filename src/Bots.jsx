@@ -6,7 +6,9 @@ import {
 } from 'lucide-react';
 import API_BASE_URL from './config';
 import Dash_nav from './Dash_nav';
-import CreateBotModal from './CreateBotModal'; // <--- 1. Import Modal
+import CreateBotModal from './CreateBotModal';     // Import Selection Modal
+import ConfigureBotModal from './ConfigureBotModal'; // Import Config Modal
+
 
 // --- Sparkline Component ---
 const BotSparkline = ({ data, color }) => (
@@ -34,6 +36,13 @@ const Bots = () => {
 
     // <--- 2. Add Modal State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+    const [selectedBotType, setSelectedBotType] = useState('');
+    const handleBotSelect = (botType) => {
+        setSelectedBotType(botType);
+        setIsCreateModalOpen(false); // Close selection modal
+        setIsConfigModalOpen(true);  // Open config modal
+    };
 
     useEffect(() => {
         const fetchBots = async () => {
@@ -83,8 +92,13 @@ const Bots = () => {
             <CreateBotModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
+                onSelect={handleBotSelect} // Pass the handler
             />
-
+            <ConfigureBotModal
+                isOpen={isConfigModalOpen}
+                onClose={() => setIsConfigModalOpen(false)}
+                botType={selectedBotType}
+            />
             <Dash_nav user={user} />
 
             <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
