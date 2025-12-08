@@ -17,6 +17,7 @@ import BotBuilder from './BotBuilder';
 import Dashboard from './Dashboard';
 import Portfolio from './Portfolio';
 import Bots from './Bots';
+import ConfigureBot from './ConfigureBot';
 import API_BASE_URL from './config';
 
 const PrivateRoute = ({ element }) => {
@@ -117,6 +118,7 @@ const App = () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/resetpass" element={<ResetPass />} />
 
+
           {/* Bot Builder */}
           <Route path="/bot-builder" element={
             localStorage.getItem('token') ? <BotBuilder /> : <Navigate to="/signin" replace />
@@ -130,6 +132,7 @@ const App = () => {
 
           {/* <--- 4. ADD BOTS ROUTE */}
           <Route path="/bots" element={<PrivateRoute element={<Bots />} />} />
+          <Route path="/configure-bot" element={<PrivateRoute element={<ConfigureBot />} />} />
         </Routes>
       </main>
 
