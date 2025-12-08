@@ -6,6 +6,7 @@ import {
     Bell, Plus, Search, ArrowUpRight, ArrowDownRight, Wallet, Loader2, X, Zap, CheckCircle2, ChevronDown
 } from 'lucide-react';
 import API_BASE_URL from './config';
+import Dash_nav from './Dash_nav';
 
 // --- CONSTANTS ---
 const EXCHANGES = [
@@ -304,7 +305,8 @@ const Portfolio = () => {
 
     return (
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black relative">
-            {/* Synchronized Background Glows */}
+
+            {/* Background Glows */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00FF9D]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
                 <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
@@ -313,49 +315,11 @@ const Portfolio = () => {
 
             <ConnectExchangeModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} onSuccess={fetchPortfolio} />
 
-            {/* SIDEBAR (Always visible) */}
-            <aside className="w-64 bg-[#050B0D]/80 backdrop-blur-md border-r border-white/5 flex flex-col justify-between py-6 z-20 hidden md:flex">
-                <div className="px-6">
-                    <div className="flex items-center gap-2 mb-12 cursor-pointer" onClick={() => navigate('/')}>
-                        <img src="/logo.png" alt="FydBlock" className="h-8 object-contain" />
-                    </div>
-                    <nav className="space-y-1">
-                        {[
-                            { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-                            { name: "My Portfolio", icon: PieChart, path: "/portfolio", active: true },
-                            { name: "Bots", icon: Briefcase, path: "/dashboard" },
-                            { name: "Backtest", icon: Wallet, path: "#" },
-                            { name: "My Exchanges", icon: Terminal, path: "#" },
-                            { name: "Terminal", icon: Activity, path: "#" },
-                        ].map((item) => (
-                            <button
-                                key={item.name}
-                                onClick={() => navigate(item.path)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group 
-                                ${item.active ? 'bg-[#00FF9D] text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                            >
-                                <item.icon size={18} className={item.active ? "text-black" : "group-hover:text-[#00FF9D] transition-colors"} />
-                                {item.name}
-                            </button>
-                        ))}
-                    </nav>
-                </div>
-                <div className="px-6">
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0A1014]/50 border border-white/5 hover:border-[#00FF9D]/30 transition-all cursor-pointer">
-                        <div className="w-10 h-10 rounded-lg bg-gray-600 overflow-hidden relative">
-                            <img src="/profile1.png" className="absolute inset-0 w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} alt="Profile" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-white">{user.name}</p>
-                            <p className="text-[10px] text-[#00FF9D]">{user.plan}</p>
-                        </div>
-                    </div>
-                </div>
-            </aside>
+            {/* --- REPLACED SIDEBAR WITH DASH_NAV --- */}
+            <Dash_nav user={user} />
 
             {/* MAIN CONTENT AREA */}
             <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
-                {/* Header (Always visible) */}
                 <header className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-[#00FF9D] drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">My Portfolio</h1>
                     <div className="flex items-center gap-4">
@@ -371,19 +335,14 @@ const Portfolio = () => {
                 </header>
 
                 {loading ? (
-                    // Display spinner in the main content area if loading
                     <div className="flex items-center justify-center h-full min-h-[400px]">
                         <Loader2 className="animate-spin text-[#00FF9D]" size={48} />
                     </div>
                 ) : (
-                    // Display content once loaded
                     <div className="relative">
-                        {/* Connect API Overlay (Appears when hasExchange is false) */}
                         {!hasExchange && <ConnectApiOverlay onConnect={() => setIsConnectModalOpen(true)} title="Connect Exchange" />}
 
-                        {/* Content Blur Wrapper (Blurs when hasExchange is false) */}
                         <div className={`${!hasExchange ? 'filter blur-md opacity-30 pointer-events-none select-none' : ''} transition-all duration-500`}>
-
                             <section className="mb-12">
                                 <div className="relative w-full h-[300px] rounded-3xl overflow-hidden border border-white/10 shadow-2xl group hover:border-[#00FF9D]/20 transition-all duration-500">
                                     <div className="absolute inset-0 bg-gradient-to-br from-[#0A1014] via-[#0F1C18] to-[#0A1014]"></div>
@@ -392,7 +351,6 @@ const Portfolio = () => {
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="w-8 h-8 rounded bg-white flex items-center justify-center text-black font-bold">$</div>
                                                 <span className="text-gray-300 font-medium">Estimated total value</span>
-                                                {/* Dynamic Arrow */}
                                                 {isPositiveChange ? (
                                                     <ArrowUpRight size={16} className="text-[#00FF9D]" />
                                                 ) : (
@@ -409,11 +367,7 @@ const Portfolio = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    {/* CHART WITH DYNAMIC DATA & COLOR */}
-                                    <PortfolioChart
-                                        data={portfolioData.history}
-                                        color={chartColor}
-                                    />
+                                    <PortfolioChart data={portfolioData.history} color={chartColor} />
                                 </div>
                             </section>
 
@@ -456,7 +410,6 @@ const Portfolio = () => {
                         </div>
                     </div>
                 )}
-
             </main>
         </div>
     );
