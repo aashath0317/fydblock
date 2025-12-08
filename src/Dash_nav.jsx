@@ -13,9 +13,8 @@ const Dash_nav = ({ user }) => {
         { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
         { name: "My Portfolio", icon: PieChart, path: "/portfolio" },
         { name: "Bots", icon: Briefcase, path: "/bots" },
-        { name: "Backtest", icon: Wallet, path: "#" }, // Placeholder
-        { name: "My Exchanges", icon: Terminal, path: "#" }, // Placeholder
-        { name: "Terminal", icon: Activity, path: "#" }, // Placeholder
+        { name: "Backtest", icon: Wallet, path: "/backtest" },
+        { name: "Terminal", icon: Activity, path: "/live-market" },
     ];
 
     const handleLogout = () => {
