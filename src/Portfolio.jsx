@@ -317,10 +317,11 @@ const Portfolio = () => {
     return (
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black relative">
 
-            {/* Background Glows */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00FF9D]/10 rounded-full blur-[150px] opacity-60 mix-blend-screen"></div>
-                <div className="absolute bottom-[-20%] right-[-10%] w-[40vw] h-[50vh] bg-[#00A3FF]/10 rounded-full blur-[150px] opacity-50"></div>
+            {/* Background Glows (Identical to Dashboard) */}
+            <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+                <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00FF9D]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
+                <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/20 rounded-full blur-[180px] opacity-70"></div>
             </div>
 
             {/* Modals */}
