@@ -3,15 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-    LayoutDashboard, PieChart, Briefcase, Activity, Terminal,
-    Users, UserPlus, BookOpen, Radio, CreditCard,
-    Bell, Plus, ChevronUp, Wallet, Loader2, X, Zap, CheckCircle2, ChevronDown
+    PieChart, Bell, Plus, ChevronUp, Loader2, X, Zap, CheckCircle2, ChevronDown
 } from 'lucide-react';
 import API_BASE_URL from './config';
-import Dash_nav from './Dash_nav';
-
-// --- Import Portfolio Content ---
-import PortfolioContent from './Portfolio';
+import Dash_nav from './Dash_nav'; // <--- 1. Import Sidebar
+import CreateBotModal from './CreateBotModal'; // <--- 2. Import Modal
 
 // --- CONSTANTS ---
 const EXCHANGES = [
@@ -174,7 +170,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
     );
 };
 
-// --- HELPER: CONNECT API OVERLAY (Used in Dashboard and Portfolio) ---
+// --- HELPER: CONNECT API OVERLAY ---
 const ConnectApiOverlay = ({ onConnect, title = "Connect" }) => (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#050B0D]/40 backdrop-blur-[4px] transition-all rounded-3xl border border-white/5">
         <div className="text-center animate-in fade-in zoom-in duration-300">
@@ -311,7 +307,7 @@ const BotCard = ({ bot, isConnected, onConnect }) => {
 };
 
 
-// --- MAIN DASHBOARD COMPONENT (Now serves as the Layout/Router) ---
+// --- MAIN DASHBOARD COMPONENT ---
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -320,6 +316,9 @@ const Dashboard = () => {
     const [hasExchange, setHasExchange] = useState(false);
     const [user, setUser] = useState({ name: "Trader", plan: "Pro Plan Active" });
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+
+    // <--- 3. ADD MODAL STATE
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // State for dashboard data
     const [statsData, setStatsData] = useState({
@@ -375,7 +374,9 @@ const Dashboard = () => {
                 <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/20 rounded-full blur-[180px] opacity-70"></div>
             </div>
 
+            {/* Modals */}
             <ConnectExchangeModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} onSuccess={fetchData} />
+            <CreateBotModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} /> {/* <--- 4. Render Modal */}
 
             {/* --- REPLACED SIDEBAR WITH DASH_NAV --- */}
             <Dash_nav user={user} />
@@ -389,13 +390,15 @@ const Dashboard = () => {
                             <Bell size={20} />
                             <div className="absolute top-2 right-2 w-2 h-2 bg-[#00FF9D] rounded-full shadow-[0_0_5px_#00FF9D]"></div>
                         </button>
-                        <button onClick={() => navigate('/bot-builder')} className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.5)]">
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)} // <--- 5. Hook up New Bot Button
+                            className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.5)]"
+                        >
                             <Plus size={18} strokeWidth={3} />
                             New Bot
                         </button>
                     </div>
                 </header>
-
                 {loading ? (
                     <div className="flex items-center justify-center h-full min-h-[60vh]">
                         <Loader2 className="animate-spin text-[#00FF9D]" size={48} />
@@ -430,7 +433,7 @@ const Dashboard = () => {
                             <h2 className="text-lg font-bold text-white mb-6">Active Bots</h2>
                             <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
                                 {validBots.map((bot, i) => <BotCard key={bot.id || i} bot={bot} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />)}
-                                <div onClick={() => navigate('/bot-builder')} className="min-w-[200px] rounded-2xl border border-dashed border-white/20 flex flex-col items-center justify-center p-6 cursor-pointer hover:border-[#00FF9D] hover:bg-[#00FF9D]/5 transition-all group bg-white/5 backdrop-blur-sm">
+                                <div onClick={() => setIsCreateModalOpen(true)} className="min-w-[200px] rounded-2xl border border-dashed border-white/20 flex flex-col items-center justify-center p-6 cursor-pointer hover:border-[#00FF9D] hover:bg-[#00FF9D]/5 transition-all group bg-white/5 backdrop-blur-sm">
                                     <div className="w-12 h-12 bg-[#050B0D] rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-white/5 group-hover:border-[#00FF9D]">
                                         <Plus size={24} className="text-[#00FF9D]" />
                                     </div>
