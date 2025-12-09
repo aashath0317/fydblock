@@ -357,7 +357,7 @@ const Portfolio = () => {
                         <Loader2 className="animate-spin text-[#00FF9D]" size={48} />
                     </div>
                 ) : (
-                    <div className="max-w-7xl mx-auto">
+                    <div className="w-full">
 
                         {/* --- TOP CHART CARD --- */}
                         <div className="relative w-full bg-[#0A1014]/60 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden mb-12 shadow-2xl">
