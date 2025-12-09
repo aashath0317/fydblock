@@ -25,7 +25,7 @@ import API_BASE_URL from './config';
 const PrivateRoute = ({ element }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasBot, setHasBot] = useState(false);
+  const [isProfileComplete, setIsProfileComplete] = useState(false); // ✅ CHANGED: Track profile status
 
   useEffect(() => {
     const checkUserStatus = async () => {
@@ -45,7 +45,8 @@ const PrivateRoute = ({ element }) => {
         if (response.ok) {
           const data = await response.json();
           setIsAuthenticated(true);
-          setHasBot(data.botCreated);
+          // ✅ CHANGED: Check if profile is complete (not if bot is created)
+          setIsProfileComplete(data.profileComplete);
         } else {
           localStorage.removeItem('token');
           setIsAuthenticated(false);
@@ -73,7 +74,8 @@ const PrivateRoute = ({ element }) => {
     return <Navigate to="/signin" replace />;
   }
 
-  if (!hasBot) {
+  // ✅ CHANGED: Only redirect to builder if profile is incomplete
+  if (!isProfileComplete) {
     return <Navigate to="/bot-builder" replace />;
   }
 
@@ -87,7 +89,6 @@ const App = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // --- UPDATED: Added '/backtest' to this list to hide the top Navbar ---
   const hideNavAndFooterPaths = [
     '/signin',
     '/signup',
@@ -102,7 +103,6 @@ const App = () => {
 
   const showNavAndFooter = !hideNavAndFooterPaths.includes(location.pathname);
 
-  // --- UPDATED: Added '/backtest' to this list to fix the layout "jump" ---
   const isFullPage = [
     '/dashboard',
     '/bot-builder',
@@ -136,7 +136,6 @@ const App = () => {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/resetpass" element={<ResetPass />} />
-
 
           {/* Bot Builder */}
           <Route path="/bot-builder" element={
