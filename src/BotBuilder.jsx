@@ -464,29 +464,14 @@ const BotBuilder = () => {
         setLoading(false);
     };
 
+    // ✅ UPDATED: Just navigate, do not create a bot in DB
     const submitFinalBot = async () => {
         setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`${API_BASE_URL}/user/bot`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    bot_name: 'Setup Skipped',
-                    quote_currency: wizardData.currency || 'USDT',
-                    bot_type: 'SKIPPED',
-                    plan: 'free',
-                    billing_cycle: 'monthly'
-                })
-            });
-
-            if (res.ok) {
-                navigate('/dashboard');
-            } else {
-                alert("Connection failed. Please try again.");
-            }
-        } catch (e) { console.error(e); }
-        setLoading(false);
+        // We simulate a short delay for UX, then redirect
+        setTimeout(() => {
+            navigate('/dashboard');
+            setLoading(false);
+        }, 500);
     };
 
     // --- RENDER HELPERS ---
