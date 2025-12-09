@@ -139,7 +139,8 @@ const SignUp = () => {
                     if (userRes.ok) {
                         const userData = await userRes.json();
                         setTimeout(() => {
-                            if (!userData.profileComplete || !userData.botCreated) {
+                            // ✅ CHANGE: Check only profileComplete
+                            if (!userData.profileComplete) {
                                 navigate('/bot-builder');
                             } else {
                                 navigate('/dashboard');
