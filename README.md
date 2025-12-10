@@ -1,161 +1,164 @@
-# FydBlock - AI-Powered Crypto Trading Platform
+# ⚡ FydBlock – AI Algorithmic Trading Ecosystem
 
-![FydBlock Hero](public/logo.png)
-
-🚀 **Project Overview**
-
-FydBlock is a high-fidelity, responsive frontend interface for a next-generation crypto trading bot platform. Designed with a dark, neon-green aesthetic (`#00FF9D`) inspired by premium fintech dashboards, it features immersive glassmorphism effects, interactive 3D elements, and a complete multi-page navigation structure.
-
-The platform includes a **Trading Dashboard**, **Bot Builder Wizard**, **Authentication System** (with Google OAuth), and a high-conversion **Landing Page**.
+FydBlock is a full-stack, microservices-based crypto trading ecosystem that enables users to automate trading using advanced **Grid** and **DCA** strategies.  
+It features a real-time user dashboard, a powerful admin panel, and a high-performance Python trading engine capable of executing hundreds of bots asynchronously.
 
 ---
 
-## ✨ Key Features
+## 🏗️ System Architecture
 
-- **🎨 Immersive Dark Mode UI** — Deep forest/black backgrounds with neon green accents and glowing ambient effects.
-- **🌍 Interactive 3D Globe** — Custom HTML5 Canvas rendering of a rotating network globe.
-- **🤖 Bot Builder Wizard** — A multi-step flow (`BotBuilder.jsx`) for users to configure trading strategies, exchange connections, and pricing plans.
-- **📊 Real-Time Dashboard** — A comprehensive user dashboard (`Dashboard.jsx`) displaying portfolio value, active bots, and profit analytics.
-- **🔐 Advanced Authentication** — Fully integrated Sign In/Up flows with:
-  - Google OAuth 2.0 integration via `@react-oauth/google`.
-  - JWT token management.
-  - Password strength validation and visual toggles.
-- **📱 Fully Responsive** — Optimized for mobile, tablet, and desktop with a custom drawer navigation.
-- **⚡ High Performance** — Built with **Vite** for instant server start and optimized production builds.
+FydBlock is built as four independent microservices:
+
+| Service | Technology | Description | Port |
+|--------|------------|-------------|------|
+| **Backend API** | Node.js / Express | Core REST API, Auth, DB & Exchange Key Management | `5000` |
+| **User Platform** | React / Vite | Trader dashboard for bots, portfolio & analytics | `5173` |
+| **Admin Panel** | React / Vite | Internal admin system for users, bots & settings | `5174` |
+| **Trading Engine** | Python / FastAPI | High-frequency, async trading executor | `8000` |
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Tech Stack
 
-- **Framework:** React 18
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS
-- **Routing:** React Router DOM v6+
-- **Authentication:** React OAuth Google
-- **Icons:** Lucide React
-- **Animations:** CSS Keyframes & HTML5 Canvas
+- **Frontend:** React 18, Tailwind CSS, Lucide Icons, Recharts, Framer Motion  
+- **Backend:** Node.js, Express, PostgreSQL, JWT, CCXT (JavaScript)  
+- **Trading Engine:** Python 3.9+, FastAPI, Uvicorn, CCXT (Async), Pandas  
+- **Database:** PostgreSQL (Relational storage for users, bots, configs)  
+- **Infrastructure:** PM2 (Process Manager), Nginx (Reverse Proxy)  
 
 ---
 
-## 🏁 Getting Started
+## 🛠️ Prerequisites
 
-Follow these steps to set up the project locally.
+Ensure the following are installed:
 
-### 1. Prerequisites
+- Node.js **v18+**  
+- Python **3.9+**  
+- PostgreSQL  
+- PM2 (`npm install -g pm2`)  
 
-- Node.js (v18+ recommended)
-- npm or yarn
-- A running instance of the **FydBlock Backend** (for Auth/Dashboard features)
+---
 
-### 2. Installation
+## 📦 Installation & Setup
 
+### 1️⃣ Database Setup
 ```bash
-git clone https://github.com/yourusername/fydblock.git
-cd fydblock
+psql -U postgres -c "CREATE DATABASE fydblock_db;"
+psql -U postgres -d fydblock_db -f backend/database.sql
+```
+
+---
+
+### 2️⃣ Backend (Node.js)
+```bash
+cd fydblock_backend
 npm install
-```
-
-### 3. Configuration
-
-⚠️ **Important:** This project requires API and Google OAuth configuration.
-
-#### A. Backend Connection
-
-Update `API_BASE_URL` in:
-
-```
-src/config.js
-```
-
-Example:
-
-```javascript
-const API_BASE_URL = "http://localhost:5000/api";
-export default API_BASE_URL;
-```
-
-#### B. Google OAuth Setup
-
-Update your Google Client ID inside:
-
-```
-src/main.jsx
-```
-
-```javascript
-const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
-```
-
-### 4. Run Development Server
-
-```bash
+# Add environment variables (see backend/README.md)
 npm run dev
 ```
 
-Visit: **http://localhost:5173**
+---
 
-### 5. Build for Production
+### 3️⃣ User Frontend (React)
+```bash
+cd fydblock_user
+npm install
+# Add .env variables (see frontend/README.md)
+npm run dev
+```
+
+---
+
+### 4️⃣ Admin Panel (React)
+```bash
+cd fydblock_admin
+npm install
+# Add .env file
+npm run dev -- --port 5174
+```
+
+---
+
+### 5️⃣ Trading Engine (Python)
+```bash
+cd fydblock_engine
+python3 -m venv venv
+source venv/bin/activate         # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn bot_engine:app --reload --port 8000
+```
+
+---
+
+## 🚀 Production Deployment with PM2
+
+Use this **ecosystem.config.js** to run backend + engine in production:
+
+```javascript
+module.exports = {
+  apps: [
+    {
+      name: "fydblock-api",
+      script: "./fydblock_backend/server.js",
+      env: {
+        NODE_ENV: "production",
+        PORT: 5000
+      }
+    },
+    {
+      name: "fydblock-engine",
+      script: "uvicorn",
+      args: "bot_engine:app --host 0.0.0.0 --port 8000",
+      cwd: "./fydblock_engine",
+      interpreter: "./fydblock_engine/venv/bin/python"
+    }
+    // Frontends should be built (npm run build) and served via Nginx
+  ]
+};
+```
+
+Start all services:
 
 ```bash
-npm run build
-```
-
-Output will be generated inside `/dist`.
-
----
-
-## 📂 Project Structure
-
-```text
-fydblock/
-├── public/                 # Static assets (Logos, Hero images)
-│   └── logos/              # Exchange logos (Binance, Coinbase, etc.)
-├── src/
-│   ├── App.jsx             # Main Application & Router Logic
-│   ├── main.jsx            # Entry Point & Google OAuth Provider
-│   ├── config.js           # API Base URL Configuration
-│   ├── index.css           # Global Styles & Tailwind Directives
-│   │
-│   {/* Components */}
-│   ├── Navbar.jsx          # Responsive Navigation
-│   ├── Footer.jsx          # Site Footer
-│   ├── WorldGlobe.jsx      # 3D Canvas Globe Animation
-│   │
-│   {/* Feature Pages */}
-│   ├── LandingPage.jsx     # Home (Hero, Features, Stats)
-│   ├── Dashboard.jsx       # User Dashboard & Analytics
-│   ├── BotBuilder.jsx      # 5-Step Bot Creation Wizard
-│   ├── PricingAndPlans.jsx # Pricing Cards & Billing Toggle
-│   │
-│   {/* Authentication */}
-│   ├── SignIn.jsx          # Login Page
-│   ├── SignUp.jsx          # Registration Page with Validation
-│   └── ResetPass.jsx       # Password Reset Flow
-│
-├── tailwind.config.js      # Custom Theme Configuration
-└── vite.config.js          # Vite Configuration
+pm2 start ecosystem.config.js
+pm2 save
 ```
 
 ---
 
-## 🚀 Deployment
+## 🔐 Environment Variables
 
-### Deploying on Vercel
+Each service requires its own `.env` file.
 
-1. Push project to GitHub  
-2. Import into Vercel  
-3. Vercel auto-detects Vite  
-4. Deploy 🎉
+### Backend `.env`
+```env
+PORT=5000
+DB_URL=postgres://user:pass@localhost:5432/fydblock_db
+JWT_SECRET=secure_secret_key
+TRADING_ENGINE_URL=http://localhost:8000
+```
 
-The included `vercel.json` ensures correct SPA routing.
+### Frontend `.env`
+```env
+VITE_API_BASE_URL=https://api.fydblock.com/api
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+---
+
+## 🤝 Contribution Guide
+
+1. Fork the repository  
+2. Create a feature branch:  
+   ```bash
+   git checkout -b feature/NewBotStrategy
+   ```
+3. Commit changes  
+4. Push to your branch  
+5. Open a Pull Request  
 
 ---
 
 ## 📄 License
 
-Licensed under the **MIT License**.  
-See the `LICENSE` file for details.
-
----
-
-**Developed by FydBlock Team**
+**MIT License © 2025 FydBlock**
