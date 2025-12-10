@@ -1,8 +1,7 @@
-// src/Portfolio.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Bell, Plus, Search, ArrowUpRight, ArrowDownRight, Wallet, Loader2, X, Zap, CheckCircle2, ChevronDown, MoreHorizontal
+    Bell, Plus, Search, ArrowUpRight, Wallet, Loader2, X, Zap, CheckCircle2, ChevronDown, PieChart
 } from 'lucide-react';
 import API_BASE_URL from './config';
 import Dash_nav from './Dash_nav';
@@ -10,24 +9,29 @@ import CreateBotModal from './CreateBotModal';
 
 // --- CONSTANTS ---
 const EXCHANGES = [
-    { id: 'binance', name: 'Binance', logo: '/logos/BINANCE.png' },
-    { id: 'bybit', name: 'Bybit', logo: '/logos/BYBIT.png' },
-    { id: 'okx', name: 'OKX', logo: '/logos/OKX.jpg' },
+    { id: 'binance', name: 'Binance', logo: '/icons/bnb.svg' }, // Assuming you have exchange logos too, otherwise revert to external
+    { id: 'bybit', name: 'Bybit', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bybit-logo.png/1200px-Bybit-logo.png' },
+    { id: 'okx', name: 'OKX', logo: 'https://cryptologos.cc/logos/okb-okb-logo.png' },
 ];
 
-// --- HELPER COMPONENT: CRYPTO ICON ---
-const CryptoIcon = ({ src, alt }) => (
-    <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-contain rounded-full"
-        onError={(e) => {
-            e.target.onerror = null;
-            // Fallback icon
-            e.target.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png";
-        }}
-    />
-);
+// --- HELPER COMPONENT: CRYPTO ICON (Local Priority) ---
+const CryptoIcon = ({ symbol, className = "w-full h-full" }) => {
+    // Points directly to public/icons/btc.svg, public/icons/ada.svg, etc.
+    const localPath = `/icons/${symbol?.toLowerCase()}.svg`;
+
+    return (
+        <img
+            src={localPath}
+            alt={symbol}
+            className={`object-contain rounded-full ${className}`}
+            onError={(e) => {
+                // If local icon is missing, show a generic fallback (Bitcoin or a generic coin image)
+                e.target.onerror = null; // Prevent infinite loop
+                e.target.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png";
+            }}
+        />
+    );
+};
 
 // --- COMPONENT: CONNECT EXCHANGE MODAL ---
 const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
@@ -90,7 +94,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                         className="bg-[#131B1F] border border-white/10 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-[#00FF9D]/50 transition-all"
                     >
                         <div className="flex items-center gap-3">
-                            <img src={selectedExchange.logo} alt={selectedExchange.name} className="h-6 w-6 object-contain" />
+                            <img src={selectedExchange.logo} alt={selectedExchange.name} className="h-6 w-6 object-contain" onError={(e) => e.target.src = "https://cryptologos.cc/logos/bitcoin-btc-logo.png"} />
                             <span className="font-bold text-white">{selectedExchange.name}</span>
                         </div>
                         <ChevronDown size={16} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -104,7 +108,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                                     onClick={() => { setSelectedExchange(ex); setIsDropdownOpen(false); }}
                                     className="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer transition-colors"
                                 >
-                                    <img src={ex.logo} alt={ex.name} className="h-6 w-6 object-contain" />
+                                    <img src={ex.logo} alt={ex.name} className="h-6 w-6 object-contain" onError={(e) => e.target.src = "https://cryptologos.cc/logos/bitcoin-btc-logo.png"} />
                                     <span className="text-sm font-medium text-gray-200">{ex.name}</span>
                                     {selectedExchange.id === ex.id && <CheckCircle2 size={14} className="text-[#00FF9D] ml-auto" />}
                                 </div>
@@ -165,64 +169,74 @@ const ConnectApiOverlay = ({ onConnect }) => (
     </div>
 );
 
-// --- REBUILT CHART COMPONENT (Matches Reference Image) ---
+// --- PREMIUM SMOOTH CHART COMPONENT ---
 const PortfolioChart = ({ data, color = "#00FF9D" }) => {
-    // Mock data generation if real data is scarce or flat
-    const mockData = [5400, 5550, 5600, 5500, 5200, 4800, 4600, 4800, 5100, 5300, 5350, 5400, 5450, 5500];
-    const chartData = (data && data.length > 5) ? data : mockData;
-
+    // If no history, generate a flat line
+    const pointsData = (data && data.length > 0) ? data : [0, 0, 0, 0, 0];
     const width = 800;
     const height = 220;
     const padding = 20;
 
-    const maxVal = Math.max(...chartData);
-    const minVal = Math.min(...chartData);
-    const range = maxVal - minVal || 1;
+    const minVal = Math.min(...pointsData);
+    const range = Math.max(...pointsData) - minVal || 1;
 
     // Helper to map data to SVG coordinates
     const getCoord = (index, value) => {
-        const x = (index / (chartData.length - 1)) * width;
-        const y = height - ((value - minVal) / range) * (height * 0.7) - padding; // Use 70% of height for the wave
+        const x = (index / (pointsData.length - 1)) * width;
+        const y = height - ((value - minVal) / range) * (height * 0.7) - padding;
         return { x, y };
     };
 
-    // Build the line path
-    const points = chartData.map((val, i) => getCoord(i, val));
-    const linePath = "M " + points.map(p => `${p.x},${p.y}`).join(" L ");
+    // Build points
+    const points = pointsData.map((val, i) => getCoord(i, val));
+
+    // Catmull-Rom Spline for smooth curves
+    const linePath = points.reduce((acc, point, i, a) => {
+        if (i === 0) return `M ${point.x},${point.y}`;
+        const p0 = a[i - 1] || point;
+        const p1 = point;
+        const p2 = a[i + 1] || point;
+        const p3 = a[i + 2] || p2;
+
+        const cp1x = p0.x + (p1.x - p0.x) / 6;
+        const cp1y = p0.y + (p1.y - p0.y) / 6;
+        const cp2x = p1.x - (p2.x - p0.x) / 6;
+        const cp2y = p1.y - (p2.y - p0.y) / 6;
+
+        return `${acc} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p1.x},${p1.y}`;
+    }, "");
+
     const areaPath = `${linePath} L ${width},${height} L 0,${height} Z`;
 
-    // Grid lines (Horizontal)
+    // Grid lines
     const gridLines = [0.2, 0.4, 0.6, 0.8].map(percent => height - (height * percent));
-
-    // Vertical Grid Lines (Matches reference, no labels)
     const gridCols = Array.from({ length: 12 });
 
     return (
         <div className="absolute inset-0 w-full h-full">
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
                 <defs>
-                    {/* Gradient for the area under the curve */}
                     <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
                         <stop offset="0%" stopColor={color} stopOpacity="0.15" />
                         <stop offset="100%" stopColor={color} stopOpacity="0" />
                     </linearGradient>
                 </defs>
 
-                {/* Grid Lines */}
+                {/* Horizontal Grid */}
                 {gridLines.map((y, i) => (
                     <line key={i} x1="0" y1={y} x2={width} y2={y} stroke="white" strokeOpacity="0.05" strokeWidth="1" />
                 ))}
 
-                {/* Vertical Grid Lines */}
+                {/* Vertical Grid */}
                 {gridCols.map((_, i) => {
                     const x = (i / (gridCols.length - 1)) * width;
                     return <line key={`v-${i}`} x1={x} y1="0" x2={x} y2={height} stroke="white" strokeOpacity="0.05" strokeWidth="1" />;
                 })}
 
-                {/* Area Fill */}
+                {/* Area */}
                 <path d={areaPath} fill="url(#chartGradient)" stroke="none" />
 
-                {/* Main Line */}
+                {/* Line */}
                 <path
                     d={linePath}
                     fill="none"
@@ -253,16 +267,9 @@ const Portfolio = () => {
 
     // Data State
     const [portfolioData, setPortfolioData] = useState({
-        totalValue: 5397.75,
-        changePercent: 1.88,
-        assets: [
-            { id: 1, symbol: 'BNB', name: 'BNB', value: 1432.13, count: 1.5818, change: 1.57, icon: 'https://cryptologos.cc/logos/bnb-bnb-logo.png' },
-            { id: 2, symbol: 'USDT', name: 'Tether', value: 1353.32, count: 1383.3218, change: -0.01, icon: 'https://cryptologos.cc/logos/tether-usdt-logo.png' },
-            { id: 3, symbol: 'SOL', name: 'Solana', value: 1288.37, count: 9.4488, change: 3.15, icon: 'https://cryptologos.cc/logos/solana-sol-logo.png' },
-            { id: 4, symbol: 'XRP', name: 'XRP', value: 1243.53, count: 594.9896, change: 2.85, icon: 'https://cryptologos.cc/logos/xrp-xrp-logo.png' },
-            { id: 5, symbol: 'ETH', name: 'Ethereum', value: 50.58, count: 0.0191, change: 3.26, icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
-            { id: 6, symbol: 'BTC', name: 'Bitcoin', value: 1.81, count: 0.00003, change: 2.63, icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png' }
-        ],
+        totalValue: 0,
+        changePercent: 0,
+        assets: [],
         history: []
     });
 
@@ -284,14 +291,15 @@ const Portfolio = () => {
                     if (res.ok) {
                         const data = await res.json();
                         // SAFELY UPDATE STATE
-                        // Ensure defaults for missing values to prevent crashes
-                        if (data.assets && data.assets.length > 0) {
+                        if (data) {
                             setPortfolioData(prev => ({
                                 ...prev,
-                                totalValue: data.totalValue || prev.totalValue,
-                                changePercent: data.changePercent || prev.changePercent,
-                                assets: data.assets,
-                                history: data.history || []
+                                totalValue: data.totalValue || 0,
+                                changePercent: data.changePercent || 0,
+                                assets: data.assets || [],
+                                history: (data.history && data.history.length > 0)
+                                    ? data.history
+                                    : [data.totalValue * 0.9, data.totalValue] // Mock history if only 1 data point
                             }));
                         }
                     }
@@ -424,22 +432,23 @@ const Portfolio = () => {
                                             {/* Symbol */}
                                             <div className="col-span-4 flex items-center gap-4">
                                                 <div className="w-8 h-8 rounded-full bg-white/5 p-1">
-                                                    <CryptoIcon src={asset.icon} alt={asset.symbol} />
+                                                    {/* ✅ USING LOCAL ICONS */}
+                                                    <CryptoIcon symbol={asset.symbol} />
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-white text-sm">{asset.symbol}</span>
-                                                    <span className="text-[10px] text-gray-500 hidden md:block">{asset.name}</span>
+                                                    <span className="text-[10px] text-gray-500 hidden md:block">Crypto</span>
                                                 </div>
                                             </div>
 
                                             {/* Value - SAFE ACCESS */}
                                             <div className="col-span-3 font-medium text-white text-sm">
-                                                ${(asset.value || 0).toLocaleString()}
+                                                ${(asset.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </div>
 
                                             {/* Count - SAFE ACCESS */}
                                             <div className="col-span-3 font-medium text-gray-400 text-sm">
-                                                {(asset.count || 0).toFixed(4)}
+                                                {(asset.balance || asset.count || 0).toFixed(4)}
                                             </div>
 
                                             {/* Change - SAFE ACCESS */}
