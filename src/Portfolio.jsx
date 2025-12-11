@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Bell, Plus, Search, ArrowUpRight, Wallet, Loader2, X, Zap, CheckCircle2, ChevronDown, PieChart
+    Bell, Plus, Search, ArrowUpRight, Wallet, Loader2, X, Zap, CheckCircle2, ChevronDown, PieChart, CircleDollarSign
 } from 'lucide-react';
 import API_BASE_URL from './config';
 import Dash_nav from './Dash_nav';
@@ -9,15 +9,20 @@ import CreateBotModal from './CreateBotModal';
 
 // --- CONSTANTS ---
 const EXCHANGES = [
-    { id: 'binance', name: 'Binance', logo: '/icons/bnb.svg' }, // Assuming you have exchange logos too, otherwise revert to external
+    { id: 'binance', name: 'Binance', logo: 'https://assets.coincap.io/assets/icons/bnb@2x.png' },
     { id: 'bybit', name: 'Bybit', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bybit-logo.png/1200px-Bybit-logo.png' },
     { id: 'okx', name: 'OKX', logo: 'https://cryptologos.cc/logos/okb-okb-logo.png' },
 ];
 
-// --- HELPER COMPONENT: CRYPTO ICON (Local Priority) ---
+// --- HELPER COMPONENT: CRYPTO ICON (Robust Fallback) ---
 const CryptoIcon = ({ symbol, className = "w-full h-full" }) => {
-    // Points directly to public/icons/btc.svg, public/icons/ada.svg, etc.
-    const localPath = `/icons/${symbol?.toLowerCase()}.svg`;
+    const symbolLower = symbol?.toLowerCase() || 'btc';
+
+    // 1. Primary: Local Icon (e.g., /icons/btc.svg)
+    const localPath = `/icons/${symbolLower}.svg`;
+
+    // 2. Secondary: Remote API (CoinCap uses symbols directly, e.g., btc@2x.png)
+    const remotePath = `https://assets.coincap.io/assets/icons/${symbolLower}@2x.png`;
 
     return (
         <img
@@ -25,11 +30,29 @@ const CryptoIcon = ({ symbol, className = "w-full h-full" }) => {
             alt={symbol}
             className={`object-contain rounded-full ${className}`}
             onError={(e) => {
-                // If local icon is missing, show a generic fallback (Bitcoin or a generic coin image)
-                e.target.onerror = null; // Prevent infinite loop
-                e.target.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png";
+                // If Local fails, try Remote. If Remote fails, show nothing (or placeholder)
+                if (!e.target.src.includes('assets.coincap.io')) {
+                    e.target.src = remotePath;
+                    e.target.onerror = (e2) => {
+                        e2.target.style.display = 'none'; // Hide if even remote fails
+                        e2.target.nextSibling.style.display = 'flex'; // Show fallback div
+                    };
+                }
             }}
         />
+    );
+};
+
+// Wrapper to handle completely missing images
+const SafeCoinIcon = ({ symbol, className }) => {
+    return (
+        <div className={`relative ${className}`}>
+            <CryptoIcon symbol={symbol} className="w-full h-full" />
+            {/* Fallback Icon (Hidden by default, shown if IMG fails completely) */}
+            <div className="absolute inset-0 hidden items-center justify-center bg-gray-800 rounded-full text-gray-500">
+                <CircleDollarSign size="60%" />
+            </div>
+        </div>
     );
 };
 
@@ -94,7 +117,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                         className="bg-[#131B1F] border border-white/10 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-[#00FF9D]/50 transition-all"
                     >
                         <div className="flex items-center gap-3">
-                            <img src={selectedExchange.logo} alt={selectedExchange.name} className="h-6 w-6 object-contain" onError={(e) => e.target.src = "https://cryptologos.cc/logos/bitcoin-btc-logo.png"} />
+                            <img src={selectedExchange.logo} alt={selectedExchange.name} className="h-6 w-6 object-contain" />
                             <span className="font-bold text-white">{selectedExchange.name}</span>
                         </div>
                         <ChevronDown size={16} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -108,7 +131,7 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                                     onClick={() => { setSelectedExchange(ex); setIsDropdownOpen(false); }}
                                     className="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer transition-colors"
                                 >
-                                    <img src={ex.logo} alt={ex.name} className="h-6 w-6 object-contain" onError={(e) => e.target.src = "https://cryptologos.cc/logos/bitcoin-btc-logo.png"} />
+                                    <img src={ex.logo} alt={ex.name} className="h-6 w-6 object-contain" />
                                     <span className="text-sm font-medium text-gray-200">{ex.name}</span>
                                     {selectedExchange.id === ex.id && <CheckCircle2 size={14} className="text-[#00FF9D] ml-auto" />}
                                 </div>
@@ -169,9 +192,12 @@ const ConnectApiOverlay = ({ onConnect }) => (
     </div>
 );
 
-// --- PREMIUM SMOOTH CHART COMPONENT ---
+// --- INTERACTIVE PORTFOLIO CHART (Fixed Tooltip) ---
 const PortfolioChart = ({ data, color = "#00FF9D" }) => {
-    // If no history, generate a flat line
+    const containerRef = useRef(null);
+    const [hoverIndex, setHoverIndex] = useState(null);
+    const [hoverCoords, setHoverCoords] = useState({ x: 0, y: 0 });
+
     const pointsData = (data && data.length > 0) ? data : [0, 0, 0, 0, 0];
     const width = 800;
     const height = 220;
@@ -180,23 +206,19 @@ const PortfolioChart = ({ data, color = "#00FF9D" }) => {
     const minVal = Math.min(...pointsData);
     const range = Math.max(...pointsData) - minVal || 1;
 
-    // Helper to map data to SVG coordinates
     const getCoord = (index, value) => {
         const x = (index / (pointsData.length - 1)) * width;
         const y = height - ((value - minVal) / range) * (height * 0.7) - padding;
         return { x, y };
     };
 
-    // Build points
     const points = pointsData.map((val, i) => getCoord(i, val));
 
-    // Catmull-Rom Spline for smooth curves
     const linePath = points.reduce((acc, point, i, a) => {
         if (i === 0) return `M ${point.x},${point.y}`;
         const p0 = a[i - 1] || point;
         const p1 = point;
         const p2 = a[i + 1] || point;
-        const p3 = a[i + 2] || p2;
 
         const cp1x = p0.x + (p1.x - p0.x) / 6;
         const cp1y = p0.y + (p1.y - p0.y) / 6;
@@ -208,12 +230,31 @@ const PortfolioChart = ({ data, color = "#00FF9D" }) => {
 
     const areaPath = `${linePath} L ${width},${height} L 0,${height} Z`;
 
-    // Grid lines
-    const gridLines = [0.2, 0.4, 0.6, 0.8].map(percent => height - (height * percent));
-    const gridCols = Array.from({ length: 12 });
+    const handleMouseMove = (e) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+
+        const totalPoints = points.length;
+        const widthPerPoint = rect.width / (totalPoints - 1);
+        const index = Math.round(mouseX / widthPerPoint);
+
+        if (index >= 0 && index < totalPoints) {
+            setHoverIndex(index);
+            setHoverCoords(points[index]);
+        }
+    };
+
+    const leftPos = hoverIndex !== null ? `${(hoverCoords.x / width) * 100}%` : '0%';
+    const topPos = hoverIndex !== null ? `${(hoverCoords.y / height) * 100}%` : '0%';
 
     return (
-        <div className="absolute inset-0 w-full h-full">
+        <div
+            ref={containerRef}
+            className="absolute inset-0 w-full h-full cursor-crosshair group"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setHoverIndex(null)}
+        >
             <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
                 <defs>
                     <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
@@ -222,36 +263,44 @@ const PortfolioChart = ({ data, color = "#00FF9D" }) => {
                     </linearGradient>
                 </defs>
 
-                {/* Horizontal Grid */}
-                {gridLines.map((y, i) => (
-                    <line key={i} x1="0" y1={y} x2={width} y2={y} stroke="white" strokeOpacity="0.05" strokeWidth="1" />
+                {[0.2, 0.4, 0.6, 0.8].map((p, i) => (
+                    <line key={i} x1="0" y1={height * (1 - p)} x2={width} y2={height * (1 - p)} stroke="white" strokeOpacity="0.05" />
                 ))}
 
-                {/* Vertical Grid */}
-                {gridCols.map((_, i) => {
-                    const x = (i / (gridCols.length - 1)) * width;
-                    return <line key={`v-${i}`} x1={x} y1="0" x2={x} y2={height} stroke="white" strokeOpacity="0.05" strokeWidth="1" />;
-                })}
-
-                {/* Area */}
                 <path d={areaPath} fill="url(#chartGradient)" stroke="none" />
+                <path d={linePath} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_10px_rgba(0,255,157,0.4)]" />
 
-                {/* Line */}
-                <path
-                    d={linePath}
-                    fill="none"
-                    stroke={color}
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="drop-shadow-[0_0_10px_rgba(0,255,157,0.4)]"
-                />
+                {hoverIndex !== null && (
+                    <line x1={hoverCoords.x} y1={0} x2={hoverCoords.x} y2={height} stroke="white" strokeWidth="1" strokeDasharray="4 4" opacity="0.5" />
+                )}
             </svg>
+
+            {/* HTML Tooltip Elements (No Stretching) */}
+            {hoverIndex !== null && (
+                <>
+                    <div
+                        className="absolute rounded-full pointer-events-none z-10 bg-[#00FF9D] opacity-30 transition-all duration-75 ease-out"
+                        style={{ width: '24px', height: '24px', left: leftPos, top: topPos, transform: 'translate(-50%, -50%)' }}
+                    />
+                    <div
+                        className="absolute rounded-full pointer-events-none z-10 bg-[#00FF9D] border-2 border-white transition-all duration-75 ease-out"
+                        style={{ width: '10px', height: '10px', left: leftPos, top: topPos, transform: 'translate(-50%, -50%)' }}
+                    />
+                    <div
+                        className="absolute bg-[#0A1014] border border-[#00FF9D] text-white text-xs rounded-lg px-3 py-1.5 shadow-xl pointer-events-none transition-all duration-75 ease-out z-20"
+                        style={{ left: leftPos, top: topPos, transform: 'translate(-50%, -140%)' }}
+                    >
+                        <p className="font-bold text-[#00FF9D] whitespace-nowrap">
+                            ${pointsData[hoverIndex].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                    </div>
+                </>
+            )}
         </div>
     );
 };
 
-// --- MAIN PORTFOLIO COMPONENT ---
+// --- MAIN PAGE ---
 const Portfolio = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -262,10 +311,8 @@ const Portfolio = () => {
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    // Filter & Search
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Data State
     const [portfolioData, setPortfolioData] = useState({
         totalValue: 0,
         changePercent: 0,
@@ -299,7 +346,7 @@ const Portfolio = () => {
                                 assets: data.assets || [],
                                 history: (data.history && data.history.length > 0)
                                     ? data.history
-                                    : [data.totalValue * 0.9, data.totalValue] // Mock history if only 1 data point
+                                    : [data.totalValue * 0.9, data.totalValue] // Fallback line if only 1 point
                             }));
                         }
                     }
@@ -325,24 +372,19 @@ const Portfolio = () => {
     return (
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black relative">
 
-            {/* Background Glows (Identical to Dashboard) */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
                 <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00FF9D]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
                 <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
                 <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/20 rounded-full blur-[180px] opacity-70"></div>
             </div>
 
-            {/* Modals */}
             <ConnectExchangeModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} onSuccess={fetchPortfolio} />
             <CreateBotModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
 
-            {/* Sidebar */}
             <Dash_nav user={user} />
 
-            {/* Main Content */}
             <main className="flex-1 overflow-y-auto p-6 md:p-8 relative z-10">
 
-                {/* Header Row */}
                 <header className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold text-[#00FF9D] drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">My Portfolio</h1>
                     <div className="flex items-center gap-4">
@@ -367,14 +409,11 @@ const Portfolio = () => {
                 ) : (
                     <div className="w-full">
 
-                        {/* --- TOP CHART CARD --- */}
                         <div className="relative w-full bg-[#0A1014]/60 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden mb-12 shadow-2xl">
                             {!hasExchange && <ConnectApiOverlay onConnect={() => setIsConnectModalOpen(true)} />}
 
                             <div className={`p-8 md:p-10 relative z-10 ${!hasExchange ? 'blur-sm opacity-50' : ''}`}>
                                 <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-8">
-
-                                    {/* Value Display */}
                                     <div>
                                         <div className="flex items-center gap-2 mb-3">
                                             <div className="w-6 h-6 rounded bg-white flex items-center justify-center text-black font-bold text-xs">$</div>
@@ -382,7 +421,6 @@ const Portfolio = () => {
                                             <ArrowUpRight size={14} className="text-[#00FF9D] opacity-60" />
                                         </div>
                                         <div className="flex items-baseline gap-4">
-                                            {/* SAFE ACCESS: Check properties before render */}
                                             <h2 className="text-4xl font-bold text-white tracking-tight drop-shadow-lg">
                                                 ${(portfolioData.totalValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </h2>
@@ -400,7 +438,7 @@ const Portfolio = () => {
                             </div>
                         </div>
 
-                        {/* --- ASSETS TABLE SECTION --- */}
+                        {/* --- ASSETS TABLE --- */}
                         <div className={`relative transition-all duration-500 ${!hasExchange ? 'blur-sm opacity-50 pointer-events-none' : ''}`}>
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-bold text-white">Assets</h3>
@@ -416,7 +454,6 @@ const Portfolio = () => {
                                 </div>
                             </div>
 
-                            {/* Table Header */}
                             <div className="grid grid-cols-12 px-6 py-3 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                                 <div className="col-span-4">Symbol</div>
                                 <div className="col-span-3">Value</div>
@@ -424,34 +461,26 @@ const Portfolio = () => {
                                 <div className="col-span-2 text-right">Change</div>
                             </div>
 
-                            {/* Asset Rows */}
                             <div className="space-y-2">
                                 {filteredAssets.length > 0 ? (
                                     filteredAssets.map((asset, i) => (
                                         <div key={i} className="grid grid-cols-12 items-center px-6 py-4 bg-[#0A1014]/40 border border-white/5 rounded-2xl hover:bg-[#0A1014]/80 hover:border-[#00FF9D]/20 transition-all group">
-                                            {/* Symbol */}
                                             <div className="col-span-4 flex items-center gap-4">
                                                 <div className="w-8 h-8 rounded-full bg-white/5 p-1">
-                                                    {/* ✅ USING LOCAL ICONS */}
-                                                    <CryptoIcon symbol={asset.symbol} />
+                                                    {/* Safe Local Icon with Smart Fallback */}
+                                                    <SafeCoinIcon symbol={asset.symbol} className="w-6 h-6" />
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-white text-sm">{asset.symbol}</span>
                                                     <span className="text-[10px] text-gray-500 hidden md:block">Crypto</span>
                                                 </div>
                                             </div>
-
-                                            {/* Value - SAFE ACCESS */}
                                             <div className="col-span-3 font-medium text-white text-sm">
                                                 ${(asset.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </div>
-
-                                            {/* Count - SAFE ACCESS */}
                                             <div className="col-span-3 font-medium text-gray-400 text-sm">
                                                 {(asset.balance || asset.count || 0).toFixed(4)}
                                             </div>
-
-                                            {/* Change - SAFE ACCESS */}
                                             <div className={`col-span-2 text-right font-bold text-sm ${(asset.change || 0) >= 0 ? 'text-[#00FF9D]' : 'text-red-500'}`}>
                                                 {(asset.change || 0) > 0 ? '+' : ''}{asset.change || 0}%
                                             </div>
