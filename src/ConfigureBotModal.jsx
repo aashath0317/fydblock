@@ -84,10 +84,10 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                     if (price > 0 && !isNaN(price)) {
                         setFetchedPrice(price);
 
-                        if (mode === 'auto') {
-                            const { newUpper, newLower } = calculateRange(price, riskLevel);
-                            setConfig(prev => ({ ...prev, upperPrice: newUpper, lowerPrice: newLower }));
-                        }
+                        // ✅ FIX: Always update inputs when a new price is fetched (Pair Change),
+                        // regardless of whether we are in Auto or Manual mode.
+                        const { newUpper, newLower } = calculateRange(price, riskLevel);
+                        setConfig(prev => ({ ...prev, upperPrice: newUpper, lowerPrice: newLower }));
                     }
                 }
             } catch (error) {
