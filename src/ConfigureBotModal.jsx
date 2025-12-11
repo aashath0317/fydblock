@@ -1,116 +1,181 @@
-import React, { useState, useEffect } from 'react';
-import { X, ChevronDown, Info } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, ChevronDown, Info, Search, Loader2, Check, LayoutGrid } from 'lucide-react';
+import API_BASE_URL from './config';
 
-// --- ANIMATED DCA CHART COMPONENT ---
-const AnimatedDCAChart = ({ orders, priceDeviation }) => {
-    const width = 500;
-    const height = 250;
-    const padding = 30;
+// --- DATA: PAIRS & PRIORITY ---
+const RAW_PAIRS_LIST = `SOL to USDT, BTC to USDT, ETH to USDT, BNB to USDT, XRP to USDT, ADA to USDT, AVAX to USDT, DOGE to USDT, DOT to USDT, LINK to USDT, TRX to USDT, MATIC to USDT, UNI to USDT, LTC to USDT, BCH to USDT, NEAR to USDT, APT to USDT, TUSD to USDT, WBTC to USDT, PAXG to USDT, SC to USDT, SFP to USDT, QTUM to USDT, CAKE to USDT, THETA to USDT, UMA to USDT, DODO to USDT, DENT to USDT, WIN to USDT, PUNDIX to USDT, CHZ to USDT, CTSI to USDT, DGB to USDT, CHR to USDT, RUNE to USDT, MANA to USDT, BAKE to USDT, KAVA to USDT, VTHO to USDT, PSG to USDT, FLOKI to USDT, AR to USDT, SPELL to USDT, MBOX to USDT, KDA to USDT, PYR to USDT, DYDX to USDT, MOVR to USDT, ROSE to USDT, YGG to USDT, IMX to USDT, JOE to USDT, CVX to USDT, FLOW to USDT, ILV to USDT, IOTA to USDT, AUDIO to USDT, STG to USDT, METIS to USDT, XDC to USDT, GMX to USDT, GNO to USDT, LQTY to USDT, TWT to USDT, CELR to USDT, ENS to USDT, BONK to USDT, BLUR to USDT, TON to USDT, CFX to USDT, PEPE to USDT, SUI to USDT, ACH to USDT, RSR to USDT, SKL to USDT, MDT to USDT, ARPA to USDT, INJ to USDT, SYS to USDT, MINA to USDT, MAGIC to USDT, TURBO to USDT, ORDI to USDT, PHB to USDT, ANKR to USDT, HOT to USDT, WOO to USDT, BICO to USDT, ASTR to USDT, DUSK to USDT, MAV to USDT, CKB to USDT, XVG to USDT, ID to USDT, RDNT to USDT, PENDLE to USDT, ARKM to USDT, WLD to USDT, HFT to USDT, CYBER to USDT, SEI to USDT, KMD to USDT, LPT to USDT, OG to USDT, HIFI to USDT, FDUSD to USDT, GMT to USDT, AVA to USDT, FORTH to USDT, MLN to USDT, MTL to USDT, EDU to USDT, API3 to USDT, JASMY to USDT, HIGH to USDT, SSV to USDT, QNT to USDT, FIDA to USDT, TIA to USDT, MEME to USDT, VIC to USDT, PYTH to USDT, JTO to USDT, 1000SATS to USDT, ACE to USDT, DATA to USDT, XAI to USDT, MANTA to USDT, JUP to USDT, RAY to USDT, STRK to USDT, ALT to USDT, PIXEL to USDT, WIF to USDT, SUPER to USDT, BOME to USDT, W to USDT, ENA to USDT, TAO to USDT, JST to USDT, SUN to USDT, BB to USDT, OM to USDT, PEOPLE to USDT, RLC to USDT, POLYX to USDT, PHA to USDT, IOST to USDT, SLP to USDT, ZK to USDT, ZRO to USDT, IO to USDT, ETHFI to USDT, LISTA to USDT, REZ to USDT, VANRY to USDT, NTRN to USDT, PORTAL to USDT, AXL to USDT, DYM to USDT, GLM to USDT, BANANA to USDT, RENDER to USDT, DOGS to USDT, POL to USDT, SLF to USDT, NEIRO to USDT, CATI to USDT, HMSTR to USDT, EIGEN to USDT, ACT to USDT, PNUT to USDT, ME to USDT, MOVE to USDT, PENGU to USDT, CETUS to USDT, COW to USDT, ACX to USDT, LUMIA to USDT, ORCA to USDT, DEGO to USDT, TNSR to USDT, AGLD to USDT, G to USDT, PIVX to USDT, UTK to USDT, XVS to USDT, VELODROME to USDT, TRUMP to USDT, USDQ to USDT, EURQ to USDT, WCT to USDT, A to USDT, USDR to USDT, EURR to USDT, WLFI to USDT, XEC to USDT, TRB to USDT, MBL to USDT, AEVO to USDT, 1INCH to USDT`;
 
-    // Calculate points for the descending line
-    const points = Array.from({ length: orders }, (_, i) => {
-        const x = padding + (i / (orders - 1)) * (width - 2 * padding);
-        // Map deviation to Y axis (Visual scale factor * 10 to make it visible)
-        const drop = (i * priceDeviation * 15);
-        const y = padding + (drop / 100) * (height - 2 * padding) + 40;
-        return { x, y, id: i };
+const PRIORITY_COINS = ['SOL', 'BTC', 'ETH', 'BNB', 'XRP', 'DOGE', 'ADA'];
+
+const getSortedPairs = () => {
+    const pairs = RAW_PAIRS_LIST.split(',').map(p => p.trim().replace(' to ', '/'));
+    return pairs.sort((a, b) => {
+        const baseA = a.split('/')[0];
+        const baseB = b.split('/')[0];
+        const idxA = PRIORITY_COINS.indexOf(baseA);
+        const idxB = PRIORITY_COINS.indexOf(baseB);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a.localeCompare(b);
     });
-
-    // Create path strings
-    const linePath = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`;
-    const areaPath = `${linePath} L ${points[points.length - 1].x},${height} L ${points[0].x},${height} Z`;
-
-    return (
-        <div className="w-full h-56 relative overflow-hidden bg-[#0A1014] rounded-xl border border-white/5 mt-4 flex items-center justify-center">
-
-            {/* Grid Lines (Subtle Background) */}
-            <div className="absolute inset-0 opacity-20"
-                style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-            </div>
-
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full relative z-10">
-                <defs>
-                    <linearGradient id="dcaGradient" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="#00FF9D" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="#00FF9D" stopOpacity="0" />
-                    </linearGradient>
-
-                    {/* Glow Filter */}
-                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="4" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                    </filter>
-                </defs>
-
-                {/* Animated Area (Fades in) */}
-                <path
-                    d={areaPath}
-                    fill="url(#dcaGradient)"
-                    className="opacity-0 animate-[fadeIn_1s_ease-out_forwards]"
-                    style={{ animationDelay: '0.5s' }}
-                />
-
-                {/* Animated Line (Draws itself) */}
-                <path
-                    d={linePath}
-                    fill="none"
-                    stroke="#00FF9D"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    filter="url(#glow)"
-                    className="[stroke-dasharray:1000] [stroke-dashoffset:1000] animate-[dash_2s_linear_forwards]"
-                />
-
-                {/* Animated Points (Pop in sequentially) */}
-                {points.map((p, i) => (
-                    <g key={p.id} className="opacity-0 animate-[popIn_0.3s_cubic-bezier(0.175,0.885,0.32,1.275)_forwards]" style={{ animationDelay: `${(i + 1) * (2 / orders)}s` }}>
-                        {/* Outer Glow */}
-                        <circle cx={p.x} cy={p.y} r="8" fill="#00FF9D" fillOpacity="0.2" />
-                        {/* Inner Dot */}
-                        <circle cx={p.x} cy={p.y} r="4" fill="#050B0D" stroke="#00FF9D" strokeWidth="2" />
-
-                        {/* "Buy" Label appearing */}
-                        <text x={p.x} y={p.y - 15} textAnchor="middle" fill="#00FF9D" fontSize="10" fontWeight="bold" className="opacity-70">
-                            {i === 0 ? 'Entry' : `Buy ${i}`}
-                        </text>
-                    </g>
-                ))}
-            </svg>
-
-            {/* CSS for Keyframes (Injected locally for simplicity) */}
-            <style>{`
-                @keyframes dash {
-                    to { stroke-dashoffset: 0; }
-                }
-                @keyframes popIn {
-                    from { transform: scale(0); opacity: 0; }
-                    to { transform: scale(1); opacity: 1; }
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-            `}</style>
-        </div>
-    );
 };
 
-const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT DCA' }) => {
+const ALL_PAIRS = getSortedPairs();
+
+const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
     const [config, setConfig] = useState({
         exchange: 'Binance',
         pair: 'BTC/USDT',
         investment: 1000,
-        orders: 5,
-        deviation: 2.0,
-        takeProfit: 5.0,
-        stopLoss: 10.0
+        grids: 20,
+        upperPrice: 0,
+        lowerPrice: 0,
+        trailingUp: false,
+        trailingDown: false
     });
+
+    const [mode, setMode] = useState('auto');
+    const [riskLevel, setRiskLevel] = useState('high');
+    const [isPairOpen, setIsPairOpen] = useState(false);
+    const [pairSearch, setPairSearch] = useState('');
+    const [isPriceLoading, setIsPriceLoading] = useState(false);
+
+    const [fetchedPrice, setFetchedPrice] = useState(0);
+
+    const filteredPairs = useMemo(() => {
+        return ALL_PAIRS.filter(pair => pair.toLowerCase().includes(pairSearch.toLowerCase()));
+    }, [pairSearch]);
+
+    // --- HELPER: Calculate Range based on Price & Risk ---
+    const calculateRange = (price, risk) => {
+        let percentage = 0.10; // Default High
+        if (risk === 'medium') percentage = 0.20;
+        if (risk === 'low') percentage = 0.30;
+
+        const newUpper = parseFloat((price * (1 + percentage)).toFixed(4));
+        const newLower = parseFloat((price * (1 - percentage)).toFixed(4));
+        return { newUpper, newLower };
+    };
+
+    // --- 1. FETCH PRICE ---
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const fetchPrice = async () => {
+            setIsPriceLoading(true);
+            try {
+                const exch = config.exchange ? config.exchange.toLowerCase() : 'binance';
+                const url = `${API_BASE_URL}/user/market-data?exchange=${exch}&symbol=${config.pair}`;
+
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Logic to extract price from Ticker OR Order Book
+                    let price = 0;
+                    if (data.price) {
+                        price = parseFloat(data.price);
+                    } else if (data.bids && data.bids.length > 0 && data.asks && data.asks.length > 0) {
+                        const bestBid = parseFloat(data.bids[0][0]);
+                        const bestAsk = parseFloat(data.asks[0][0]);
+                        price = (bestBid + bestAsk) / 2;
+                    }
+
+                    if (price > 0 && !isNaN(price)) {
+                        setFetchedPrice(price);
+
+                        // If in AUTO mode, calculate immediately
+                        if (mode === 'auto') {
+                            const { newUpper, newLower } = calculateRange(price, riskLevel);
+                            setConfig(prev => ({ ...prev, upperPrice: newUpper, lowerPrice: newLower }));
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch live price:", error);
+            } finally {
+                setIsPriceLoading(false);
+            }
+        };
+
+        fetchPrice();
+    }, [config.pair, config.exchange, isOpen]);
+
+    // --- 2. UPDATE INPUTS WHEN RISK/MODE CHANGES ---
+    useEffect(() => {
+        if (fetchedPrice <= 0) return;
+        if (mode === 'manual') return;
+
+        const { newUpper, newLower } = calculateRange(fetchedPrice, riskLevel);
+
+        setConfig(prev => ({
+            ...prev,
+            upperPrice: newUpper,
+            lowerPrice: newLower
+        }));
+
+    }, [fetchedPrice, mode, riskLevel]);
+
+
+    const handleCreate = () => {
+        if (Number(config.upperPrice) <= 0 || Number(config.lowerPrice) <= 0) {
+            alert("Price range is invalid.");
+            return;
+        }
+
+        const payload = {
+            bot_name: `${config.pair} Grid Bot`,
+            quote_currency: config.pair.split('/')[0],
+            bot_type: 'GRID',
+            status: 'active',
+            config: {
+                exchange: config.exchange,
+                pair: config.pair,
+                strategy: {
+                    upper_price: Number(config.upperPrice),
+                    lower_price: Number(config.lowerPrice),
+                    grids: Number(config.grids),
+                    investment: Number(config.investment),
+                    trailing_up: config.trailingUp,
+                    trailing_down: config.trailingDown
+                }
+            }
+        };
+
+        console.log("Creating Bot Payload:", payload);
+
+        const createBot = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/user/bot`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert("Grid Bot Created Successfully!");
+                    onClose();
+                } else {
+                    const errData = await res.json();
+                    alert(`Failed to create bot: ${errData.message || 'Unknown error'}`);
+                }
+            } catch (e) { console.error(e); }
+        };
+        createBot();
+    };
 
     if (!isOpen) return null;
 
-    const firstOrder = (config.investment / config.orders).toFixed(0);
-    const lastOrderPriceDrop = (config.orders - 1) * config.deviation;
+    // --- SAFE HELPER VALUES FOR PREVIEW UI (Prevents Crash) ---
+    const numUpper = Number(config.upperPrice) || 0;
+    const numLower = Number(config.lowerPrice) || 0;
+    const numGrids = Number(config.grids) || 0;
+    const numInv = Number(config.investment) || 0;
+
+    const priceRange = numUpper - numLower;
+    const gridStep = numGrids > 0 ? (priceRange / numGrids) : 0;
+    const investmentPerGrid = numGrids > 0 ? (numInv / numGrids).toFixed(2) : 0;
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -122,100 +187,202 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT DCA' }) => {
 
                 {/* --- LEFT SIDE: CONFIGURATION --- */}
                 <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-white mb-1">Configure {botType.replace('_', ' ')} Bot</h2>
-                    <p className="text-sm text-gray-400 mb-6">Setup your automated trading parameters.</p>
+                    <h2 className="text-2xl font-bold text-white mb-1">Configure Grid Bot</h2>
+                    <p className="text-sm text-gray-400 mb-6">Setup your automated grid trading parameters.</p>
 
                     <div className="space-y-5">
-                        {/* Inputs Grid */}
+                        {/* EXCHANGE & PAIR */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Exchange</label>
                                 <div className="relative">
-                                    <select className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] appearance-none cursor-pointer text-sm">
+                                    <select
+                                        value={config.exchange}
+                                        onChange={(e) => setConfig({ ...config, exchange: e.target.value })}
+                                        className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] appearance-none cursor-pointer text-sm"
+                                    >
                                         <option>Binance</option><option>Bybit</option><option>OKX</option>
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={14} />
                                 </div>
                             </div>
-                            <div className="space-y-1">
+
+                            <div className="space-y-1 relative">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Pair</label>
-                                <div className="relative">
-                                    <select className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] appearance-none cursor-pointer text-sm">
-                                        <option>BTC/USDT</option><option>ETH/USDT</option><option>SOL/USDT</option>
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={14} />
+                                <div
+                                    className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 flex items-center justify-between cursor-pointer hover:border-[#00FF9D]/30"
+                                    onClick={() => setIsPairOpen(!isPairOpen)}
+                                >
+                                    <span className="text-white text-sm truncate">{config.pair}</span>
+                                    <ChevronDown size={14} className="text-gray-500" />
                                 </div>
+                                {isPairOpen && (
+                                    <div className="absolute top-full left-0 w-full mt-2 bg-[#1A2023] border border-white/10 rounded-xl shadow-2xl z-30 overflow-hidden h-60 flex flex-col">
+                                        <div className="p-2 border-b border-white/5">
+                                            <div className="flex items-center bg-black/30 rounded px-2 py-1.5 border border-white/5">
+                                                <Search size={14} className="text-gray-500 mr-2" />
+                                                <input type="text" autoFocus placeholder="SEARCH" className="bg-transparent text-xs text-white outline-none w-full uppercase" value={pairSearch} onChange={(e) => setPairSearch(e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div className="overflow-y-auto flex-1">
+                                            {filteredPairs.map((p) => {
+                                                const isPriority = PRIORITY_COINS.some(c => p.startsWith(c + '/'));
+                                                return (
+                                                    <div key={p} onClick={() => { setConfig({ ...config, pair: p }); setIsPairOpen(false); }} className={`px-4 py-2 text-xs cursor-pointer flex items-center justify-between hover:bg-white/5 ${config.pair === p ? 'text-[#00FF9D] bg-[#00FF9D]/5' : 'text-gray-300'}`}>
+                                                        <span className={isPriority ? 'font-bold text-white' : ''}>{p}</span>
+                                                        {isPriority && <span className="text-[10px] text-yellow-500">★</span>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
+                        {/* MODE TOGGLE */}
+                        <div className="flex bg-[#131B1F] p-1 rounded-lg mt-2">
+                            <button onClick={() => setMode('auto')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'auto' ? 'bg-[#00FF9D] text-black' : 'text-gray-400 hover:text-white'}`}>AUTO (AI)</button>
+                            <button onClick={() => setMode('manual')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'manual' ? 'bg-[#00FF9D] text-black' : 'text-gray-400 hover:text-white'}`}>MANUAL</button>
+                        </div>
+
+                        {/* --- AUTO MODE CONTROLS --- */}
+                        {mode === 'auto' && (
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase">Select Risk Level</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <button onClick={() => setRiskLevel('high')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'high' ? 'border-red-500 bg-red-500/10 text-red-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                        High Risk <span className="text-[10px] font-normal opacity-70">±10% Range</span>
+                                    </button>
+                                    <button onClick={() => setRiskLevel('medium')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'medium' ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                        Medium Risk <span className="text-[10px] font-normal opacity-70">±20% Range</span>
+                                    </button>
+                                    <button onClick={() => setRiskLevel('low')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'low' ? 'border-green-500 bg-green-500/10 text-green-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                        Low Risk <span className="text-[10px] font-normal opacity-70">±30% Range</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- PRICE INPUTS (Updated to prevent crash) --- */}
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4 relative">
+                                {isPriceLoading && <div className="absolute inset-0 bg-[#0A1014]/80 z-10 flex items-center justify-center rounded-lg"><Loader2 size={16} className="animate-spin text-[#00FF9D]" /></div>}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Upper Price</label>
+                                    <input
+                                        type="number"
+                                        value={config.upperPrice}
+                                        // ✅ SAFE INPUT HANDLING
+                                        onChange={(e) => setConfig({ ...config, upperPrice: e.target.value })}
+                                        className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm ${mode === 'auto' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                        disabled={mode === 'auto'}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Lower Price</label>
+                                    <input
+                                        type="number"
+                                        value={config.lowerPrice}
+                                        // ✅ SAFE INPUT HANDLING
+                                        onChange={(e) => setConfig({ ...config, lowerPrice: e.target.value })}
+                                        className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm ${mode === 'auto' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                        disabled={mode === 'auto'}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* TRAILING ONLY IN MANUAL */}
+                            {mode === 'manual' && (
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Trailing Features</label>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer group bg-[#131B1F] px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 transition-all">
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingUp ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-600'}`}>{config.trailingUp && <Check size={12} className="text-black" />}</div>
+                                            <input type="checkbox" className="hidden" checked={config.trailingUp} onChange={e => setConfig({ ...config, trailingUp: e.target.checked })} />
+                                            <span className="text-xs text-gray-300 group-hover:text-white font-bold">Trailing Up</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer group bg-[#131B1F] px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 transition-all">
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingDown ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-600'}`}>{config.trailingDown && <Check size={12} className="text-black" />}</div>
+                                            <input type="checkbox" className="hidden" checked={config.trailingDown} onChange={e => setConfig({ ...config, trailingDown: e.target.checked })} />
+                                            <span className="text-xs text-gray-300 group-hover:text-white font-bold">Trailing Down</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* --- COMMON INPUTS: INVESTMENT & GRIDS --- */}
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase">Total Investment</label>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase">Total Investment</label>
                             <div className="relative">
-                                <input type="number" value={config.investment} onChange={(e) => setConfig({ ...config, investment: Number(e.target.value) })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
+                                <input type="number" value={config.investment} onChange={(e) => setConfig({ ...config, investment: parseFloat(e.target.value) || 0 })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">USDT</span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Orders</label>
-                                <input type="number" value={config.orders} onChange={(e) => setConfig({ ...config, orders: Number(e.target.value) })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Deviation (%)</label>
-                                <input type="number" step="0.1" value={config.deviation} onChange={(e) => setConfig({ ...config, deviation: Number(e.target.value) })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase">Number of Grids</label>
+                            <div className="relative">
+                                <input type="number" value={config.grids} onChange={(e) => setConfig({ ...config, grids: parseFloat(e.target.value) || 0 })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
+                                <LayoutGrid size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Take Profit (%)</label>
-                                <input type="number" step="0.1" value={config.takeProfit} onChange={(e) => setConfig({ ...config, takeProfit: Number(e.target.value) })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Stop Loss (%)</label>
-                                <input type="number" step="0.1" value={config.stopLoss} onChange={(e) => setConfig({ ...config, stopLoss: Number(e.target.value) })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
-                            </div>
-                        </div>
-
-                        <button onClick={() => { alert("Bot Created!"); onClose(); }} className="w-full bg-[#00FF9D] text-black font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:bg-[#00cc7d] hover:scale-[1.01] transition-all mt-4">
-                            Create Bot
+                        <button onClick={handleCreate} className="w-full bg-[#00FF9D] text-black font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:bg-[#00cc7d] hover:scale-[1.01] transition-all mt-4">
+                            Create Grid Bot
                         </button>
                     </div>
                 </div>
 
-                {/* --- RIGHT SIDE: ANIMATED STRATEGY PREVIEW --- */}
-                <div className="flex-1 bg-[#0A1014]/40 border border-white/5 rounded-2xl p-6 flex flex-col">
-                    <h3 className="text-lg font-bold text-white mb-2">Strategy Preview</h3>
+                {/* --- RIGHT SIDE: PREVIEW --- */}
+                <div className="lg:col-span-5">
+                    <div className="bg-[#0A1014]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-8 sticky top-10">
+                        <h2 className="text-xl font-bold text-white mb-6">Strategy Preview</h2>
 
-                    {/* Key Stats Row */}
-                    <div className="grid grid-cols-2 gap-4 mb-2 text-sm">
-                        <div className="flex justify-between py-2 border-b border-white/5">
-                            <span className="text-gray-400">Total Investment</span>
-                            <span className="text-white font-mono">{config.investment} USDT</span>
+                        <div className="space-y-4 text-sm">
+                            <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                <span className="text-gray-400">Current Price</span>
+                                <span className="font-bold text-[#00FF9D]">${fetchedPrice.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                <span className="text-gray-400">Grid Range</span>
+                                {/* ✅ SAFE RENDER: Using numLower/numUpper instead of config variables */}
+                                <span className="font-bold text-white">
+                                    {numLower > 0 ? numLower.toFixed(4) : '---'} - {numUpper > 0 ? numUpper.toFixed(4) : '---'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                <span className="text-gray-400">Grid Density</span>
+                                <span className="font-bold text-white">
+                                    {numGrids} Grids (~${gridStep.toFixed(2)} step)
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                <span className="text-gray-400">Investment per Grid</span>
+                                <span className="font-bold text-white">${investmentPerGrid}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                <span className="text-gray-400">Mode</span>
+                                <span className={`font-bold uppercase ${mode === 'auto' ? 'text-[#00FF9D]' : 'text-yellow-500'}`}>{mode} ({mode === 'auto' ? riskLevel : 'Custom'})</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                <span className="text-gray-400">Trailing</span>
+                                <div className="flex gap-2">
+                                    {config.trailingUp && <span className="text-[10px] bg-[#00FF9D]/10 text-[#00FF9D] px-2 py-1 rounded">UP</span>}
+                                    {config.trailingDown && <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded">DOWN</span>}
+                                    {!config.trailingUp && !config.trailingDown && <span className="text-gray-600">-</span>}
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex justify-between py-2 border-b border-white/5">
-                            <span className="text-gray-400">Order Count</span>
-                            <span className="text-white font-mono">{config.orders}</span>
+
+                        <div className="mt-6 flex items-start gap-2 p-4 bg-[#00FF9D]/5 border border-[#00FF9D]/20 rounded-xl min-h-[80px]">
+                            <Info size={18} className="text-[#00FF9D] shrink-0 mt-0.5" />
+                            <p className="text-xs text-[#00FF9D]/80 leading-relaxed">
+                                Bot will place <strong>{numGrids} orders</strong> in the price range of {numLower.toFixed(2)} to {numUpper.toFixed(2)}.
+                                {mode === 'auto' ? ` Optimized for ${riskLevel} risk market conditions.` : ' Using custom manual settings.'}
+                            </p>
                         </div>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-white/5 text-sm mb-4">
-                        <span className="text-gray-400">Last Order Price</span>
-                        <span className="text-white font-mono">{firstOrder} USDT <span className="text-red-500">(-{lastOrderPriceDrop.toFixed(1)}%)</span></span>
-                    </div>
-
-                    {/* THE ANIMATION */}
-                    <div className="flex-1 flex flex-col justify-center">
-                        <AnimatedDCAChart orders={config.orders} priceDeviation={config.deviation} />
-                    </div>
-
-                    <div className="mt-6 flex items-start gap-3 text-xs text-gray-400 leading-relaxed bg-[#00FF9D]/5 p-4 rounded-xl border border-[#00FF9D]/10">
-                        <Info size={16} className="text-[#00FF9D] shrink-0 mt-0.5" />
-                        <p>
-                            Bot will place <strong>{config.orders} orders</strong>.
-                            Each consecutive order triggers when price drops by <strong>{config.deviation}%</strong>
-                            to average down your entry price automatically.
-                        </p>
                     </div>
                 </div>
             </div>
