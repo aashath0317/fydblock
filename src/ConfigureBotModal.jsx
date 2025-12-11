@@ -72,7 +72,6 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                 if (res.ok) {
                     const data = await res.json();
 
-                    // Logic to extract price from Ticker OR Order Book
                     let price = 0;
                     if (data.price) {
                         price = parseFloat(data.price);
@@ -85,7 +84,6 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                     if (price > 0 && !isNaN(price)) {
                         setFetchedPrice(price);
 
-                        // If in AUTO mode, calculate immediately
                         if (mode === 'auto') {
                             const { newUpper, newLower } = calculateRange(price, riskLevel);
                             setConfig(prev => ({ ...prev, upperPrice: newUpper, lowerPrice: newLower }));
@@ -143,8 +141,6 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
             }
         };
 
-        console.log("Creating Bot Payload:", payload);
-
         const createBot = async () => {
             try {
                 const token = localStorage.getItem('token');
@@ -167,7 +163,6 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
 
     if (!isOpen) return null;
 
-    // --- SAFE HELPER VALUES FOR PREVIEW UI (Prevents Crash) ---
     const numUpper = Number(config.upperPrice) || 0;
     const numLower = Number(config.lowerPrice) || 0;
     const numGrids = Number(config.grids) || 0;
@@ -179,14 +174,15 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-[#0A1014] border border-white/10 rounded-3xl w-full max-w-6xl p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col lg:flex-row gap-8">
+            {/* FIXED: Changed flex layout to grid layout to strictly split containers */}
+            <div className="bg-[#0A1014] border border-white/10 rounded-3xl w-full max-w-6xl p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                 <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors z-20">
                     <X size={24} />
                 </button>
 
-                {/* --- LEFT SIDE: CONFIGURATION --- */}
-                <div className="flex-1">
+                {/* --- LEFT SIDE: CONFIGURATION (Fixed Col Span 7) --- */}
+                <div className="lg:col-span-7 flex flex-col h-full">
                     <h2 className="text-2xl font-bold text-white mb-1">Configure Grid Bot</h2>
                     <p className="text-sm text-gray-400 mb-6">Setup your automated grid trading parameters.</p>
 
@@ -246,74 +242,71 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                             <button onClick={() => setMode('manual')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'manual' ? 'bg-[#00FF9D] text-black' : 'text-gray-400 hover:text-white'}`}>MANUAL</button>
                         </div>
 
-                        {/* --- AUTO MODE CONTROLS --- */}
-                        {mode === 'auto' && (
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase">Select Risk Level</label>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <button onClick={() => setRiskLevel('high')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'high' ? 'border-red-500 bg-red-500/10 text-red-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
-                                        High Risk <span className="text-[10px] font-normal opacity-70">±10% Range</span>
-                                    </button>
-                                    <button onClick={() => setRiskLevel('medium')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'medium' ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
-                                        Medium Risk <span className="text-[10px] font-normal opacity-70">±20% Range</span>
-                                    </button>
-                                    <button onClick={() => setRiskLevel('low')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'low' ? 'border-green-500 bg-green-500/10 text-green-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
-                                        Low Risk <span className="text-[10px] font-normal opacity-70">±30% Range</span>
-                                    </button>
+                        {/* FIXED: FIXED HEIGHT WRAPPER 
+                            This div wraps the dynamic content (Inputs vs Buttons).
+                            It forces this section to always be 180px tall so content below doesn't jump.
+                        */}
+                        <div className="h-[180px] flex flex-col justify-center">
+                            {mode === 'auto' ? (
+                                <div className="space-y-3 w-full animate-in fade-in duration-300">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Select Risk Level</label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <button onClick={() => setRiskLevel('high')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'high' ? 'border-red-500 bg-red-500/10 text-red-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                            High Risk <span className="text-[10px] font-normal opacity-70">±10% Range</span>
+                                        </button>
+                                        <button onClick={() => setRiskLevel('medium')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'medium' ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                            Medium Risk <span className="text-[10px] font-normal opacity-70">±20% Range</span>
+                                        </button>
+                                        <button onClick={() => setRiskLevel('low')} className={`py-4 rounded-xl border text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 ${riskLevel === 'low' ? 'border-green-500 bg-green-500/10 text-green-500' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>
+                                            Low Risk <span className="text-[10px] font-normal opacity-70">±30% Range</span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="space-y-4 w-full animate-in fade-in duration-300">
+                                    <div className="grid grid-cols-2 gap-4 relative">
+                                        {isPriceLoading && <div className="absolute inset-0 bg-[#0A1014]/80 z-10 flex items-center justify-center rounded-lg"><Loader2 size={16} className="animate-spin text-[#00FF9D]" /></div>}
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Upper Price</label>
+                                            <input
+                                                type="number"
+                                                value={config.upperPrice}
+                                                onChange={(e) => setConfig({ ...config, upperPrice: e.target.value })}
+                                                className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm`}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Lower Price</label>
+                                            <input
+                                                type="number"
+                                                value={config.lowerPrice}
+                                                onChange={(e) => setConfig({ ...config, lowerPrice: e.target.value })}
+                                                className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm`}
+                                            />
+                                        </div>
+                                    </div>
 
-                        {/* --- PRICE INPUTS (Updated to prevent crash) --- */}
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4 relative">
-                                {isPriceLoading && <div className="absolute inset-0 bg-[#0A1014]/80 z-10 flex items-center justify-center rounded-lg"><Loader2 size={16} className="animate-spin text-[#00FF9D]" /></div>}
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Upper Price</label>
-                                    <input
-                                        type="number"
-                                        value={config.upperPrice}
-                                        // ✅ SAFE INPUT HANDLING
-                                        onChange={(e) => setConfig({ ...config, upperPrice: e.target.value })}
-                                        className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm ${mode === 'auto' ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                        disabled={mode === 'auto'}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Lower Price</label>
-                                    <input
-                                        type="number"
-                                        value={config.lowerPrice}
-                                        // ✅ SAFE INPUT HANDLING
-                                        onChange={(e) => setConfig({ ...config, lowerPrice: e.target.value })}
-                                        className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm ${mode === 'auto' ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                        disabled={mode === 'auto'}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* TRAILING ONLY IN MANUAL */}
-                            {mode === 'manual' && (
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Trailing Features</label>
-                                    <div className="flex gap-4">
-                                        <label className="flex items-center gap-2 cursor-pointer group bg-[#131B1F] px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 transition-all">
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingUp ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-600'}`}>{config.trailingUp && <Check size={12} className="text-black" />}</div>
-                                            <input type="checkbox" className="hidden" checked={config.trailingUp} onChange={e => setConfig({ ...config, trailingUp: e.target.checked })} />
-                                            <span className="text-xs text-gray-300 group-hover:text-white font-bold">Trailing Up</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer group bg-[#131B1F] px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 transition-all">
-                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingDown ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-600'}`}>{config.trailingDown && <Check size={12} className="text-black" />}</div>
-                                            <input type="checkbox" className="hidden" checked={config.trailingDown} onChange={e => setConfig({ ...config, trailingDown: e.target.checked })} />
-                                            <span className="text-xs text-gray-300 group-hover:text-white font-bold">Trailing Down</span>
-                                        </label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Trailing Features</label>
+                                        <div className="flex gap-4">
+                                            <label className="flex items-center gap-2 cursor-pointer group bg-[#131B1F] px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 transition-all flex-1 justify-center">
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingUp ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-600'}`}>{config.trailingUp && <Check size={12} className="text-black" />}</div>
+                                                <input type="checkbox" className="hidden" checked={config.trailingUp} onChange={e => setConfig({ ...config, trailingUp: e.target.checked })} />
+                                                <span className="text-xs text-gray-300 group-hover:text-white font-bold">Trailing Up</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer group bg-[#131B1F] px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 transition-all flex-1 justify-center">
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingDown ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-600'}`}>{config.trailingDown && <Check size={12} className="text-black" />}</div>
+                                                <input type="checkbox" className="hidden" checked={config.trailingDown} onChange={e => setConfig({ ...config, trailingDown: e.target.checked })} />
+                                                <span className="text-xs text-gray-300 group-hover:text-white font-bold">Trailing Down</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* --- COMMON INPUTS: INVESTMENT & GRIDS --- */}
-                        <div className="space-y-1">
+                        {/* --- COMMON INPUTS --- */}
+                        <div className="space-y-1 mt-2">
                             <label className="block text-[10px] font-bold text-gray-400 uppercase">Total Investment</label>
                             <div className="relative">
                                 <input type="number" value={config.investment} onChange={(e) => setConfig({ ...config, investment: parseFloat(e.target.value) || 0 })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
@@ -335,19 +328,18 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                     </div>
                 </div>
 
-                {/* --- RIGHT SIDE: PREVIEW --- */}
-                <div className="lg:col-span-5">
-                    <div className="bg-[#0A1014]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-8 sticky top-10">
+                {/* --- RIGHT SIDE: PREVIEW (Fixed Col Span 5) --- */}
+                <div className="lg:col-span-5 h-full">
+                    <div className="bg-[#0A1014]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-8 sticky top-10 h-full flex flex-col">
                         <h2 className="text-xl font-bold text-white mb-6">Strategy Preview</h2>
 
-                        <div className="space-y-4 text-sm">
+                        <div className="space-y-4 text-sm flex-1">
                             <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                 <span className="text-gray-400">Current Price</span>
                                 <span className="font-bold text-[#00FF9D]">${fetchedPrice.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                 <span className="text-gray-400">Grid Range</span>
-                                {/* ✅ SAFE RENDER: Using numLower/numUpper instead of config variables */}
                                 <span className="font-bold text-white">
                                     {numLower > 0 ? numLower.toFixed(4) : '---'} - {numUpper > 0 ? numUpper.toFixed(4) : '---'}
                                 </span>
