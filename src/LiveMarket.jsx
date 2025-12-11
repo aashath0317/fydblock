@@ -308,11 +308,11 @@ const LiveMarket = () => {
 
             <Dash_nav user={user} />
 
-            {/* --- FIX IS HERE: changed overflow-hidden to overflow-y-auto --- */}
-            <main className="flex-1 p-6 relative z-10 flex flex-col h-full overflow-y-auto">
+            {/* --- FIX 1: MATCH PADDING (p-4 md:p-8) --- */}
+            <main className="flex-1 p-4 md:p-8 relative z-10 flex flex-col h-full overflow-y-auto">
 
-                {/* 1. Header */}
-                <header className="flex justify-between items-center mb-6 shrink-0">
+                {/* --- FIX 2: MATCH HEADER MARGIN (mb-8) --- */}
+                <header className="flex justify-between items-center mb-8 shrink-0">
                     <h1 className="text-3xl font-bold text-[#00FF9D] drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">Terminals</h1>
                     <div className="flex items-center gap-4">
                         <button className="w-10 h-10 rounded-xl bg-[#0A1014]/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:border-[#00FF9D] transition-colors relative">
@@ -464,12 +464,14 @@ const LiveMarket = () => {
                     {/* --- ROW 2 --- */}
 
                     {/* TRADE PANEL (BOTTOM LEFT SMALL) */}
-                    <div className="col-span-12 lg:col-span-4 h-[350px]">
+                    {/* Height increased to 520px to fit form */}
+                    <div className="col-span-12 lg:col-span-4 h-[520px]">
                         <TradePanel pair={selectedPair.value} market={selectedMarket} />
                     </div>
 
                     {/* ORDER HISTORY (BOTTOM RIGHT LARGE) */}
-                    <div className="col-span-12 lg:col-span-8 h-[350px] bg-[#0A1014] border border-white/10 rounded-2xl flex flex-col overflow-hidden">
+                    {/* Height increased to 520px to match Trade Panel */}
+                    <div className="col-span-12 lg:col-span-8 h-[520px] bg-[#0A1014] border border-white/10 rounded-2xl flex flex-col overflow-hidden">
                         {/* Tabs */}
                         <div className="flex border-b border-white/5 bg-[#0A1014]">
                             {['Account Portfolio', 'Open Orders', 'Trades History'].map((tab, i) => (
