@@ -1,13 +1,15 @@
 // src/Dashboard.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-    PieChart, Bell, Plus, ChevronUp, Loader2, X, Zap, CheckCircle2, ChevronDown
+    PieChart, Bell, Plus, ChevronUp, Loader2, X, Zap, CheckCircle2, ChevronDown, FileText, CheckSquare, Square
 } from 'lucide-react';
 import API_BASE_URL from './config';
-import Dash_nav from './Dash_nav'; // <--- 1. Import Sidebar
-import CreateBotModal from './CreateBotModal'; // <--- 2. Import Modal
+import Dash_nav from './Dash_nav';
+import CreateBotModal from './CreateBotModal';
+import ConfigureBotModal from './ConfigureBotModal';
+import { useTrading } from './context/TradingContext';
 
 // --- CONSTANTS ---
 const EXCHANGES = [
@@ -17,12 +19,20 @@ const EXCHANGES = [
 ];
 
 // --- COMPONENT: CONNECT EXCHANGE MODAL ---
-const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
+const ConnectExchangeModal = ({ isOpen, onClose, onSuccess, defaultIsTestnet = false }) => {
     const [activeTab, setActiveTab] = useState('manual');
     const [selectedExchange, setSelectedExchange] = useState(EXCHANGES[0]);
     const [apiKey, setApiKey] = useState('');
     const [apiSecret, setApiSecret] = useState('');
     const [passphrase, setPassphrase] = useState('');
+
+    // Auto-check testnet if passed via props
+    const [isTestnet, setIsTestnet] = useState(defaultIsTestnet);
+
+    useEffect(() => {
+        setIsTestnet(defaultIsTestnet);
+    }, [defaultIsTestnet, isOpen]);
+
     const [loading, setLoading] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -34,12 +44,15 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
 
         setLoading(true);
         try {
+            // Append _paper if testnet is selected
+            const finalExchangeName = isTestnet ? `${selectedExchange.id}_paper` : selectedExchange.id;
+
             const token = localStorage.getItem('token');
             const res = await fetch(`${API_BASE_URL}/user/exchange`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
-                    exchange_name: selectedExchange.id,
+                    exchange_name: finalExchangeName,
                     api_key: apiKey,
                     api_secret: apiSecret,
                     passphrase: passphrase
@@ -63,13 +76,14 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
             <div className="bg-[#0A1014]/80 backdrop-blur-2xl border border-white/20 w-full max-w-lg rounded-3xl p-8 relative shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
                     <X size={20} />
                 </button>
+                <h2 className="text-2xl font-bold text-white mb-6">
+                    Connect {isTestnet ? 'Paper' : 'Exchange'} API
+                </h2>
 
-                <h2 className="text-2xl font-bold text-white mb-6">Connect Exchange</h2>
-
+                {/* Exchange Selector */}
                 <div className="mb-6 relative">
                     <label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Select Exchange</label>
                     <div
@@ -82,15 +96,10 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                         </div>
                         <ChevronDown size={16} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
-
                     {isDropdownOpen && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-[#1A2023] border border-white/10 rounded-xl overflow-hidden z-20 shadow-xl backdrop-blur-xl">
                             {EXCHANGES.map(ex => (
-                                <div
-                                    key={ex.id}
-                                    onClick={() => { setSelectedExchange(ex); setIsDropdownOpen(false); }}
-                                    className="flex items-center gap-3 p-3 hover:bg-white/10 cursor-pointer transition-colors"
-                                >
+                                <div key={ex.id} onClick={() => { setSelectedExchange(ex); setIsDropdownOpen(false); }} className="flex items-center gap-3 p-3 hover:bg-white/10 cursor-pointer transition-colors">
                                     <img src={ex.logo} alt={ex.name} className="h-6 w-6 object-contain" />
                                     <span className="text-sm font-medium text-gray-200">{ex.name}</span>
                                     {selectedExchange.id === ex.id && <CheckCircle2 size={14} className="text-[#00FF9D] ml-auto" />}
@@ -100,68 +109,39 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
                     )}
                 </div>
 
+                {/* Tabs */}
                 <div className="flex bg-black/20 p-1 rounded-xl mb-6 border border-white/5">
-                    <button
-                        onClick={() => setActiveTab('fast')}
-                        className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'fast' ? 'bg-[#00FF9D] text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]' : 'text-gray-400 hover:text-white'}`}
-                    >
-                        Fast Connect
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('manual')}
-                        className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'manual' ? 'bg-[#00FF9D] text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]' : 'text-gray-400 hover:text-white'}`}
-                    >
-                        Manual Entry
-                    </button>
+                    <button onClick={() => setActiveTab('fast')} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'fast' ? 'bg-[#00FF9D] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}>Fast Connect</button>
+                    <button onClick={() => setActiveTab('manual')} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'manual' ? 'bg-[#00FF9D] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}>Manual Entry</button>
                 </div>
 
                 {activeTab === 'fast' ? (
                     <div className="text-center py-8 bg-white/5 rounded-2xl border border-white/5 border-dashed">
-                        <div className="w-12 h-12 mx-auto bg-gray-800/50 rounded-full flex items-center justify-center text-gray-500 mb-4 backdrop-blur-sm">
-                            <Zap size={24} fill="currentColor" />
-                        </div>
+                        <div className="w-12 h-12 mx-auto bg-gray-800/50 rounded-full flex items-center justify-center text-gray-500 mb-4 backdrop-blur-sm"><Zap size={24} fill="currentColor" /></div>
                         <h3 className="text-lg font-bold text-white mb-1">Unavailable right now</h3>
-                        <p className="text-sm text-gray-500 mb-6">
-                            Fast Connect is currently disabled for {selectedExchange.name}.<br />Please use <b>Manual Entry</b>.
-                        </p>
-                        <button disabled className="bg-gray-800/50 text-gray-500 px-6 py-2 rounded-lg text-sm font-bold cursor-not-allowed border border-white/5">
-                            Unavailable
-                        </button>
+                        <p className="text-sm text-gray-500 mb-6">Fast Connect is currently disabled for {selectedExchange.name}.<br />Please use <b>Manual Entry</b>.</p>
+                        <button disabled className="bg-gray-800/50 text-gray-500 px-6 py-2 rounded-lg text-sm font-bold cursor-not-allowed border border-white/5">Unavailable</button>
                     </div>
                 ) : (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                        <div>
-                            <label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">API Key</label>
-                            <input
-                                type="text"
-                                value={apiKey}
-                                onChange={(e) => setApiKey(e.target.value)}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-[#00FF9D] focus:bg-black/60 outline-none transition-all font-mono text-sm placeholder:text-gray-600"
-                                placeholder={`Enter your ${selectedExchange.name} API Key`}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">API Secret</label>
-                            <input
-                                type="password"
-                                value={apiSecret}
-                                onChange={(e) => setApiSecret(e.target.value)}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-[#00FF9D] focus:bg-black/60 outline-none transition-all font-mono text-sm placeholder:text-gray-600"
-                                placeholder={`Enter your ${selectedExchange.name} API Secret`}
-                            />
-                        </div>
-                        {selectedExchange.id === 'okx' && (
-                            <div>
-                                <label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Passphrase</label>
-                                <input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-[#00FF9D] outline-none" placeholder="Enter OKX Passphrase" />
-                            </div>
-                        )}
-                        <button
-                            onClick={handleSubmit}
-                            disabled={loading}
-                            className="w-full mt-4 bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.5)] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+                        <div><label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">API Key</label><input type="text" value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-[#00FF9D] focus:bg-black/60 outline-none transition-all font-mono text-sm placeholder:text-gray-600" placeholder={`Enter your ${selectedExchange.name} ${isTestnet ? 'Testnet' : ''} API Key`} /></div>
+                        <div><label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">API Secret</label><input type="password" value={apiSecret} onChange={(e) => setApiSecret(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-[#00FF9D] focus:bg-black/60 outline-none transition-all font-mono text-sm placeholder:text-gray-600" placeholder={`Enter your ${selectedExchange.name} ${isTestnet ? 'Testnet' : ''} API Secret`} /></div>
+                        {selectedExchange.id === 'okx' && (<div><label className="block text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Passphrase</label><input type="password" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white focus:border-[#00FF9D] outline-none" placeholder="Enter OKX Passphrase" /></div>)}
+
+                        {/* --- TESTNET CHECKBOX --- */}
+                        <div
+                            className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${isTestnet ? 'bg-[#E2F708]/10 border-[#E2F708]/30' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                            onClick={() => setIsTestnet(!isTestnet)}
                         >
-                            {loading ? <Loader2 className="animate-spin" size={20} /> : "Connect Exchange"}
+                            {isTestnet ? <CheckSquare size={20} className="text-[#E2F708]" /> : <Square size={20} className="text-gray-500" />}
+                            <div>
+                                <p className={`text-sm font-bold ${isTestnet ? 'text-[#E2F708]' : 'text-gray-400'}`}>Connect to Testnet / Paper Trading</p>
+                                <p className="text-[10px] text-gray-500">Enable this if you are using Demo/Sandbox API Keys</p>
+                            </div>
+                        </div>
+
+                        <button onClick={handleSubmit} disabled={loading} className={`w-full mt-4 font-bold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] ${isTestnet ? 'bg-[#E2F708] hover:bg-[#d4e600] text-black shadow-[#E2F708]/20' : 'bg-[#00FF9D] hover:bg-[#00cc7d] text-black shadow-[#00FF9D]/20'}`}>
+                            {loading ? <Loader2 className="animate-spin" size={20} /> : `Connect ${isTestnet ? 'Testnet' : 'Exchange'}`}
                         </button>
                     </div>
                 )}
@@ -170,137 +150,71 @@ const ConnectExchangeModal = ({ isOpen, onClose, onSuccess }) => {
     );
 };
 
-// --- HELPER: CONNECT API OVERLAY ---
-const ConnectApiOverlay = ({ onConnect, title = "Connect" }) => (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#050B0D]/40 backdrop-blur-[4px] transition-all rounded-3xl border border-white/5">
-        <div className="text-center animate-in fade-in zoom-in duration-300">
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onConnect();
-                }}
-                className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-3 px-8 rounded-full text-sm shadow-[0_0_20px_rgba(0,255,157,0.5)] hover:shadow-[0_0_30px_rgba(0,255,157,0.7)] transition-all flex items-center gap-2 mx-auto scale-105 hover:scale-110 active:scale-100"
-            >
-                <Plus size={16} strokeWidth={3} />
-                {title}
-            </button>
+// ... (Keep ConnectApiOverlay, Sparkline, PerformanceChart, StatCard, BotCard as previously defined) ...
+const ConnectApiOverlay = ({ onConnect, title = "Connect", isConnected }) => {
+    if (isConnected) return null;
+    return (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#050B0D]/40 backdrop-blur-[4px] transition-all rounded-3xl border border-white/5">
+            <div className="text-center animate-in fade-in zoom-in duration-300">
+                <button onClick={(e) => { e.stopPropagation(); onConnect(); }} className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-3 px-8 rounded-full text-sm shadow-[0_0_20px_rgba(0,255,157,0.5)] hover:shadow-[0_0_30px_rgba(0,255,157,0.7)] transition-all flex items-center gap-2 mx-auto scale-105 hover:scale-110 active:scale-100">
+                    <Plus size={16} strokeWidth={3} /> {title}
+                </button>
+            </div>
         </div>
-    </div>
-);
-
-// --- HELPER: CHECK INVALID BOTS ---
-const isInvalidBot = (type) => {
-    if (!type) return true;
-    const t = type.toString().toUpperCase().trim();
-    return t === 'SKIPPED' || t === 'EXAMPLE BOT';
+    );
 };
 
-// --- VISUAL ASSETS ---
-const Sparkline = ({ color = "#00FF9D", isConnected }) => (
+const isInvalidBot = (type) => { if (!type) return true; const t = type.toString().toUpperCase().trim(); return t === 'SKIPPED' || t === 'EXAMPLE BOT'; };
+
+const Sparkline = ({ color, isConnected }) => (
     <div className="relative h-12 w-full overflow-hidden opacity-80 mt-2">
-        {isConnected && (
-            <>
-                <div className="absolute right-0 top-[40%] w-2 h-2 rounded-full bg-[#00FF9D] shadow-[0_0_10px_#00FF9D] z-10 animate-pulse"></div>
-                <svg viewBox="0 0 100 40" className="w-full h-full" preserveAspectRatio="none">
-                    <defs>
-                        <linearGradient id="sparkGradient" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0%" stopColor={color} stopOpacity="0.2" />
-                            <stop offset="100%" stopColor={color} stopOpacity="0" />
-                        </linearGradient>
-                    </defs>
-                    <path d="M0,30 L10,20 L20,35 L30,15 L40,25 L50,10 L60,30 L70,20 L80,5 L90,25 L100,20" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_5px_rgba(0,255,157,0.5)]" />
-                    <path d="M0,30 L10,20 L20,35 L30,15 L40,25 L50,10 L60,30 L70,20 L80,5 L90,25 L100,20 V40 H0 Z" fill="url(#sparkGradient)" stroke="none" />
-                </svg>
-            </>
-        )}
+        {isConnected && (<><div className="absolute right-0 top-[40%] w-2 h-2 rounded-full shadow-[0_0_10px] z-10 animate-pulse" style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }}></div><svg viewBox="0 0 100 40" className="w-full h-full" preserveAspectRatio="none"><defs><linearGradient id={`sparkGradient-${color}`} x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.2" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs><path d="M0,30 L10,20 L20,35 L30,15 L40,25 L50,10 L60,30 L70,20 L80,5 L90,25 L100,20" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_5px_rgba(0,255,157,0.5)]" /><path d="M0,30 L10,20 L20,35 L30,15 L40,25 L50,10 L60,30 L70,20 L80,5 L90,25 L100,20 V40 H0 Z" fill={`url(#sparkGradient-${color})`} stroke="none" /></svg></>)}
     </div>
 );
 
-const PerformanceChart = ({ isConnected }) => (
+const PerformanceChart = ({ isConnected, themeColor }) => (
     <div className="w-full h-72 relative flex flex-col">
         <div className="flex-1 relative flex">
-            <div className="flex flex-col justify-between text-[10px] text-gray-500 font-medium h-full pr-4 pb-2 w-12 text-right">
-                <span>50k</span><span>40k</span><span>30k</span><span>20k</span><span>10k</span>
-            </div>
+            <div className="flex flex-col justify-between text-[10px] text-gray-500 font-medium h-full pr-4 pb-2 w-12 text-right"><span>50k</span><span>40k</span><span>30k</span><span>20k</span><span>10k</span></div>
             <div className="flex-1 relative border-l border-white/5">
                 {[0, 1, 2, 3, 4].map((i) => <div key={i} className="absolute w-full border-t border-white/5" style={{ top: `${i * 25}%` }}></div>)}
-                {isConnected && (
-                    <svg viewBox="0 0 800 300" className="w-full h-full overflow-visible absolute inset-0" preserveAspectRatio="none">
-                        <defs><linearGradient id="mainChartGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#00FF9D" stopOpacity="0.1" /><stop offset="100%" stopColor="#00FF9D" stopOpacity="0" /></linearGradient></defs>
-                        <path d="M0,150 L50,100 L80,120 L120,80 L160,110 L200,90 L250,160 L300,140 L350,80 L400,120 L450,100 L500,150 L550,130 L600,180 L650,160 L700,200 L750,150 L800,120" fill="none" stroke="#00FF9D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_8px_rgba(0,255,157,0.5)]" />
-                        <path d="M0,150 L50,100 L80,120 L120,80 L160,110 L200,90 L250,160 L300,140 L350,80 L400,120 L450,100 L500,150 L550,130 L600,180 L650,160 L700,200 L750,150 L800,120 V300 H0 Z" fill="url(#mainChartGradient)" stroke="none" />
-                    </svg>
-                )}
+                {isConnected && (<svg viewBox="0 0 800 300" className="w-full h-full overflow-visible absolute inset-0" preserveAspectRatio="none"><defs><linearGradient id="mainChartGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor={themeColor} stopOpacity="0.1" /><stop offset="100%" stopColor={themeColor} stopOpacity="0" /></linearGradient></defs><path d="M0,150 L50,100 L80,120 L120,80 L160,110 L200,90 L250,160 L300,140 L350,80 L400,120 L450,100 L500,150 L550,130 L600,180 L650,160 L700,200 L750,150 L800,120" fill="none" stroke={themeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_8px_rgba(0,255,157,0.5)]" /><path d="M0,150 L50,100 L80,120 L120,80 L160,110 L200,90 L250,160 L300,140 L350,80 L400,120 L450,100 L500,150 L550,130 L600,180 L650,160 L700,200 L750,150 L800,120 V300 H0 Z" fill="url(#mainChartGradient)" stroke="none" /></svg>)}
             </div>
         </div>
-        <div className="flex justify-between text-[10px] text-gray-500 mt-2 pl-12 pt-2 border-t border-white/5">
-            <span>Nov 10</span><span>Nov 11</span><span>Nov 12</span><span>Nov 13</span><span>Nov 14</span><span>Nov 15</span><span>Nov 16</span>
-        </div>
+        <div className="flex justify-between text-[10px] text-gray-500 mt-2 pl-12 pt-2 border-t border-white/5"><span>Nov 10</span><span>Nov 11</span><span>Nov 12</span><span>Nov 13</span><span>Nov 14</span><span>Nov 15</span><span>Nov 16</span></div>
     </div>
 );
 
-// --- CARD COMPONENTS ---
-const StatCard = ({ title, value, percentage, icon, isConnected, onConnect }) => (
-    <div className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-6 border border-white/5 relative overflow-hidden group hover:border-white/10 transition-all duration-300 h-40 flex flex-col justify-between hover:shadow-[0_0_30px_rgba(0,255,157,0.05)]">
-        {!isConnected && <ConnectApiOverlay onConnect={onConnect} title="Connect API" />}
+const StatCard = ({ title, value, percentage, icon, isConnected, onConnect, themeColor }) => (
+    <div className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-6 border border-white/5 relative overflow-hidden group transition-all duration-300 h-40 flex flex-col justify-between hover:shadow-[0_0_30px_rgba(0,255,157,0.05)] hover:border-[${themeColor}]/30`}>
+        {!isConnected && <ConnectApiOverlay onConnect={onConnect} title="Connect API" isConnected={isConnected} />}
         <div className={`${!isConnected ? 'filter blur-[3px] opacity-30 pointer-events-none select-none' : ''} transition-all h-full flex flex-col justify-between`}>
             <div>
-                <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/5 group-hover:border-[#00FF9D]/30 transition-colors">{icon}</div>
-                        <h3 className="text-gray-400 text-sm font-medium">{title}</h3>
-                    </div>
-                    {isConnected && <ChevronUp size={16} className="text-[#00FF9D]" />}
-                </div>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-white tracking-tight">{value}</span>
-                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${isConnected ? 'text-[#00FF9D] bg-[#00FF9D]/10' : 'text-gray-600 bg-white/5'}`}>{percentage}</span>
-                </div>
+                <div className="flex justify-between items-start mb-2"><div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/5 transition-colors group-hover:border-[${themeColor}]/30`}>{icon}</div><h3 className="text-gray-400 text-sm font-medium">{title}</h3></div>{isConnected && <ChevronUp size={16} color={themeColor} />}</div>
+                <div className="flex items-baseline gap-2"><span className="text-3xl font-bold text-white tracking-tight">{value}</span><span className={`text-xs font-bold px-1.5 py-0.5 rounded ${isConnected ? `text-[${themeColor}] bg-[${themeColor}]/10` : 'text-gray-600 bg-white/5'}`} style={isConnected ? { color: themeColor, backgroundColor: `${themeColor}1a` } : {}}>{percentage}</span></div>
             </div>
-            <Sparkline isConnected={isConnected} />
+            <Sparkline color={themeColor} isConnected={isConnected} />
         </div>
     </div>
 );
 
-const BotCard = ({ bot, isConnected, onConnect }) => {
+const BotCard = ({ bot, isConnected, onConnect, themeColor }) => {
     const isPlaceholder = isInvalidBot(bot.bot_type);
-    const displayProfit = isConnected && !isPlaceholder ? `$0.00` : (isPlaceholder ? '$124.50' : "----");
-    const displayPercent = isConnected && !isPlaceholder ? "0.00%" : (isPlaceholder ? '+2.4%' : "--");
+    let config = {}; if (typeof bot.config === 'string') { try { config = JSON.parse(bot.config); } catch (e) { } } else { config = bot.config || {}; }
+    const mode = config.mode || 'live';
+    const isPaper = mode === 'paper';
+    const displayProfit = isConnected && !isPlaceholder ? (bot.total_profit ? `$${bot.total_profit}` : '$0.00') : (isPlaceholder ? '$124.50' : "----");
+    const displayPercent = isConnected && !isPlaceholder ? "+0.00%" : (isPlaceholder ? '+2.4%' : "--");
 
     return (
-        <div className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-5 border border-white/5 min-w-[260px] relative overflow-hidden group transition-all duration-300 ${isConnected ? 'hover:border-[#00FF9D]/30 hover:shadow-[0_0_20px_rgba(0,255,157,0.1)]' : ''}`}>
-            {!isConnected && !isPlaceholder && <ConnectApiOverlay onConnect={onConnect} title="Connect" />}
+        <div className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-5 border border-white/5 min-w-[260px] relative overflow-hidden group transition-all duration-300 ${isConnected ? `hover:border-[${themeColor}]/30 hover:shadow-[0_0_20px_rgba(0,255,157,0.1)]` : ''}`}>
+            {!isConnected && !isPlaceholder && <ConnectApiOverlay onConnect={onConnect} title="Connect" isConnected={isConnected} />}
             <div className={`${!isConnected && !isPlaceholder ? 'filter blur-[2px] opacity-60 pointer-events-none' : ''} transition-all`}>
                 <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-[#00FF9D]/30 transition-colors">
-                            <div className="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold">
-                                {bot.quote_currency ? bot.quote_currency.charAt(0) : '$'}
-                            </div>
-                        </div>
-                        <div>
-                            <h4 className="text-white font-bold text-sm">{bot.quote_currency || 'Unknown'} Pair</h4>
-                            <span className={`text-[10px] uppercase tracking-wider ${isPlaceholder ? 'text-gray-400' : 'text-[#00FF9D]'}`}>{bot.bot_type}</span>
-                        </div>
-                    </div>
-                    {isConnected && <ChevronUp size={14} className="text-[#00FF9D]" />}
+                    <div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center transition-colors group-hover:border-[${themeColor}]/30`}><div className="w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[10px] font-bold">{bot.quote_currency ? bot.quote_currency.charAt(0) : '$'}</div></div><div><h4 className="text-white font-bold text-sm">{bot.quote_currency || 'Unknown'} Pair</h4><div className="flex items-center gap-2"><span className={`text-[10px] uppercase tracking-wider ${isPlaceholder ? 'text-gray-400' : ''}`} style={!isPlaceholder ? { color: themeColor } : {}}>{bot.bot_type}</span>{isPaper && <span className="text-[9px] bg-[#E2F708]/20 text-[#E2F708] px-1.5 py-0.5 rounded">PAPER</span>}</div></div></div>
+                    {isConnected && <ChevronUp size={14} color={themeColor} />}
                 </div>
-                <div className="flex justify-between items-end">
-                    <div>
-                        <p className="text-2xl font-bold text-white mb-1">{displayProfit}</p>
-                        <p className={`text-xs font-bold ${isConnected ? 'text-[#00FF9D]' : 'text-gray-500'}`}>{displayPercent}</p>
-                    </div>
-                    <div className="w-24 h-10 opacity-70">
-                        {isConnected ? (
-                            <svg viewBox="0 0 50 20" className="w-full h-full">
-                                <path d="M0,20 L10,5 L20,15 L30,5 L40,10 L50,0" fill="none" stroke={isPlaceholder ? "#666" : "#00FF9D"} strokeWidth="2" strokeLinecap="round" />
-                                <circle cx="50" cy="0" r="2" fill={isPlaceholder ? "#666" : "#00FF9D"} className={isPlaceholder ? "" : "shadow-[0_0_5px_#00FF9D]"} />
-                            </svg>
-                        ) : (
-                            <div className="h-[2px] w-full bg-white/5 mt-4 border-t border-dashed border-gray-700"></div>
-                        )}
-                    </div>
-                </div>
+                <div className="flex justify-between items-end"><div><p className="text-2xl font-bold text-white mb-1">{displayProfit}</p><p className={`text-xs font-bold ${isConnected ? '' : 'text-gray-500'}`} style={isConnected ? { color: themeColor } : {}}>{displayPercent}</p></div><div className="w-24 h-10 opacity-70">{isConnected ? (<svg viewBox="0 0 50 20" className="w-full h-full"><path d="M0,20 L10,5 L20,15 L30,5 L40,10 L50,0" fill="none" stroke={isPlaceholder ? "#666" : themeColor} strokeWidth="2" strokeLinecap="round" /><circle cx="50" cy="0" r="2" fill={isPlaceholder ? "#666" : themeColor} className={isPlaceholder ? "" : "shadow-[0_0_5px_currentColor]"} /></svg>) : (<div className="h-[2px] w-full bg-white/5 mt-4 border-t border-dashed border-gray-700"></div>)}</div></div>
             </div>
         </div>
     );
@@ -312,15 +226,20 @@ const BotCard = ({ bot, isConnected, onConnect }) => {
 const Dashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { isPaperTrading } = useTrading();
+
     const [loading, setLoading] = useState(true);
     const [hasExchange, setHasExchange] = useState(false);
     const [user, setUser] = useState({ name: "Trader", plan: "Pro Plan Active" });
+
+    // Modals
     const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
-
-    // <--- 3. ADD MODAL STATE
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+    const [selectedBotType, setSelectedBotType] = useState('SPOT GRID');
+    const [connectModalTestnetDefault, setConnectModalTestnetDefault] = useState(false);
 
-    // State for dashboard data
+    // Data State
     const [statsData, setStatsData] = useState({
         daily: { value: "$0.00", percentage: "0.00%" },
         monthly: { value: "$0.00", percentage: "0.00%" },
@@ -328,7 +247,14 @@ const Dashboard = () => {
     });
     const [activeBots, setActiveBots] = useState([]);
 
+    // Themes
+    const themeColor = isPaperTrading ? '#E2F708' : '#00FF9D';
+    const themeTextClass = isPaperTrading ? 'text-[#E2F708]' : 'text-[#00FF9D]';
+    const themeBgClass = isPaperTrading ? 'bg-[#E2F708]' : 'bg-[#00FF9D]';
+    const themeBorderHover = isPaperTrading ? 'hover:border-[#E2F708]' : 'hover:border-[#00FF9D]';
+
     const fetchData = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
         if (!token) return navigate('/signin');
 
@@ -337,10 +263,27 @@ const Dashboard = () => {
             if (res.ok) {
                 const data = await res.json();
                 setUser({ name: data.user.full_name || "Trader", plan: "Pro Plan Active" });
-                let isConnected = data.hasExchange === true;
+
+                // --- CRITICAL CHANGE: CONNECTION LOGIC ---
+                // Only mark connected if we have the specific keys for the active mode
+                const isPaper = isPaperTrading;
+                const isConnected = isPaper ? data.hasPaperExchange : data.hasLiveExchange;
+
                 setHasExchange(isConnected);
 
-                const dashRes = await fetch(`${API_BASE_URL}/user/dashboard`, { headers: { 'Authorization': `Bearer ${token}` } });
+                // --- AUTO PROMPT ---
+                // If we are in paper mode, but have no paper keys, force the prompt.
+                if (isPaper && !data.hasPaperExchange) {
+                    setConnectModalTestnetDefault(true);
+                    setIsConnectModalOpen(true);
+                }
+
+                // Fetch Data
+                const queryMode = isPaper ? 'paper' : 'live';
+                const dashRes = await fetch(`${API_BASE_URL}/user/dashboard?mode=${queryMode}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
                 if (dashRes.ok) {
                     const dashData = await dashRes.json();
                     setStatsData({
@@ -360,59 +303,86 @@ const Dashboard = () => {
 
     useEffect(() => {
         fetchData();
-    }, [navigate]);
+    }, [navigate, isPaperTrading]);
+
+    const handleBotSelect = (botType) => {
+        setSelectedBotType(botType);
+        setIsCreateModalOpen(false);
+        setIsConfigModalOpen(true);
+    };
 
     const validBots = activeBots.filter(bot => !isInvalidBot(bot.bot_type));
 
     return (
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black relative">
-
-            {/* Background Glows */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-                <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00FF9D]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
+                <div className={`absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[150px] opacity-70 mix-blend-screen transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/20' : 'bg-[#00FF9D]/20'}`}></div>
                 <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
-                <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/20 rounded-full blur-[180px] opacity-70"></div>
+                <div className={`absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] rounded-full blur-[180px] opacity-70 transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/10' : 'bg-[#00FF9D]/20'}`}></div>
             </div>
 
-            {/* Modals */}
-            <ConnectExchangeModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} onSuccess={fetchData} />
-            <CreateBotModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} /> {/* <--- 4. Render Modal */}
+            <ConnectExchangeModal
+                isOpen={isConnectModalOpen}
+                onClose={() => setIsConnectModalOpen(false)}
+                onSuccess={fetchData}
+                defaultIsTestnet={connectModalTestnetDefault}
+            />
+            <CreateBotModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSelect={handleBotSelect}
+            />
+            <ConfigureBotModal
+                isOpen={isConfigModalOpen}
+                onClose={() => setIsConfigModalOpen(false)}
+                botType={selectedBotType}
+                onSuccess={fetchData}
+            />
 
-            {/* --- REPLACED SIDEBAR WITH DASH_NAV --- */}
             <Dash_nav user={user} />
 
-            {/* --- MAIN CONTENT --- */}
             <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
                 <header className="flex justify-between items-center mb-10">
-                    <h1 className="text-3xl font-bold text-[#00FF9D] drop-shadow-[0_0_10px_rgba(0,255,157,0.3)]">Dashboard</h1>
                     <div className="flex items-center gap-4">
-                        <button className="w-10 h-10 rounded-xl bg-[#0A1014]/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:border-[#00FF9D] transition-colors relative">
+                        <h1 className={`text-3xl font-bold drop-shadow-[0_0_10px_rgba(255,255,255,0.1)] transition-colors duration-300 ${themeTextClass}`}>
+                            {isPaperTrading ? "Paper Dashboard" : "Dashboard"}
+                        </h1>
+                        {isPaperTrading && (
+                            <div className="px-3 py-1 rounded-full bg-[#E2F708]/10 border border-[#E2F708]/30 text-[#E2F708] text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                                <FileText size={14} /> DEMO ENVIRONMENT
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <button className={`w-10 h-10 rounded-xl bg-[#0A1014]/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white transition-colors relative ${themeBorderHover}`}>
                             <Bell size={20} />
-                            <div className="absolute top-2 right-2 w-2 h-2 bg-[#00FF9D] rounded-full shadow-[0_0_5px_#00FF9D]"></div>
+                            <div className={`absolute top-2 right-2 w-2 h-2 rounded-full shadow-[0_0_5px_currentColor] ${themeBgClass}`}></div>
                         </button>
                         <button
-                            onClick={() => setIsCreateModalOpen(true)} // <--- 5. Hook up New Bot Button
-                            className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:shadow-[0_0_30px_rgba(0,255,157,0.5)]"
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className={`text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] ${themeBgClass} hover:brightness-110`}
                         >
                             <Plus size={18} strokeWidth={3} />
                             New Bot
                         </button>
                     </div>
                 </header>
+
                 {loading ? (
                     <div className="flex items-center justify-center h-full min-h-[60vh]">
-                        <Loader2 className="animate-spin text-[#00FF9D]" size={48} />
+                        <Loader2 className={`animate-spin ${themeTextClass}`} size={48} />
                     </div>
                 ) : (
                     <>
                         <section className="grid md:grid-cols-3 gap-6 mb-8">
-                            <StatCard title="Today's Profit" value={statsData.daily.value} percentage={statsData.daily.percentage} icon={<span className="font-bold text-lg">$</span>} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
-                            <StatCard title="30 Days Profit" value={statsData.monthly.value} percentage={statsData.monthly.percentage} icon={<span className="font-bold text-lg">30</span>} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
-                            <StatCard title="Assets Value" value={statsData.assets.value} percentage={statsData.assets.percentage} icon={<PieChart size={20} />} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />
+                            <StatCard title="Today's Profit" value={statsData.daily.value} percentage={statsData.daily.percentage} icon={<span className="font-bold text-lg">$</span>} isConnected={hasExchange} onConnect={() => { setConnectModalTestnetDefault(isPaperTrading); setIsConnectModalOpen(true); }} themeColor={themeColor} />
+                            <StatCard title="30 Days Profit" value={statsData.monthly.value} percentage={statsData.monthly.percentage} icon={<span className="font-bold text-lg">30</span>} isConnected={hasExchange} onConnect={() => { setConnectModalTestnetDefault(isPaperTrading); setIsConnectModalOpen(true); }} themeColor={themeColor} />
+                            <StatCard title="Assets Value" value={statsData.assets.value} percentage={statsData.assets.percentage} icon={<PieChart size={20} />} isConnected={hasExchange} onConnect={() => { setConnectModalTestnetDefault(isPaperTrading); setIsConnectModalOpen(true); }} themeColor={themeColor} />
                         </section>
 
-                        <section className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 mb-8 relative overflow-hidden min-h-[400px] hover:border-white/10 transition-colors">
-                            {!hasExchange && <ConnectApiOverlay onConnect={() => setIsConnectModalOpen(true)} title="Connect Exchange" />}
+                        <section className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 mb-8 relative overflow-hidden min-h-[400px] transition-colors ${themeBorderHover}`}>
+                            {!hasExchange && <ConnectApiOverlay onConnect={() => { setConnectModalTestnetDefault(isPaperTrading); setIsConnectModalOpen(true); }} title="Connect Exchange" isConnected={hasExchange} />}
                             <div className={`${!hasExchange ? 'filter blur-md opacity-30 pointer-events-none select-none' : ''} transition-all duration-500 h-full`}>
                                 <div className="flex justify-between items-center mb-8">
                                     <div>
@@ -421,21 +391,27 @@ const Dashboard = () => {
                                     </div>
                                     <div className="flex bg-black/20 p-1 rounded-lg border border-white/5 backdrop-blur-sm">
                                         {['1h', '3h', '1d', '1w', '1m'].map((tf, i) => (
-                                            <button key={tf} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${i === 2 ? 'bg-[#00FF9D] text-black shadow-[0_0_10px_rgba(0,255,157,0.3)]' : 'text-gray-500 hover:text-white'}`}>{tf}</button>
+                                            <button key={tf} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${i === 2 ? `${themeBgClass} text-black shadow-lg` : 'text-gray-500 hover:text-white'}`}>{tf}</button>
                                         ))}
                                     </div>
                                 </div>
-                                <PerformanceChart isConnected={hasExchange} />
+                                <PerformanceChart isConnected={hasExchange} themeColor={themeColor} />
                             </div>
                         </section>
 
-                        <section className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 relative hover:border-white/10 transition-colors">
-                            <h2 className="text-lg font-bold text-white mb-6">Active Bots</h2>
+                        <section className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 relative transition-colors ${themeBorderHover}`}>
+                            <h2 className="text-lg font-bold text-white mb-6">Active Bots ({validBots.length})</h2>
                             <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-                                {validBots.map((bot, i) => <BotCard key={bot.id || i} bot={bot} isConnected={hasExchange} onConnect={() => setIsConnectModalOpen(true)} />)}
-                                <div onClick={() => setIsCreateModalOpen(true)} className="min-w-[200px] rounded-2xl border border-dashed border-white/20 flex flex-col items-center justify-center p-6 cursor-pointer hover:border-[#00FF9D] hover:bg-[#00FF9D]/5 transition-all group bg-white/5 backdrop-blur-sm">
-                                    <div className="w-12 h-12 bg-[#050B0D] rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-white/5 group-hover:border-[#00FF9D]">
-                                        <Plus size={24} className="text-[#00FF9D]" />
+                                {validBots.length > 0 ? (
+                                    validBots.map((bot, i) => (
+                                        <BotCard key={bot.id || i} bot={bot} isConnected={hasExchange} onConnect={() => { setConnectModalTestnetDefault(isPaperTrading); setIsConnectModalOpen(true); }} themeColor={themeColor} />
+                                    ))
+                                ) : (
+                                    <div className="text-gray-500 text-sm italic p-4">No active bots found in {isPaperTrading ? 'paper' : 'live'} mode.</div>
+                                )}
+                                <div onClick={() => setIsCreateModalOpen(true)} className={`min-w-[200px] rounded-2xl border border-dashed border-white/20 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-white/5 transition-all group backdrop-blur-sm ${themeBorderHover}`}>
+                                    <div className={`w-12 h-12 bg-[#050B0D] rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-white/5 ${themeBorderHover}`}>
+                                        <Plus size={24} className={themeTextClass} />
                                     </div>
                                     <span className="text-sm font-bold text-gray-400 group-hover:text-white">Deploy New Bot</span>
                                 </div>
