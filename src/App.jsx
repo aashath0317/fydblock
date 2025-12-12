@@ -21,11 +21,12 @@ import ConfigureBot from './ConfigureBot';
 import Backtest from './Backtest';
 import LiveMarket from './LiveMarket';
 import API_BASE_URL from './config';
+import { TradingProvider } from './context/TradingContext'; // <--- 1. Import Context Provider
 
 const PrivateRoute = ({ element }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isProfileComplete, setIsProfileComplete] = useState(false); // ✅ CHANGED: Track profile status
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
 
   useEffect(() => {
     const checkUserStatus = async () => {
@@ -45,7 +46,6 @@ const PrivateRoute = ({ element }) => {
         if (response.ok) {
           const data = await response.json();
           setIsAuthenticated(true);
-          // ✅ CHANGED: Check if profile is complete (not if bot is created)
           setIsProfileComplete(data.profileComplete);
         } else {
           localStorage.removeItem('token');
@@ -74,7 +74,6 @@ const PrivateRoute = ({ element }) => {
     return <Navigate to="/signin" replace />;
   }
 
-  // ✅ CHANGED: Only redirect to builder if profile is incomplete
   if (!isProfileComplete) {
     return <Navigate to="/bot-builder" replace />;
   }
@@ -98,7 +97,8 @@ const App = () => {
     '/portfolio',
     '/bots',
     '/backtest',
-    '/live-market'
+    '/live-market',
+    '/configure-bot'
   ];
 
   const showNavAndFooter = !hideNavAndFooterPaths.includes(location.pathname);
@@ -109,7 +109,8 @@ const App = () => {
     '/portfolio',
     '/bots',
     '/backtest',
-    '/live-market'
+    '/live-market',
+    '/configure-bot'
   ].includes(location.pathname);
 
   const mainClass = isFullPage ? "relative z-10 p-0" : "relative z-10";
@@ -126,33 +127,36 @@ const App = () => {
 
       {showNavAndFooter && <Navbar />}
 
-      <main className={mainClass}>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/company" element={<Company />} />
-          <Route path="/pricing" element={<PricingAndPlans />} />
-          <Route path="/affiliate" element={<Affiliate />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/resetpass" element={<ResetPass />} />
+      {/* 2. Wrap Main Routes with TradingProvider */}
+      <TradingProvider>
+        <main className={mainClass}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/company" element={<Company />} />
+            <Route path="/pricing" element={<PricingAndPlans />} />
+            <Route path="/affiliate" element={<Affiliate />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/resetpass" element={<ResetPass />} />
 
-          {/* Bot Builder */}
-          <Route path="/bot-builder" element={
-            localStorage.getItem('token') ? <BotBuilder /> : <Navigate to="/signin" replace />
-          } />
+            {/* Bot Builder */}
+            <Route path="/bot-builder" element={
+              localStorage.getItem('token') ? <BotBuilder /> : <Navigate to="/signin" replace />
+            } />
 
-          {/* Dashboard Routes */}
-          <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
-          <Route path="/portfolio" element={<PrivateRoute element={<Portfolio />} />} />
-          <Route path="/bots" element={<PrivateRoute element={<Bots />} />} />
-          <Route path="/configure-bot" element={<PrivateRoute element={<ConfigureBot />} />} />
-          <Route path="/live-market" element={<PrivateRoute element={<LiveMarket />} />} />
+            {/* Dashboard Routes (Now have access to isPaperTrading) */}
+            <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+            <Route path="/portfolio" element={<PrivateRoute element={<Portfolio />} />} />
+            <Route path="/bots" element={<PrivateRoute element={<Bots />} />} />
+            <Route path="/configure-bot" element={<PrivateRoute element={<ConfigureBot />} />} />
+            <Route path="/live-market" element={<PrivateRoute element={<LiveMarket />} />} />
 
-          {/* Backtest Route */}
-          <Route path="/backtest" element={<PrivateRoute element={<Backtest />} />} />
-        </Routes>
-      </main>
+            {/* Backtest Route */}
+            <Route path="/backtest" element={<PrivateRoute element={<Backtest />} />} />
+          </Routes>
+        </main>
+      </TradingProvider>
 
       {showNavAndFooter && <Footer />}
     </div>
