@@ -172,28 +172,110 @@ const Sparkline = ({ color, isConnected }) => (
     </div>
 );
 
-const PerformanceChart = ({ isConnected, themeColor }) => (
-    <div className="w-full h-72 relative flex flex-col">
-        <div className="flex-1 relative flex">
-            <div className="flex flex-col justify-between text-[10px] text-gray-500 font-medium h-full pr-4 pb-2 w-12 text-right"><span>50k</span><span>40k</span><span>30k</span><span>20k</span><span>10k</span></div>
-            <div className="flex-1 relative border-l border-white/5">
-                {[0, 1, 2, 3, 4].map((i) => <div key={i} className="absolute w-full border-t border-white/5" style={{ top: `${i * 25}%` }}></div>)}
-                {isConnected && (<svg viewBox="0 0 800 300" className="w-full h-full overflow-visible absolute inset-0" preserveAspectRatio="none"><defs><linearGradient id="mainChartGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor={themeColor} stopOpacity="0.1" /><stop offset="100%" stopColor={themeColor} stopOpacity="0" /></linearGradient></defs><path d="M0,150 L50,100 L80,120 L120,80 L160,110 L200,90 L250,160 L300,140 L350,80 L400,120 L450,100 L500,150 L550,130 L600,180 L650,160 L700,200 L750,150 L800,120" fill="none" stroke={themeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_8px_rgba(0,255,157,0.5)]" /><path d="M0,150 L50,100 L80,120 L120,80 L160,110 L200,90 L250,160 L300,140 L350,80 L400,120 L450,100 L500,150 L550,130 L600,180 L650,160 L700,200 L750,150 L800,120 V300 H0 Z" fill="url(#mainChartGradient)" stroke="none" /></svg>)}
+const PerformanceChart = ({ isConnected, themeColor, data = [] }) => {
+    // 1. Handle Empty/Loading Data
+    if (!isConnected || !data || data.length === 0) {
+        return (
+            <div className="w-full h-72 flex items-center justify-center border border-dashed border-white/10 rounded-xl">
+                <p className="text-gray-600 text-xs">Waiting for data...</p>
+            </div>
+        );
+    }
+
+    // 2. Prepare Data Points for SVG
+    const width = 800;
+    const height = 300;
+    const padding = 20;
+
+    // Find range
+    const values = data.map(d => d.value);
+    const minVal = Math.min(...values) * 0.95; // 5% buffer
+    const maxVal = Math.max(...values) * 1.05;
+    const range = maxVal - minVal || 1; // Avoid divide by zero
+
+    // Map data to coordinates
+    const points = data.map((d, i) => {
+        const x = (i / (data.length - 1)) * width;
+        const y = height - ((d.value - minVal) / range) * height;
+        return `${x},${y}`;
+    });
+
+    const linePath = `M ${points.join(' L ')}`;
+    const areaPath = `${linePath} L ${width},${height} L 0,${height} Z`;
+
+    // Generate Y-Axis Labels (5 ticks)
+    const yTicks = [0, 0.25, 0.5, 0.75, 1].map(t => {
+        const val = minVal + (t * range);
+        return { y: height - (t * height), label: val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val.toFixed(0) };
+    });
+
+    // Generate X-Axis Labels (Every 5th point)
+    const xTicks = data.filter((_, i) => i % 5 === 0).map((d, i) => ({
+        x: (data.indexOf(d) / (data.length - 1)) * width,
+        label: d.date
+    }));
+
+    return (
+        <div className="w-full h-72 relative flex flex-col">
+            <div className="flex-1 relative flex">
+                {/* Y-Axis Labels */}
+                <div className="flex flex-col justify-between text-[10px] text-gray-500 font-medium h-full pr-4 w-12 text-right absolute -left-2 top-0 bottom-0 py-2">
+                    {yTicks.reverse().map((t, i) => (
+                        <span key={i} style={{ position: 'absolute', top: t.y - 10, right: 0 }}>{t.label}</span>
+                    ))}
+                </div>
+
+                {/* Chart Area */}
+                <div className="flex-1 relative border-l border-white/5 ml-12 overflow-hidden">
+                    {/* Grid Lines */}
+                    {[0, 0.25, 0.5, 0.75, 1].map((t, i) => (
+                        <div key={i} className="absolute w-full border-t border-white/5" style={{ top: `${t * 100}%` }}></div>
+                    ))}
+
+                    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible absolute inset-0" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="mainChartGradient" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stopColor={themeColor} stopOpacity="0.1" />
+                                <stop offset="100%" stopColor={themeColor} stopOpacity="0" />
+                            </linearGradient>
+                        </defs>
+                        <path d={areaPath} fill="url(#mainChartGradient)" stroke="none" />
+                        <path d={linePath} fill="none" stroke={themeColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-[0_0_8px_rgba(0,255,157,0.2)]" />
+                    </svg>
+                </div>
+            </div>
+
+            {/* X-Axis Labels */}
+            <div className="flex justify-between text-[10px] text-gray-500 mt-2 pl-12 pt-2 border-t border-white/5">
+                {xTicks.map((t, i) => (
+                    <span key={i}>{t.label}</span>
+                ))}
             </div>
         </div>
-        <div className="flex justify-between text-[10px] text-gray-500 mt-2 pl-12 pt-2 border-t border-white/5"><span>Nov 10</span><span>Nov 11</span><span>Nov 12</span><span>Nov 13</span><span>Nov 14</span><span>Nov 15</span><span>Nov 16</span></div>
-    </div>
-);
+    );
+};
 
 const StatCard = ({ title, value, percentage, icon, isConnected, onConnect, themeColor }) => (
-    <div className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-6 border border-white/5 relative overflow-hidden group transition-all duration-300 h-40 flex flex-col justify-between hover:shadow-[0_0_30px_rgba(0,255,157,0.05)] hover:border-[${themeColor}]/30`}>
+    <div className={`bg-[#0A1014] rounded-3xl p-6 border border-white/10 relative overflow-hidden group transition-all duration-300 h-32 flex flex-col justify-between hover:border-[${themeColor}]/30`}>
         {!isConnected && <ConnectApiOverlay onConnect={onConnect} title="Connect API" isConnected={isConnected} />}
-        <div className={`${!isConnected ? 'filter blur-[3px] opacity-30 pointer-events-none select-none' : ''} transition-all h-full flex flex-col justify-between`}>
-            <div>
-                <div className="flex justify-between items-start mb-2"><div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white border border-white/5 transition-colors group-hover:border-[${themeColor}]/30`}>{icon}</div><h3 className="text-gray-400 text-sm font-medium">{title}</h3></div>{isConnected && <ChevronUp size={16} color={themeColor} />}</div>
-                <div className="flex items-baseline gap-2"><span className="text-3xl font-bold text-white tracking-tight">{value}</span><span className={`text-xs font-bold px-1.5 py-0.5 rounded ${isConnected ? `text-[${themeColor}] bg-[${themeColor}]/10` : 'text-gray-600 bg-white/5'}`} style={isConnected ? { color: themeColor, backgroundColor: `${themeColor}1a` } : {}}>{percentage}</span></div>
+
+        <div className={`${!isConnected ? 'filter blur-[3px] opacity-30 pointer-events-none select-none' : ''} transition-all h-full flex flex-col justify-center`}>
+            <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl bg-[#131B1F] flex items-center justify-center text-white border border-white/5`}>
+                        {icon}
+                    </div>
+                    <h3 className="text-gray-400 text-sm font-medium">{title}</h3>
+                </div>
+                {isConnected && <ChevronUp size={16} color={themeColor} />}
             </div>
-            <Sparkline color={themeColor} isConnected={isConnected} />
+
+            <div className="flex items-baseline gap-3 mt-1">
+                <span className="text-3xl font-bold text-white tracking-tight">{value}</span>
+                <span className={`text-xs font-bold px-2 py-1 rounded bg-[#131B1F] ${isConnected ? '' : 'text-gray-600'}`} style={isConnected ? { color: themeColor } : {}}>
+                    {percentage}
+                </span>
+            </div>
         </div>
     </div>
 );
@@ -224,8 +306,8 @@ const BotCard = ({ bot, isConnected, onConnect, themeColor }) => {
 // --- MAIN DASHBOARD COMPONENT ---
 
 const Dashboard = () => {
+    // ... [Same hooks and state as before] ...
     const navigate = useNavigate();
-    const location = useLocation();
     const { isPaperTrading } = useTrading();
 
     const [loading, setLoading] = useState(true);
@@ -246,6 +328,7 @@ const Dashboard = () => {
         assets: { value: "$0.00", percentage: "0.00%" }
     });
     const [activeBots, setActiveBots] = useState([]);
+    const [chartData, setChartData] = useState([]); // <--- NEW STATE for Chart
 
     // Themes
     const themeColor = isPaperTrading ? '#E2F708' : '#00FF9D';
@@ -264,21 +347,15 @@ const Dashboard = () => {
                 const data = await res.json();
                 setUser({ name: data.user.full_name || "Trader", plan: "Pro Plan Active" });
 
-                // --- CRITICAL CHANGE: CONNECTION LOGIC ---
-                // Only mark connected if we have the specific keys for the active mode
                 const isPaper = isPaperTrading;
                 const isConnected = isPaper ? data.hasPaperExchange : data.hasLiveExchange;
-
                 setHasExchange(isConnected);
 
-                // --- AUTO PROMPT ---
-                // If we are in paper mode, but have no paper keys, force the prompt.
                 if (isPaper && !data.hasPaperExchange) {
                     setConnectModalTestnetDefault(true);
                     setIsConnectModalOpen(true);
                 }
 
-                // Fetch Data
                 const queryMode = isPaper ? 'paper' : 'live';
                 const dashRes = await fetch(`${API_BASE_URL}/user/dashboard?mode=${queryMode}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -292,6 +369,7 @@ const Dashboard = () => {
                         assets: { value: dashData.stats[2].value, percentage: dashData.stats[2].percentage }
                     });
                     setActiveBots(dashData.bots || []);
+                    setChartData(dashData.chartData || []); // <--- Capture real chart data
                 }
             }
         } catch (err) {
@@ -305,22 +383,23 @@ const Dashboard = () => {
         fetchData();
     }, [navigate, isPaperTrading]);
 
+    // ... [Handlers: handleBotSelect, validBots] ...
     const handleBotSelect = (botType) => {
         setSelectedBotType(botType);
         setIsCreateModalOpen(false);
         setIsConfigModalOpen(true);
     };
-
     const validBots = activeBots.filter(bot => !isInvalidBot(bot.bot_type));
 
     return (
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black relative">
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-                <div className={`absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[150px] opacity-70 mix-blend-screen transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/20' : 'bg-[#00FF9D]/20'}`}></div>
-                <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
-                <div className={`absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] rounded-full blur-[180px] opacity-70 transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/10' : 'bg-[#00FF9D]/20'}`}></div>
+                <div className={`absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[150px] opacity-20 mix-blend-screen transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/20' : 'bg-[#00FF9D]/20'}`}></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-20 mix-blend-screen"></div>
+                <div className={`absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] rounded-full blur-[180px] opacity-20 transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/10' : 'bg-[#00FF9D]/20'}`}></div>
             </div>
 
+            {/* Modals */}
             <ConnectExchangeModal
                 isOpen={isConnectModalOpen}
                 onClose={() => setIsConnectModalOpen(false)}
@@ -355,13 +434,13 @@ const Dashboard = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button className={`w-10 h-10 rounded-xl bg-[#0A1014]/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white transition-colors relative ${themeBorderHover}`}>
+                        <button className={`w-10 h-10 rounded-xl bg-[#0A1014] border border-white/10 flex items-center justify-center text-white transition-colors relative ${themeBorderHover}`}>
                             <Bell size={20} />
                             <div className={`absolute top-2 right-2 w-2 h-2 rounded-full shadow-[0_0_5px_currentColor] ${themeBgClass}`}></div>
                         </button>
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className={`text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] ${themeBgClass} hover:brightness-110`}
+                            className={`text-black font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 transition-all shadow-none hover:brightness-110 ${themeBgClass}`}
                         >
                             <Plus size={18} strokeWidth={3} />
                             New Bot
@@ -381,25 +460,28 @@ const Dashboard = () => {
                             <StatCard title="Assets Value" value={statsData.assets.value} percentage={statsData.assets.percentage} icon={<PieChart size={20} />} isConnected={hasExchange} onConnect={() => { setConnectModalTestnetDefault(isPaperTrading); setIsConnectModalOpen(true); }} themeColor={themeColor} />
                         </section>
 
-                        <section className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 mb-8 relative overflow-hidden min-h-[400px] transition-colors ${themeBorderHover}`}>
+                        {/* --- UPDATED PERFORMANCE ANALYTICS (Solid BG, Dynamic Chart) --- */}
+                        <section className={`bg-[#0A1014] rounded-3xl p-8 border border-white/10 mb-8 relative overflow-hidden min-h-[400px] transition-colors ${themeBorderHover}`}>
                             {!hasExchange && <ConnectApiOverlay onConnect={() => { setConnectModalTestnetDefault(isPaperTrading); setIsConnectModalOpen(true); }} title="Connect Exchange" isConnected={hasExchange} />}
+
                             <div className={`${!hasExchange ? 'filter blur-md opacity-30 pointer-events-none select-none' : ''} transition-all duration-500 h-full`}>
                                 <div className="flex justify-between items-center mb-8">
                                     <div>
                                         <h2 className="text-lg font-bold text-white mb-2">Performance Analytics</h2>
                                         <p className="text-2xl font-bold text-white">{hasExchange ? statsData.daily.value : "$0.00"}</p>
                                     </div>
-                                    <div className="flex bg-black/20 p-1 rounded-lg border border-white/5 backdrop-blur-sm">
+                                    <div className="flex bg-[#131B1F] p-1 rounded-lg border border-white/5">
                                         {['1h', '3h', '1d', '1w', '1m'].map((tf, i) => (
-                                            <button key={tf} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${i === 2 ? `${themeBgClass} text-black shadow-lg` : 'text-gray-500 hover:text-white'}`}>{tf}</button>
+                                            <button key={tf} className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${i === 2 ? `${themeBgClass} text-black` : 'text-gray-500 hover:text-white'}`}>{tf}</button>
                                         ))}
                                     </div>
                                 </div>
-                                <PerformanceChart isConnected={hasExchange} themeColor={themeColor} />
+                                {/* Dynamic Chart with Data */}
+                                <PerformanceChart isConnected={hasExchange} themeColor={themeColor} data={chartData} />
                             </div>
                         </section>
 
-                        <section className={`bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 relative transition-colors ${themeBorderHover}`}>
+                        <section className={`bg-[#0A1014] rounded-3xl p-8 border border-white/10 relative transition-colors ${themeBorderHover}`}>
                             <h2 className="text-lg font-bold text-white mb-6">Active Bots ({validBots.length})</h2>
                             <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
                                 {validBots.length > 0 ? (
@@ -409,8 +491,8 @@ const Dashboard = () => {
                                 ) : (
                                     <div className="text-gray-500 text-sm italic p-4">No active bots found in {isPaperTrading ? 'paper' : 'live'} mode.</div>
                                 )}
-                                <div onClick={() => setIsCreateModalOpen(true)} className={`min-w-[200px] rounded-2xl border border-dashed border-white/20 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-white/5 transition-all group backdrop-blur-sm ${themeBorderHover}`}>
-                                    <div className={`w-12 h-12 bg-[#050B0D] rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-white/5 ${themeBorderHover}`}>
+                                <div onClick={() => setIsCreateModalOpen(true)} className={`min-w-[200px] rounded-2xl border border-dashed border-white/20 flex flex-col items-center justify-center p-6 cursor-pointer hover:bg-white/5 transition-all group ${themeBorderHover}`}>
+                                    <div className={`w-12 h-12 bg-[#131B1F] rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border border-white/5 ${themeBorderHover}`}>
                                         <Plus size={24} className={themeTextClass} />
                                     </div>
                                     <span className="text-sm font-bold text-gray-400 group-hover:text-white">Deploy New Bot</span>
