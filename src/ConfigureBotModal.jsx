@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, ChevronDown, Info, Search, Loader2, Check, LayoutGrid } from 'lucide-react';
 import API_BASE_URL from './config';
+import { useTrading } from './context/TradingContext'; // <--- Import Context
 
 // --- DATA: PAIRS & PRIORITY ---
 const RAW_PAIRS_LIST = `SOL to USDT, BTC to USDT, ETH to USDT, BNB to USDT, XRP to USDT, ADA to USDT, AVAX to USDT, DOGE to USDT, DOT to USDT, LINK to USDT, TRX to USDT, MATIC to USDT, UNI to USDT, LTC to USDT, BCH to USDT, NEAR to USDT, APT to USDT, TUSD to USDT, WBTC to USDT, PAXG to USDT, SC to USDT, SFP to USDT, QTUM to USDT, CAKE to USDT, THETA to USDT, UMA to USDT, DODO to USDT, DENT to USDT, WIN to USDT, PUNDIX to USDT, CHZ to USDT, CTSI to USDT, DGB to USDT, CHR to USDT, RUNE to USDT, MANA to USDT, BAKE to USDT, KAVA to USDT, VTHO to USDT, PSG to USDT, FLOKI to USDT, AR to USDT, SPELL to USDT, MBOX to USDT, KDA to USDT, PYR to USDT, DYDX to USDT, MOVR to USDT, ROSE to USDT, YGG to USDT, IMX to USDT, JOE to USDT, CVX to USDT, FLOW to USDT, ILV to USDT, IOTA to USDT, AUDIO to USDT, STG to USDT, METIS to USDT, XDC to USDT, GMX to USDT, GNO to USDT, LQTY to USDT, TWT to USDT, CELR to USDT, ENS to USDT, BONK to USDT, BLUR to USDT, TON to USDT, CFX to USDT, PEPE to USDT, SUI to USDT, ACH to USDT, RSR to USDT, SKL to USDT, MDT to USDT, ARPA to USDT, INJ to USDT, SYS to USDT, MINA to USDT, MAGIC to USDT, TURBO to USDT, ORDI to USDT, PHB to USDT, ANKR to USDT, HOT to USDT, WOO to USDT, BICO to USDT, ASTR to USDT, DUSK to USDT, MAV to USDT, CKB to USDT, XVG to USDT, ID to USDT, RDNT to USDT, PENDLE to USDT, ARKM to USDT, WLD to USDT, HFT to USDT, CYBER to USDT, SEI to USDT, KMD to USDT, LPT to USDT, OG to USDT, HIFI to USDT, FDUSD to USDT, GMT to USDT, AVA to USDT, FORTH to USDT, MLN to USDT, MTL to USDT, EDU to USDT, API3 to USDT, JASMY to USDT, HIGH to USDT, SSV to USDT, QNT to USDT, FIDA to USDT, TIA to USDT, MEME to USDT, VIC to USDT, PYTH to USDT, JTO to USDT, 1000SATS to USDT, ACE to USDT, DATA to USDT, XAI to USDT, MANTA to USDT, JUP to USDT, RAY to USDT, STRK to USDT, ALT to USDT, PIXEL to USDT, WIF to USDT, SUPER to USDT, BOME to USDT, W to USDT, ENA to USDT, TAO to USDT, JST to USDT, SUN to USDT, BB to USDT, OM to USDT, PEOPLE to USDT, RLC to USDT, POLYX to USDT, PHA to USDT, IOST to USDT, SLP to USDT, ZK to USDT, ZRO to USDT, IO to USDT, ETHFI to USDT, LISTA to USDT, REZ to USDT, VANRY to USDT, NTRN to USDT, PORTAL to USDT, AXL to USDT, DYM to USDT, GLM to USDT, BANANA to USDT, RENDER to USDT, DOGS to USDT, POL to USDT, SLF to USDT, NEIRO to USDT, CATI to USDT, HMSTR to USDT, EIGEN to USDT, ACT to USDT, PNUT to USDT, ME to USDT, MOVE to USDT, PENGU to USDT, CETUS to USDT, COW to USDT, ACX to USDT, LUMIA to USDT, ORCA to USDT, DEGO to USDT, TNSR to USDT, AGLD to USDT, G to USDT, PIVX to USDT, UTK to USDT, XVS to USDT, VELODROME to USDT, TRUMP to USDT, USDQ to USDT, EURQ to USDT, WCT to USDT, A to USDT, USDR to USDT, EURR to USDT, WLFI to USDT, XEC to USDT, TRB to USDT, MBL to USDT, AEVO to USDT, 1INCH to USDT`;
@@ -23,7 +24,9 @@ const getSortedPairs = () => {
 
 const ALL_PAIRS = getSortedPairs();
 
-const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
+const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID', onSuccess }) => {
+    const { isPaperTrading } = useTrading(); // <--- Get Active Mode
+
     const [config, setConfig] = useState({
         exchange: 'Binance',
         pair: 'BTC/USDT',
@@ -40,8 +43,14 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
     const [isPairOpen, setIsPairOpen] = useState(false);
     const [pairSearch, setPairSearch] = useState('');
     const [isPriceLoading, setIsPriceLoading] = useState(false);
-
     const [fetchedPrice, setFetchedPrice] = useState(0);
+    const [creating, setCreating] = useState(false); // Loading state for creation
+
+    // Theme Colors based on Mode
+    const themeColor = isPaperTrading ? '#E2F708' : '#00FF9D';
+    const themeBgHover = isPaperTrading ? 'hover:bg-[#E2F708]' : 'hover:bg-[#00FF9D]';
+    const themeText = isPaperTrading ? 'text-[#E2F708]' : 'text-[#00FF9D]';
+    const themeBorder = isPaperTrading ? 'border-[#E2F708]' : 'border-[#00FF9D]';
 
     const filteredPairs = useMemo(() => {
         return ALL_PAIRS.filter(pair => pair.toLowerCase().includes(pairSearch.toLowerCase()));
@@ -83,9 +92,6 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
 
                     if (price > 0 && !isNaN(price)) {
                         setFetchedPrice(price);
-
-                        // ✅ FIX: Always update inputs when a new price is fetched (Pair Change),
-                        // regardless of whether we are in Auto or Manual mode.
                         const { newUpper, newLower } = calculateRange(price, riskLevel);
                         setConfig(prev => ({ ...prev, upperPrice: newUpper, lowerPrice: newLower }));
                     }
@@ -116,20 +122,24 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
     }, [fetchedPrice, mode, riskLevel]);
 
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         if (Number(config.upperPrice) <= 0 || Number(config.lowerPrice) <= 0) {
             alert("Price range is invalid.");
             return;
         }
 
+        setCreating(true);
+
         const payload = {
-            bot_name: `${config.pair} Grid Bot`,
+            bot_name: `${config.pair} Grid Bot (${isPaperTrading ? 'Paper' : 'Live'})`,
             quote_currency: config.pair.split('/')[0],
             bot_type: 'GRID',
             status: 'active',
+            mode: isPaperTrading ? 'paper' : 'live', // <--- Pass Mode to Backend
             config: {
                 exchange: config.exchange,
                 pair: config.pair,
+                mode: isPaperTrading ? 'paper' : 'live',
                 strategy: {
                     upper_price: Number(config.upperPrice),
                     lower_price: Number(config.lowerPrice),
@@ -141,24 +151,27 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
             }
         };
 
-        const createBot = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const res = await fetch(`${API_BASE_URL}/user/bot`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    alert("Grid Bot Created Successfully!");
-                    onClose();
-                } else {
-                    const errData = await res.json();
-                    alert(`Failed to create bot: ${errData.message || 'Unknown error'}`);
-                }
-            } catch (e) { console.error(e); }
-        };
-        createBot();
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/user/bot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                alert(`${isPaperTrading ? 'Paper' : 'Live'} Grid Bot Created Successfully!`);
+                if (onSuccess) onSuccess(); // <--- Refresh Dashboard
+                onClose();
+            } else {
+                const errData = await res.json();
+                alert(`Failed to create bot: ${errData.message || 'Unknown error'}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Connection failed");
+        } finally {
+            setCreating(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -174,16 +187,16 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-            {/* FIXED: Changed flex layout to grid layout to strictly split containers */}
-            <div className="bg-[#0A1014] border border-white/10 rounded-3xl w-full max-w-6xl p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <div className={`bg-[#0A1014] border border-white/10 rounded-3xl w-full max-w-6xl p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-8 ${isPaperTrading ? 'border-[#E2F708]/30' : ''}`}>
 
                 <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors z-20">
                     <X size={24} />
                 </button>
 
-                {/* --- LEFT SIDE: CONFIGURATION (Fixed Col Span 7) --- */}
+                {/* --- LEFT SIDE: CONFIGURATION --- */}
                 <div className="lg:col-span-7 flex flex-col h-full">
-                    <h2 className="text-2xl font-bold text-white mb-1">Configure Grid Bot</h2>
+                    <h2 className="text-2xl font-bold text-white mb-1">Configure {isPaperTrading ? 'Paper' : 'Live'} Grid Bot</h2>
                     <p className="text-sm text-gray-400 mb-6">Setup your automated grid trading parameters.</p>
 
                     <div className="space-y-5">
@@ -195,7 +208,7 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                                     <select
                                         value={config.exchange}
                                         onChange={(e) => setConfig({ ...config, exchange: e.target.value })}
-                                        className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] appearance-none cursor-pointer text-sm"
+                                        className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[${themeColor}] appearance-none cursor-pointer text-sm focus:${themeBorder}`}
                                     >
                                         <option>Binance</option><option>Bybit</option><option>OKX</option>
                                     </select>
@@ -206,7 +219,7 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                             <div className="space-y-1 relative">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Pair</label>
                                 <div
-                                    className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 flex items-center justify-between cursor-pointer hover:border-[#00FF9D]/30"
+                                    className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 flex items-center justify-between cursor-pointer hover:${themeBorder} hover:border-opacity-30`}
                                     onClick={() => setIsPairOpen(!isPairOpen)}
                                 >
                                     <span className="text-white text-sm truncate">{config.pair}</span>
@@ -224,7 +237,7 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                                             {filteredPairs.map((p) => {
                                                 const isPriority = PRIORITY_COINS.some(c => p.startsWith(c + '/'));
                                                 return (
-                                                    <div key={p} onClick={() => { setConfig({ ...config, pair: p }); setIsPairOpen(false); }} className={`px-4 py-2 text-xs cursor-pointer flex items-center justify-between hover:bg-white/5 ${config.pair === p ? 'text-[#00FF9D] bg-[#00FF9D]/5' : 'text-gray-300'}`}>
+                                                    <div key={p} onClick={() => { setConfig({ ...config, pair: p }); setIsPairOpen(false); }} className={`px-4 py-2 text-xs cursor-pointer flex items-center justify-between hover:bg-white/5 ${config.pair === p ? `text-[${themeColor}] bg-[${themeColor}]/5` : 'text-gray-300'}`}>
                                                         <span className={isPriority ? 'font-bold text-white' : ''}>{p}</span>
                                                         {isPriority && <span className="text-[10px] text-yellow-500">★</span>}
                                                     </div>
@@ -238,14 +251,11 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
 
                         {/* MODE TOGGLE */}
                         <div className="flex bg-[#131B1F] p-1 rounded-lg mt-2">
-                            <button onClick={() => setMode('auto')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'auto' ? 'bg-[#00FF9D] text-black' : 'text-gray-400 hover:text-white'}`}>AUTO (AI)</button>
-                            <button onClick={() => setMode('manual')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'manual' ? 'bg-[#00FF9D] text-black' : 'text-gray-400 hover:text-white'}`}>MANUAL</button>
+                            <button onClick={() => setMode('auto')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'auto' ? `bg-[${themeColor}] text-black` : 'text-gray-400 hover:text-white'}`} style={mode === 'auto' ? { backgroundColor: themeColor } : {}}>AUTO (AI)</button>
+                            <button onClick={() => setMode('manual')} className={`flex-1 py-2 rounded-md text-xs font-bold transition-all ${mode === 'manual' ? `bg-[${themeColor}] text-black` : 'text-gray-400 hover:text-white'}`} style={mode === 'manual' ? { backgroundColor: themeColor } : {}}>MANUAL</button>
                         </div>
 
-                        {/* FIXED: FIXED HEIGHT WRAPPER 
-                            This div wraps the dynamic content (Inputs vs Buttons).
-                            It forces this section to always be 180px tall so content below doesn't jump.
-                        */}
+                        {/* FIXED HEIGHT WRAPPER */}
                         <div className="h-[180px] flex flex-col justify-center">
                             {mode === 'auto' ? (
                                 <div className="space-y-3 w-full animate-in fade-in duration-300">
@@ -265,14 +275,14 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                             ) : (
                                 <div className="space-y-4 w-full animate-in fade-in duration-300">
                                     <div className="grid grid-cols-2 gap-4 relative">
-                                        {isPriceLoading && <div className="absolute inset-0 bg-[#0A1014]/80 z-10 flex items-center justify-center rounded-lg"><Loader2 size={16} className="animate-spin text-[#00FF9D]" /></div>}
+                                        {isPriceLoading && <div className={`absolute inset-0 bg-[#0A1014]/80 z-10 flex items-center justify-center rounded-lg`}><Loader2 size={16} className={`animate-spin ${themeText}`} /></div>}
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-gray-400 uppercase">Upper Price</label>
                                             <input
                                                 type="number"
                                                 value={config.upperPrice}
                                                 onChange={(e) => setConfig({ ...config, upperPrice: e.target.value })}
-                                                className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm`}
+                                                className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:${themeBorder} text-sm`}
                                             />
                                         </div>
                                         <div className="space-y-1">
@@ -281,7 +291,7 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                                                 type="number"
                                                 value={config.lowerPrice}
                                                 onChange={(e) => setConfig({ ...config, lowerPrice: e.target.value })}
-                                                className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm`}
+                                                className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:${themeBorder} text-sm`}
                                             />
                                         </div>
                                     </div>
@@ -290,12 +300,12 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                                         <label className="text-[10px] font-bold text-gray-400 uppercase">Trailing Features</label>
                                         <div className="flex gap-4">
                                             <label className="flex items-center gap-2 cursor-pointer group bg-[#131B1F] px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 transition-all flex-1 justify-center">
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingUp ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-600'}`}>{config.trailingUp && <Check size={12} className="text-black" />}</div>
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingUp ? `bg-[${themeColor}] border-[${themeColor}]` : 'border-gray-600'}`} style={config.trailingUp ? { backgroundColor: themeColor, borderColor: themeColor } : {}}>{config.trailingUp && <Check size={12} className="text-black" />}</div>
                                                 <input type="checkbox" className="hidden" checked={config.trailingUp} onChange={e => setConfig({ ...config, trailingUp: e.target.checked })} />
                                                 <span className="text-xs text-gray-300 group-hover:text-white font-bold">Trailing Up</span>
                                             </label>
                                             <label className="flex items-center gap-2 cursor-pointer group bg-[#131B1F] px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 transition-all flex-1 justify-center">
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingDown ? 'bg-[#00FF9D] border-[#00FF9D]' : 'border-gray-600'}`}>{config.trailingDown && <Check size={12} className="text-black" />}</div>
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${config.trailingDown ? `bg-[${themeColor}] border-[${themeColor}]` : 'border-gray-600'}`} style={config.trailingDown ? { backgroundColor: themeColor, borderColor: themeColor } : {}}>{config.trailingDown && <Check size={12} className="text-black" />}</div>
                                                 <input type="checkbox" className="hidden" checked={config.trailingDown} onChange={e => setConfig({ ...config, trailingDown: e.target.checked })} />
                                                 <span className="text-xs text-gray-300 group-hover:text-white font-bold">Trailing Down</span>
                                             </label>
@@ -309,7 +319,7 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                         <div className="space-y-1 mt-2">
                             <label className="block text-[10px] font-bold text-gray-400 uppercase">Total Investment</label>
                             <div className="relative">
-                                <input type="number" value={config.investment} onChange={(e) => setConfig({ ...config, investment: parseFloat(e.target.value) || 0 })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
+                                <input type="number" value={config.investment} onChange={(e) => setConfig({ ...config, investment: parseFloat(e.target.value) || 0 })} className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:${themeBorder} text-sm`} />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">USDT</span>
                             </div>
                         </div>
@@ -317,18 +327,22 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-gray-400 uppercase">Number of Grids</label>
                             <div className="relative">
-                                <input type="number" value={config.grids} onChange={(e) => setConfig({ ...config, grids: parseFloat(e.target.value) || 0 })} className="w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:border-[#00FF9D] text-sm" />
+                                <input type="number" value={config.grids} onChange={(e) => setConfig({ ...config, grids: parseFloat(e.target.value) || 0 })} className={`w-full bg-[#131B1F] border border-white/10 rounded-lg px-3 py-2.5 text-white outline-none focus:${themeBorder} text-sm`} />
                                 <LayoutGrid size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
                             </div>
                         </div>
 
-                        <button onClick={handleCreate} className="w-full bg-[#00FF9D] text-black font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(0,255,157,0.3)] hover:bg-[#00cc7d] hover:scale-[1.01] transition-all mt-4">
-                            Create Grid Bot
+                        <button
+                            onClick={handleCreate}
+                            disabled={creating}
+                            className={`w-full text-black font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:scale-[1.01] transition-all mt-4 flex justify-center items-center gap-2 ${isPaperTrading ? 'bg-[#E2F708] hover:bg-[#d4e600]' : 'bg-[#00FF9D] hover:bg-[#00cc7d]'}`}
+                        >
+                            {creating ? <Loader2 className="animate-spin" /> : `Create ${isPaperTrading ? 'Paper' : 'Live'} Grid Bot`}
                         </button>
                     </div>
                 </div>
 
-                {/* --- RIGHT SIDE: PREVIEW (Fixed Col Span 5) --- */}
+                {/* --- RIGHT SIDE: PREVIEW --- */}
                 <div className="lg:col-span-5 h-full">
                     <div className="bg-[#0A1014]/60 backdrop-blur-xl border border-white/5 rounded-3xl p-8 sticky top-10 h-full flex flex-col">
                         <h2 className="text-xl font-bold text-white mb-6">Strategy Preview</h2>
@@ -336,7 +350,7 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                         <div className="space-y-4 text-sm flex-1">
                             <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                 <span className="text-gray-400">Current Price</span>
-                                <span className="font-bold text-[#00FF9D]">${fetchedPrice.toLocaleString()}</span>
+                                <span className={`font-bold ${themeText}`}>${fetchedPrice.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                 <span className="text-gray-400">Grid Range</span>
@@ -356,21 +370,21 @@ const ConfigureBotModal = ({ isOpen, onClose, botType = 'SPOT GRID' }) => {
                             </div>
                             <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                 <span className="text-gray-400">Mode</span>
-                                <span className={`font-bold uppercase ${mode === 'auto' ? 'text-[#00FF9D]' : 'text-yellow-500'}`}>{mode} ({mode === 'auto' ? riskLevel : 'Custom'})</span>
+                                <span className={`font-bold uppercase ${mode === 'auto' ? themeText : 'text-yellow-500'}`}>{mode} ({mode === 'auto' ? riskLevel : 'Custom'})</span>
                             </div>
                             <div className="flex justify-between items-center pb-4 border-b border-white/5">
                                 <span className="text-gray-400">Trailing</span>
                                 <div className="flex gap-2">
-                                    {config.trailingUp && <span className="text-[10px] bg-[#00FF9D]/10 text-[#00FF9D] px-2 py-1 rounded">UP</span>}
+                                    {config.trailingUp && <span className={`text-[10px] bg-[${themeColor}]/10 text-[${themeColor}] px-2 py-1 rounded`} style={{ color: themeColor, backgroundColor: `${themeColor}1a` }}>UP</span>}
                                     {config.trailingDown && <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-1 rounded">DOWN</span>}
                                     {!config.trailingUp && !config.trailingDown && <span className="text-gray-600">-</span>}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-6 flex items-start gap-2 p-4 bg-[#00FF9D]/5 border border-[#00FF9D]/20 rounded-xl min-h-[80px]">
-                            <Info size={18} className="text-[#00FF9D] shrink-0 mt-0.5" />
-                            <p className="text-xs text-[#00FF9D]/80 leading-relaxed">
+                        <div className={`mt-6 flex items-start gap-2 p-4 bg-[${themeColor}]/5 border border-[${themeColor}]/20 rounded-xl min-h-[80px]`} style={{ borderColor: `${themeColor}33`, backgroundColor: `${themeColor}0d` }}>
+                            <Info size={18} className="shrink-0 mt-0.5" style={{ color: themeColor }} />
+                            <p className="text-xs leading-relaxed" style={{ color: themeColor }}>
                                 Bot will place <strong>{numGrids} orders</strong> in the price range of {numLower.toFixed(2)} to {numUpper.toFixed(2)}.
                                 {mode === 'auto' ? ` Optimized for ${riskLevel} risk market conditions.` : ' Using custom manual settings.'}
                             </p>
