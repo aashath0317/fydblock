@@ -301,9 +301,9 @@ const LiveMarket = () => {
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black">
 
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-                <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00FF9D]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
-                <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
-                <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/20 rounded-full blur-[180px] opacity-70"></div>
+                <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00FF9D]/5 rounded-full blur-[150px] opacity-30 mix-blend-screen"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00FF9D]/5 rounded-full blur-[150px] opacity-30 mix-blend-screen"></div>
+                <div className="absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] bg-[#00FF9D]/5 rounded-full blur-[180px] opacity-30"></div>
             </div>
 
             <Dash_nav user={user} />
