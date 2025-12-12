@@ -283,7 +283,9 @@ const Portfolio = () => {
     return (
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black relative">
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-                <div className={`absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[150px] opacity-70 mix-blend-screen transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/20' : 'bg-[#00FF9D]/20'}`}></div>
+                <div className={`absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[150px] opacity-20 mix-blend-screen transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/20' : 'bg-[#00FF9D]/20'}`}></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-20 mix-blend-screen"></div>
+                <div className={`absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] rounded-full blur-[180px] opacity-20 transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/10' : 'bg-[#00FF9D]/20'}`}></div>
             </div>
 
             <ConnectExchangeModal isOpen={isConnectModalOpen} onClose={() => setIsConnectModalOpen(false)} onSuccess={fetchPortfolio} defaultIsTestnet={connectModalTestnetDefault} />
@@ -304,7 +306,7 @@ const Portfolio = () => {
 
                 {loading ? <div className="flex items-center justify-center h-[50vh]"><Loader2 className={`animate-spin ${themeTextClass}`} size={48} /></div> : (
                     <div className="w-full">
-                        <div className="relative w-full bg-[#0A1014]/60 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden mb-12 shadow-2xl">
+                        <div className="relative w-full bg-[#0A1014]/100 border border-white/10 rounded-[32px] overflow-hidden mb-12 shadow-2xl">
                             {!hasExchange && <ConnectApiOverlay onConnect={openConnectModal} isPaper={isPaperTrading} />}
                             <div className={`p-8 md:p-10 relative z-10 ${!hasExchange ? 'blur-md opacity-30 pointer-events-none' : ''}`}>
                                 <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-8">
@@ -320,7 +322,7 @@ const Portfolio = () => {
                             </div>
                         </div>
 
-                        <div className={`relative transition-all duration-500 ${!hasExchange ? 'blur-md opacity-30 pointer-events-none' : ''}`}>
+                        <div className={`relative transition-all duration-500 ${!hasExchange ? 'blur-md pointer-events-none' : ''}`}>
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-bold text-white">Assets</h3>
                                 <div className="relative w-64"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} /><input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full bg-[#0A1014]/50 border border-white/10 rounded-full py-2.5 pl-10 pr-4 text-sm text-white focus:border-opacity-50`} /></div>
@@ -328,7 +330,7 @@ const Portfolio = () => {
                             <div className="grid grid-cols-12 px-6 py-3 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider"><div className="col-span-4">Symbol</div><div className="col-span-3">Value</div><div className="col-span-3">Balance</div><div className="col-span-2 text-right">Change</div></div>
                             <div className="space-y-2">
                                 {filteredAssets.length > 0 ? filteredAssets.map((asset, i) => (
-                                    <div key={i} className={`grid grid-cols-12 items-center px-6 py-4 bg-[#0A1014]/40 border border-white/5 rounded-2xl hover:bg-[#0A1014]/80 transition-all`}>
+                                    <div key={i} className={`grid grid-cols-12 items-center px-6 py-4 bg-[#0A1014]/100 border border-white/5 rounded-2xl hover:bg-[#0A1014]/80 transition-all`}>
                                         <div className="col-span-4 flex items-center gap-4"><div className="w-8 h-8 rounded-full bg-white/5 p-1"><SafeCoinIcon symbol={asset.symbol} className="w-6 h-6" /></div><span className="font-bold text-white text-sm">{asset.symbol}</span></div>
                                         <div className="col-span-3 font-medium text-white text-sm">${(asset.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                                         <div className="col-span-3 font-medium text-gray-400 text-sm">{(asset.balance || 0).toFixed(4)}</div>
