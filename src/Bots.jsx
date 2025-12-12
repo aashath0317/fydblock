@@ -9,7 +9,7 @@ import API_BASE_URL from './config';
 import Dash_nav from './Dash_nav';
 import CreateBotModal from './CreateBotModal';
 import ConfigureBotModal from './ConfigureBotModal';
-import { useTrading } from './context/TradingContext'; // 1. Import Context
+import { useTrading } from './context/TradingContext';
 
 // --- SPARKLINE COMPONENT (Mini Chart) ---
 const BotSparkline = ({ color }) => (
@@ -31,7 +31,7 @@ const BotSparkline = ({ color }) => (
 // --- MAIN COMPONENT ---
 const Bots = () => {
     const navigate = useNavigate();
-    const { isPaperTrading } = useTrading(); // 2. Get Global Mode
+    const { isPaperTrading } = useTrading();
 
     const [loading, setLoading] = useState(true);
     const [bots, setBots] = useState([]);
@@ -91,7 +91,6 @@ const Bots = () => {
 
     const handleToggleBot = async (botId, currentStatus) => {
         const token = localStorage.getItem('token');
-        // Optimistic UI Update
         const originalBots = [...bots];
         setBots(bots.map(b =>
             (b.bot_id === botId || b.id === botId)
@@ -108,12 +107,11 @@ const Bots = () => {
             if (!res.ok) {
                 throw new Error("Failed to toggle");
             }
-            // Success - Refetch to sync exact state
             fetchData();
         } catch (e) {
             console.error(e);
             alert("Failed to change bot status. Check console.");
-            setBots(originalBots); // Revert on error
+            setBots(originalBots);
         }
     };
 
@@ -127,7 +125,7 @@ const Bots = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
-                fetchData(); // Remove from list
+                fetchData();
             } else {
                 alert("Failed to delete bot");
             }
@@ -153,15 +151,17 @@ const Bots = () => {
     const themeText = isPaperTrading ? 'text-[#E2F708]' : 'text-[#00FF9D]';
     const themeBgBtn = isPaperTrading ? 'bg-[#E2F708]' : 'bg-[#00FF9D]';
     const themeHoverBtn = isPaperTrading ? 'hover:bg-[#d4e600]' : 'hover:bg-[#00cc7d]';
+    // Solid border for cards
+    const themeBorderHover = isPaperTrading ? 'hover:border-[#E2F708]' : 'hover:border-[#00FF9D]';
 
     return (
         <div className="flex h-screen bg-[#050B0D] font-sans text-white overflow-hidden selection:bg-[#00FF9D] selection:text-black relative">
 
-            {/* Background FX */}
+            {/* Reduced Glow Background (Same as updated Dashboard) */}
             <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-                <div className={`absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[150px] opacity-70 mix-blend-screen transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/20' : 'bg-[#00FF9D]/20'}`}></div>
-                <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/20 rounded-full blur-[150px] opacity-70 mix-blend-screen"></div>
-                <div className={`absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] rounded-full blur-[180px] opacity-70 transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/10' : 'bg-[#00FF9D]/20'}`}></div>
+                <div className={`absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[150px] opacity-30 mix-blend-screen transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/5' : 'bg-[#00FF9D]/5'}`}></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[40vw] h-[60vh] bg-[#00A3FF]/10 rounded-full blur-[150px] opacity-30 mix-blend-screen"></div>
+                <div className={`absolute bottom-[-30%] left-[20%] w-[60vw] h-[50vh] rounded-full blur-[180px] opacity-30 transition-colors duration-700 ${isPaperTrading ? 'bg-[#E2F708]/5' : 'bg-[#00FF9D]/5'}`}></div>
             </div>
 
             {/* Modals */}
@@ -185,7 +185,8 @@ const Bots = () => {
                         {isPaperTrading ? 'Paper Bots' : 'Active Bots'}
                     </h1>
                     <div className="flex items-center gap-4">
-                        <button className="w-10 h-10 rounded-xl bg-[#0A1014]/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:border-white transition-colors relative">
+                        {/* Removed glass effect from bell button */}
+                        <button className="w-10 h-10 rounded-xl bg-[#0A1014] border border-white/10 flex items-center justify-center text-white hover:border-white transition-colors relative">
                             <Bell size={20} />
                             <div className={`absolute top-2 right-2 w-2 h-2 rounded-full shadow-[0_0_5px_currentColor] ${isPaperTrading ? 'bg-[#E2F708] text-[#E2F708]' : 'bg-[#00FF9D] text-[#00FF9D]'}`}></div>
                         </button>
@@ -199,17 +200,18 @@ const Bots = () => {
                     </div>
                 </header>
 
-                {/* --- ACTIVE BOTS LIST --- */}
-                <section className="bg-[#0A1014]/20 backdrop-blur-2xl rounded-3xl p-8 border border-white/5 mb-8 relative min-h-[400px]">
+                {/* --- ACTIVE BOTS LIST (Solid Background) --- */}
+                <section className={`bg-[#0A1014] rounded-3xl p-8 border border-white/10 mb-8 relative min-h-[400px]`}>
                     <div className="flex justify-between items-center mb-8">
                         <h2 className="text-xl font-bold text-white">Running Strategies</h2>
                         <div className="relative w-72">
+                            {/* Input solid background */}
                             <input
                                 type="text"
                                 placeholder="Search Bots..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-[#0A1014]/50 border border-white/10 pl-4 pr-10 py-2.5 rounded-lg outline-none text-sm font-medium text-white focus:border-white/30 transition-all placeholder:text-gray-600"
+                                className="w-full bg-[#131B1F] border border-white/10 pl-4 pr-10 py-2.5 rounded-lg outline-none text-sm font-medium text-white focus:border-white/30 transition-all placeholder:text-gray-600"
                             />
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                         </div>
@@ -222,13 +224,14 @@ const Bots = () => {
                     ) : filteredBots.length > 0 ? (
                         <div className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide">
                             {filteredBots.map((bot, index) => (
-                                <div key={index} className="min-w-[300px] bg-[#0E1416]/80 backdrop-blur-md border border-white/10 rounded-2xl p-6 relative group hover:border-white/20 transition-all duration-300">
+                                // Card solid background
+                                <div key={index} className={`min-w-[300px] bg-[#0A1014] border border-white/10 rounded-2xl p-6 relative group ${themeBorderHover} transition-all duration-300`}>
                                     <div className="relative z-10">
 
                                         {/* Bot Header */}
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center border border-white/5 text-white font-bold">
+                                                <div className="w-10 h-10 rounded-lg bg-[#131B1F] flex items-center justify-center border border-white/5 text-white font-bold">
                                                     {bot.quote_currency?.charAt(0) || '$'}
                                                 </div>
                                                 <div>
@@ -275,7 +278,7 @@ const Bots = () => {
                                             {/* Delete Button */}
                                             <button
                                                 onClick={() => handleDeleteBot(bot.bot_id || bot.id)}
-                                                className="px-3 py-3 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-500 text-gray-400 transition-colors border border-white/5 hover:border-red-500/50"
+                                                className="px-3 py-3 rounded-xl bg-[#131B1F] hover:bg-red-500/20 hover:text-red-500 text-gray-400 transition-colors border border-white/5 hover:border-red-500/50"
                                                 title="Delete Bot"
                                             >
                                                 <Trash2 size={16} />
@@ -287,8 +290,8 @@ const Bots = () => {
                             ))}
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center h-64 border border-dashed border-white/10 rounded-2xl bg-white/5">
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 border transition-colors bg-white/5 border-white/10`}>
+                        <div className="flex flex-col items-center justify-center h-64 border border-dashed border-white/10 rounded-2xl bg-[#0A1014]">
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 border transition-colors bg-[#131B1F] border-white/10`}>
                                 <Activity size={32} className="text-gray-500" />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">No Active Bots</h3>
@@ -306,7 +309,7 @@ const Bots = () => {
                     )}
                 </section>
 
-                {/* --- AVAILABLE BOTS (Templates) --- */}
+                {/* --- AVAILABLE BOTS (Templates) - Solid Background --- */}
                 <section>
                     <h2 className="text-xl font-bold text-white mb-6">Available Strategy Templates</h2>
 
@@ -316,11 +319,10 @@ const Bots = () => {
                                 <div
                                     key={bot.bot_id || bot.id}
                                     onClick={() => handleBotSelect(bot.bot_type)}
-                                    className={`h-48 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-all group bg-[#0A1014]/40 relative overflow-hidden hover:border-[${themeColor}]`}
-                                    style={{ borderColor: 'rgba(255,255,255,0.1)' }} // Default border
+                                    className={`h-48 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-[#131B1F] transition-all group bg-[#0A1014] relative overflow-hidden ${themeBorderHover}`}
                                 >
                                     <div className="relative z-10 flex flex-col items-center">
-                                        <div className={`w-14 h-14 bg-white/5 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform group-hover:text-black border border-white/5 shadow-lg group-hover:bg-[${themeColor}]`}
+                                        <div className={`w-14 h-14 bg-[#131B1F] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform group-hover:text-black border border-white/5 shadow-lg group-hover:bg-[${themeColor}]`}
                                             style={{ transition: 'all 0.3s ease' }}
                                         >
                                             {bot.icon_url ? (
@@ -336,14 +338,11 @@ const Bots = () => {
                                         <span className="font-bold text-white tracking-widest text-xs uppercase">{bot.bot_name}</span>
                                         <span className="text-[10px] text-gray-500 mt-1 uppercase">{bot.bot_type}</span>
                                     </div>
-
-                                    {/* Hover Glow Effect */}
-                                    <div className={`absolute inset-0 bg-[${themeColor}]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="w-full bg-[#0A1014]/20 border border-white/5 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
+                        <div className="w-full bg-[#0A1014] border border-white/10 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
                             <Bot size={32} className="text-gray-600 mb-4" />
                             <h3 className="text-lg font-bold text-white">No Templates Available</h3>
                             <p className="text-gray-400 text-sm mt-2">Check back later for new strategies.</p>
