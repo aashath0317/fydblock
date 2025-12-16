@@ -3,10 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Bell, ChevronDown, Info, Search, Loader2 } from 'lucide-react';
 import Dash_nav from './Dash_nav';
 import API_BASE_URL from './config';
+import { useTrading } from './context/TradingContext'; // <--- IMPORT ADDED
 
 // --- DATA: PAIRS & PRIORITY (Utility Code) ---
 const RAW_PAIRS_LIST = `SOL to USDT, BTC to USDT, ETH to USDT, BNB to USDT, XRP to USDT, HYPE to USDT, ADA to USDT, AVAX to USDT, DOGE to USDT, DOT to USDT, LINK to USDT, TRX to USDT, MATIC to USDT, UNI to USDT, LTC to USDT, BCH to USDT, NEAR to USDT, APT to USDT, TUSD to USDT, WBTC to USDT, PAXG to USDT, SC to USDT, SFP to USDT, QTUM to USDT, CAKE to USDT, THETA to USDT, UMA to USDT, DODO to USDT, DENT to USDT, WIN to USDT, PUNDIX to USDT, CHZ to USDT, CTSI to USDT, DGB to USDT, CHR to USDT, RUNE to USDT, MANA to USDT, BAKE to USDT, KAVA to USDT, VTHO to USDT, PSG to USDT, FLOKI to USDT, AR to USDT, SPELL to USDT, MBOX to USDT, KDA to USDT, PYR to USDT, DYDX to USDT, MOVR to USDT, ROSE to USDT, YGG to USDT, IMX to USDT, JOE to USDT, CVX to USDT, FLOW to USDT, ILV to USDT, IOTA to USDT, AUDIO to USDT, STG to USDT, METIS to USDT, XDC to USDT, GMX to USDT, GNO to USDT, LQTY to USDT, TWT to USDT, CELR to USDT, ENS to USDT, BONK to USDT, BLUR to USDT, TON to USDT, CFX to USDT, PEPE to USDT, SUI to USDT, ACH to USDT, RSR to USDT, SKL to USDT, MDT to USDT, ARPA to USDT, INJ to USDT, SYS to USDT, MINA to USDT, MAGIC to USDT, TURBO to USDT, ORDI to USDT, PHB to USDT, ANKR to USDT, HOT to USDT, WOO to USDT, BICO to USDT, ASTR to USDT, DUSK to USDT, MAV to USDT, CKB to USDT, XVG to USDT, ID to USDT, RDNT to USDT, PENDLE to USDT, ARKM to USDT, WLD to USDT, HFT to USDT, CYBER to USDT, SEI to USDT, KMD to USDT, LPT to USDT, OG to USDT, HIFI to USDT, FDUSD to USDT, GMT to USDT, AVA to USDT, FORTH to USDT, MLN to USDT, MTL to USDT, EDU to USDT, API3 to USDT, JASMY to USDT, HIGH to USDT, SSV to USDT, QNT to USDT, FIDA to USDT, TIA to USDT, MEME to USDT, VIC to USDT, PYTH to USDT, JTO to USDT, 1000SATS to USDT, ACE to USDT, DATA to USDT, XAI to USDT, MANTA to USDT, JUP to USDT, RAY to USDT, STRK to USDT, ALT to USDT, PIXEL to USDT, WIF to USDT, SUPER to USDT, BOME to USDT, W to USDT, ENA to USDT, TAO to USDT, JST to USDT, SUN to USDT, BB to USDT, OM to USDT, PEOPLE to USDT, RLC to USDT, POLYX to USDT, PHA to USDT, IOST to USDT, SLP to USDT, ZK to USDT, ZRO to USDT, IO to USDT, ETHFI to USDT, LISTA to USDT, REZ to USDT, VANRY to USDT, NTRN to USDT, PORTAL to USDT, AXL to USDT, DYM to USDT, GLM to USDT, BANANA to USDT, RENDER to USDT, DOGS to USDT, POL to USDT, SLF to USDT, NEIRO to USDT, CATI to USDT, HMSTR to USDT, EIGEN to USDT, ACT to USDT, PNUT to USDT, ME to USDT, MOVE to USDT, PENGU to USDT, CETUS to USDT, COW to USDT, ACX to USDT, LUMIA to USDT, ORCA to USDT, DEGO to USDT, TNSR to USDT, AGLD to USDT, G to USDT, PIVX to USDT, UTK to USDT, XVS to USDT, VELODROME to USDT, TRUMP to USDT, USDQ to USDT, EURQ to USDT, WCT to USDT, A to USDT, USDR to USDT, EURR to USDT, WLFI to USDT, XEC to USDT, TRB to USDT, MBL to USDT, AEVO to USDT, 1INCH to USDT`;
-const PRIORITY_COINS = ['SOL', 'BTC', 'ETH', 'BNB', 'XRP', 'DOGE', 'ADA', 'HYPE' ];
+const PRIORITY_COINS = ['SOL', 'BTC', 'ETH', 'BNB', 'XRP', 'DOGE', 'ADA', 'HYPE'];
 const getSortedPairs = () => {
     const pairs = RAW_PAIRS_LIST.split(',').map(p => p.trim().replace(' to ', '/'));
     return pairs.sort((a, b) => {
@@ -24,18 +25,23 @@ const ALL_PAIRS = getSortedPairs();
 // --- END DATA UTILITY ---
 
 
-// ... (AnimatedDCAChart component remains the same) ...
-
 const ConfigureBot = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const botType = searchParams.get('type') || 'SPOT DCA';
     const [user] = useState({ name: "Akeel Aashath", plan: "Pro Plan Active" });
 
+    // Global Trading Context (For Paper vs Live)
+    const { isPaperTrading } = useTrading();
+
     // Dropdown/Search State
     const [isPairOpen, setIsPairOpen] = useState(false);
     const [pairSearch, setPairSearch] = useState('');
     const [isPriceLoading, setIsPriceLoading] = useState(false);
+
+    // API Submission State
+    const [creating, setCreating] = useState(false);
+
     const filteredPairs = useMemo(() => {
         return ALL_PAIRS.filter(pair => pair.toLowerCase().includes(pairSearch.toLowerCase()));
     }, [pairSearch]);
@@ -94,10 +100,61 @@ const ConfigureBot = () => {
     const firstOrder = (config.investment / config.orders).toFixed(0);
     const lastOrderPriceDrop = (config.orders - 1) * config.deviation; // Simple approximation
 
-    const handleCreate = () => {
-        // Logic to save bot would go here
-        alert("Bot Created Successfully!");
-        navigate('/bots');
+    // --- HANDLE CREATE BOT (UPDATED WITH API CALL) ---
+    const handleCreate = async () => {
+        if (!config.investment || config.investment <= 0) {
+            alert("Please enter a valid investment amount.");
+            return;
+        }
+
+        setCreating(true);
+
+        const payload = {
+            bot_name: `${config.pair} ${botType} Bot (${isPaperTrading ? 'Paper' : 'Live'})`,
+            quote_currency: config.pair.split('/')[0],
+            bot_type: botType, // e.g. "SPOT DCA"
+            status: 'active',
+            mode: isPaperTrading ? 'paper' : 'live',
+            config: {
+                exchange: config.exchange,
+                pair: config.pair,
+                mode: isPaperTrading ? 'paper' : 'live',
+                strategy: {
+                    investment: Number(config.investment),
+                    orders: Number(config.orders),
+                    deviation: Number(config.deviation),
+                    take_profit: Number(config.takeProfit),
+                    stop_loss: Number(config.stopLoss),
+                    upper_price: Number(config.upperPrice),
+                    lower_price: Number(config.lowerPrice)
+                }
+            }
+        };
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/user/bot`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("Bot Created Successfully!");
+                navigate('/bots');
+            } else {
+                const data = await res.json();
+                alert(`Failed to create bot: ${data.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error("Error creating bot:", error);
+            alert("Network error. Please try again.");
+        } finally {
+            setCreating(false);
+        }
     };
 
     return (
@@ -122,8 +179,13 @@ const ConfigureBot = () => {
                         </button>
                         <h1 className="text-3xl font-bold text-white">Configure {botType.replace('_', ' ').toUpperCase()} Bot</h1>
                     </div>
-                    <button className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl shadow-[0_0_20px_rgba(0,255,157,0.3)]">
-                        + New Bot
+                    {/* Header Action Button (Optional secondary create) */}
+                    <button
+                        onClick={handleCreate}
+                        disabled={creating}
+                        className="bg-[#00FF9D] hover:bg-[#00cc7d] text-black font-bold py-2.5 px-6 rounded-xl shadow-[0_0_20px_rgba(0,255,157,0.3)] disabled:opacity-50"
+                    >
+                        {creating ? <Loader2 className="animate-spin" size={20} /> : "+ Create"}
                     </button>
                 </header>
 
@@ -286,9 +348,17 @@ const ConfigureBot = () => {
 
                             <button
                                 onClick={handleCreate}
-                                className="w-full bg-[#00FF9D] text-black font-bold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(0,255,157,0.4)] hover:bg-[#00cc7d] hover:scale-[1.01] transition-all mt-4"
+                                disabled={creating}
+                                className={`w-full bg-[#00FF9D] text-black font-bold text-lg py-4 rounded-xl shadow-[0_0_20px_rgba(0,255,157,0.4)] hover:bg-[#00cc7d] hover:scale-[1.01] transition-all mt-4 flex items-center justify-center gap-2 ${creating ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                Create Bot
+                                {creating ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={24} />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    "Create Bot"
+                                )}
                             </button>
                         </div>
                     </div>
@@ -316,9 +386,6 @@ const ConfigureBot = () => {
                                     <span className="font-bold text-white">{firstOrder} USDT at <span className="text-red-500">-{lastOrderPriceDrop.toFixed(1)}%</span></span>
                                 </div>
                             </div>
-
-                            {/* --- ANIMATED SVG CHART --- */}
-                            {/* <AnimatedDCAChart orders={config.orders} priceDeviation={config.deviation} /> */}
 
                             <div className="mt-6 flex items-start gap-2 p-4 bg-[#00FF9D]/5 border border-[#00FF9D]/20 rounded-xl">
                                 <Info size={18} className="text-[#00FF9D] shrink-0 mt-0.5" />
